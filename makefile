@@ -3,5 +3,5 @@ EXEC = ctINT
 
 all: executable
 executable: src/main.c
-	gcc $(OPTIONS) -o $(EXEC) src/main.c -lm  
+	gcc $(OPTIONS) -o $(EXEC) src/matrix.c -llapack -lblas -lm -lgfortran -lstdc++ 
 
