@@ -1,4 +1,4 @@
-OPTIONS = -O2 -Wall
+OPTIONS = -Wall
 EXEC = ctINT
 
 all: executable

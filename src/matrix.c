@@ -5,7 +5,7 @@
 
 
 extern int dgemm_(char*,char*,int*,int*,int*,double*,double*,int*,double*, int*, double*,double*, int*);
-
+extern int dswap_(int*, double*, int*, double*, int*);
 
 typedef struct {
   int N;
@@ -66,6 +66,26 @@ int matrixMatrixMultiplication(squareMatrix * A, squareMatrix * B, squareMatrix 
   return 0;
 }
 
+#define ELEM(mtx, i, j) \
+  mtx->data[i * mtx->N + j]
+
+int matrixSwapRows(squareMatrix * A, int row1, int row2) {
+  int N=A->N;
+  assert(row1 < N);
+  assert(row2 < N);
+  int one=1;
+  dswap_(&N, &A->data[row1*A->N], &one, &A->data[row2*A->N], &one);
+  return 0;
+}
+
+int matrixSwapCols(squareMatrix * A, int col1, int col2) {
+  int N=A->N;
+  assert(col1 < N);
+  assert(col2 < N);
+  //int one=1;
+  dswap_(&N, &A->data[col1], &N, &A->data[col2], &N);
+  return 0;
+}
 
 /*
         zgetrf_(&dim,&dim,data_,&dim,IPIV_,&INFO);
@@ -75,8 +95,7 @@ int matrixMatrixMultiplication(squareMatrix * A, squareMatrix * B, squareMatrix 
             exit( 1 );
 */
 
-#define ELEM(mtx, i, j) \
-  mtx->data[i * mtx->N + j]
+
 
 int printMatrix(squareMatrix * mtx) {
   if (!mtx) return -1;
@@ -90,6 +109,10 @@ int printMatrix(squareMatrix * mtx) {
   }
   return 0;
 }
+
+
+
+
 
 
 int testCopy() {
@@ -147,12 +170,39 @@ int testMultiply() {
 }
 
 
+int testSwaps() {
+  squareMatrix *A;
+  A = newSquareMatrix(100*100);
+  
+  resizeMatrix(A,4);
+  
+  double * p = A->data;
+  *p++ = 1.0; *p++ = 0.0; *p++ = 0.0; *p++ = 0.0;
+  *p++ = 0.0; *p++ = 1.0; *p++ = 0.0; *p++ = 3.0;
+  *p++ = 0.0; *p++ = 2.0; *p++ = 1.0; *p++ = 0.0;
+  *p++ = 0.0; *p++ = 2.0; *p++ = 1.0; *p++ = 3.0;
+  
+  printf("\nA=\n"); printMatrix(A);
+  matrixSwapRows(A,1,3);
+  printf("\nswaping rows 1-3\nA=\n"); printMatrix(A);
+  matrixSwapCols(A,0,2);
+  printf("\nswaping cols 0-2\nA=\n"); printMatrix(A);
+  
+
+  //matrixMatrixMultiplication(A,B,C);
+  //printf("\nC=A*B=\n"); printMatrix(C);
+
+  deleteMatrix(A);
+  return 0;
+}
 
 int main() {
-  //printf("\n---------\ntestCopy():\n");
-  //testCopy();
+  printf("\n---------\ntestCopy():\n");
+  testCopy();
   printf("\n---------\ntestMultiply():\n");
   testMultiply();
+  printf("\n---------\ntestSwapRow():\n");
+  testSwaps();
 
 
   return 0;
