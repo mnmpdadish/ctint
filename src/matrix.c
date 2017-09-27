@@ -53,6 +53,7 @@ int copySquareMatrix(squareMatrix * mtxIN, squareMatrix * mtxOUT) {
   return 0;
 }
 
+
 int matrixMatrixMultiplication(squareMatrix * A, squareMatrix * B, squareMatrix * C) {
   assert(C->dataBufferSize >= A->dataBufferSize);
   assert(C->dataBufferSize >= B->dataBufferSize);
@@ -62,14 +63,15 @@ int matrixMatrixMultiplication(squareMatrix * A, squareMatrix * B, squareMatrix 
   double one=1.0;
   double zero=1.0;
   char yes = 't';
-  dgemm_(&yes,&yes,&N,&N,&N, &one, A->data, &N, B->data, &N, &zero, C->data, &N); //we need to transpose because lapack does not define the matrices the same way we do.
+  //we need to transpose because lapack does not define the matrices the same way we do.
+  dgemm_(&yes,&yes,&N,&N,&N, &one, A->data, &N, B->data, &N, &zero, C->data, &N); 
   return 0;
 }
 
 #define ELEM(mtx, i, j) \
-  mtx->data[i * mtx->N + j]
+  mtx->data[j * mtx->N + i]
 
-int matrixSwapRows(squareMatrix * A, int row1, int row2) {
+int matrixSwapCols(squareMatrix * A, int row1, int row2) {
   int N=A->N;
   assert(row1 < N);
   assert(row2 < N);
@@ -78,7 +80,7 @@ int matrixSwapRows(squareMatrix * A, int row1, int row2) {
   return 0;
 }
 
-int matrixSwapCols(squareMatrix * A, int col1, int col2) {
+int matrixSwapRows(squareMatrix * A, int col1, int col2) {
   int N=A->N;
   assert(col1 < N);
   assert(col2 < N);
@@ -86,6 +88,24 @@ int matrixSwapCols(squareMatrix * A, int col1, int col2) {
   dswap_(&N, &A->data[col1], &N, &A->data[col2], &N);
   return 0;
 }
+
+
+void swap_double(double* a, double* b)
+{
+    double temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+int transposeMatrix(squareMatrix * A) {
+  int i,j;
+  for(i=0;i<A->N;i++)
+    for(j=0;j<i;j++){
+      swap_double(&ELEM(A,i,j),&ELEM(A,j,i));
+    }
+  return 0;
+}
+
 
 /*
         zgetrf_(&dim,&dim,data_,&dim,IPIV_,&INFO);
@@ -114,6 +134,26 @@ int printMatrix(squareMatrix * mtx) {
 
 
 
+int testTranspose() {
+  squareMatrix *A;
+  A = newSquareMatrix(100*100);
+
+  resizeMatrix(A,3);
+  
+  double * p = A->data;
+  *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
+  *p++ = 4.0; *p++ = 1.0; *p++ = 0.0;
+  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
+  printf("\nA=\n"); printMatrix(A);
+  
+  transposeMatrix(A);
+  printf("\ntransposing\nA=\n"); printMatrix(A);
+  
+  deleteMatrix(A);
+  return 0;
+}
+
+
 
 int testCopy() {
   squareMatrix *A, *B;
@@ -126,6 +166,8 @@ int testCopy() {
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0;
+  transposeMatrix(A); // with this meth of input, we need to transpose
+
   printf("\nA=\n"); printMatrix(A);
   printf("\nB=\n"); printMatrix(B);
 
@@ -151,12 +193,14 @@ int testMultiply() {
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0;
+  transposeMatrix(A); // with this meth of input, we need to transpose
   
   p = B->data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 5.5;
   *p++ = 0.0; *p++ = 2.0; *p++ = 2.0;
-  
+  transposeMatrix(B); // with this meth of input, we need to transpose
+
   printf("\nA=\n"); printMatrix(A);
   printf("\nB=\n"); printMatrix(B);
 
@@ -181,6 +225,7 @@ int testSwaps() {
   *p++ = 0.0; *p++ = 1.0; *p++ = 0.0; *p++ = 3.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0; *p++ = 3.0;
+  transposeMatrix(A); // with this meth of input, we need to transpose
   
   printf("\nA=\n"); printMatrix(A);
   matrixSwapRows(A,1,3);
@@ -197,12 +242,14 @@ int testSwaps() {
 }
 
 int main() {
-  printf("\n---------\ntestCopy():\n");
+  printf("\n-------------\ntestCopy():\n");
   testCopy();
-  printf("\n---------\ntestMultiply():\n");
+  printf("\n-------------\ntestMultiply():\n");
   testMultiply();
-  printf("\n---------\ntestSwapRow():\n");
+  printf("\n-------------\ntestSwapRow():\n");
   testSwaps();
+  printf("\n-------------\ntestTranspose():\n");
+  testTranspose();
 
 
   return 0;
