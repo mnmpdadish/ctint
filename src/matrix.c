@@ -6,14 +6,19 @@
 
 extern int dgemm_(char*,char*,int*,int*,int*,double*,double*,int*,double*, int*, double*,double*, int*);
 extern int dswap_(int*, double*, int*, double*, int*);
+extern int dgetrf_(int*,int*,double*,int*,int*,int*);
+extern int dgetri_(int*,double*,int*,int*,double*,int*,int*);
+  
+#define dataBufferSize 10000
+
 
 typedef struct {
   int N;
-  int dataBufferSize; // can have a much larger buffer, in order to enable easy resizing
-  double * data;
+  //int dataBufferSize; // can have a much larger buffer, in order to enable easy resizing
+  double data[dataBufferSize];
 } squareMatrix;
-
-squareMatrix * newSquareMatrix(int dataBufferSize) {
+/*
+squareMatrix * newSquareMatrix(int N) {
   if (dataBufferSize <= 0) return NULL;
 
   // allocate a squareMatrix structure
@@ -28,6 +33,7 @@ squareMatrix * newSquareMatrix(int dataBufferSize) {
   return m;
 }
 
+
 int deleteMatrix(squareMatrix * mtx) {
   if (!mtx) return -1;
   // free mtx's data
@@ -37,17 +43,18 @@ int deleteMatrix(squareMatrix * mtx) {
   free(mtx);
   return 0;
 }
+*/
 
 int resizeMatrix(squareMatrix * mtx, int N) {
   assert(N >= 0);
-  assert(N*N <= mtx->dataBufferSize);
+  assert(N*N <= dataBufferSize);
   mtx->N=N;
   //memcpy(cp->data, mtx->data, mtx->rows * mtx->cols * sizeof(double));
   return 0;
 }
 
 int copySquareMatrix(squareMatrix * mtxIN, squareMatrix * mtxOUT) {
-  assert(mtxOUT->dataBufferSize >= mtxIN->dataBufferSize);
+  //assert(mtxOUT->dataBufferSize >= mtxIN->dataBufferSize);
   mtxOUT->N=mtxIN->N;
   memcpy(mtxOUT->data, mtxIN->data, mtxIN->N * mtxIN->N * sizeof(double));
   return 0;
@@ -55,16 +62,16 @@ int copySquareMatrix(squareMatrix * mtxIN, squareMatrix * mtxOUT) {
 
 
 int matrixMatrixMultiplication(squareMatrix * A, squareMatrix * B, squareMatrix * C) {
-  assert(C->dataBufferSize >= A->dataBufferSize);
-  assert(C->dataBufferSize >= B->dataBufferSize);
+  //assert(C->dataBufferSize >= A->dataBufferSize);
+  //assert(C->dataBufferSize >= B->dataBufferSize);
   assert(A->N == B->N);
   C->N=A->N;
   int N=A->N;
   double one=1.0;
-  double zero=1.0;
+  double zero=0.0;
   char yes = 't';
   //we need to transpose because lapack does not define the matrices the same way we do.
-  dgemm_(&yes,&yes,&N,&N,&N, &one, A->data, &N, B->data, &N, &zero, C->data, &N); 
+  dgemm_(&yes,&yes,&N,&N,&N, &one, B->data, &N, A->data, &N, &zero, C->data, &N); 
   return 0;
 }
 
@@ -107,139 +114,161 @@ int transposeMatrix(squareMatrix * A) {
 }
 
 
-/*
-        zgetrf_(&dim,&dim,data_,&dim,IPIV_,&INFO);
-        zgetri_(&dim,data_,&dim,IPIV_,WORK_,&nEntry,&INFO);
-        if( !(INFO == 0) ) {
-            printf( "The algorithm failed to invert the matrix.\n" );
-            exit( 1 );
-*/
+
+
 
 
 
 int printMatrix(squareMatrix * mtx) {
-  if (!mtx) return -1;
+  if (!mtx){ 
+    printf("oups.\n");
+    return -1;
+  }
   
   int i,j;
   for (i = 0; i < mtx->N; i++) {
     for (j = 0; j < mtx->N; j++) {
       printf("% 6.2f ", ELEM(mtx, i, j));
+      //printf(".");
     }
     printf("\n");
   }
+  fflush(stdout);
   return 0;
 }
 
 
+void invertMatrix(squareMatrix * A) {
+  //assert(A->N == TMP->N);
+  int INFO1=0;
+  int INFO2=0;
+  int IPIV[A->N];
+  int nEntry=A->N*A->N;
+  double WORK[nEntry]; 
+  dgetrf_(&A->N,&A->N,&A->data[0],&A->N,&IPIV[0],&INFO1);
+  dgetri_(&A->N,A->data,&A->N,&IPIV[0],&WORK[0],&nEntry,&INFO2);
+  if( !(INFO1 == 0) || !(INFO2 == 0) ) {
+    printf( "The algorithm failed to invert the matrix. %d %d\n", INFO1, INFO2);
+    exit( 1 );
+  }
+};
 
 
 
 int testTranspose() {
-  squareMatrix *A;
-  A = newSquareMatrix(100*100);
-
-  resizeMatrix(A,3);
+  squareMatrix A;
+  resizeMatrix(&A,3);
   
-  double * p = A->data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 4.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
-  printf("\nA=\n"); printMatrix(A);
+  printf("\nA=\n"); printMatrix(&A);
   
-  transposeMatrix(A);
-  printf("\ntransposing\nA=\n"); printMatrix(A);
+  transposeMatrix(&A);
+  printf("\ntransposing\nA=\n"); printMatrix(&A);
   
-  deleteMatrix(A);
   return 0;
 }
 
 
 
 int testCopy() {
-  squareMatrix *A, *B;
-  A = newSquareMatrix(100*100);
-  B = newSquareMatrix(100*100);
+  squareMatrix A, B;
+  resizeMatrix(&A,3);
   
-  resizeMatrix(A,3);
-  
-  double * p = A->data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0;
-  transposeMatrix(A); // with this meth of input, we need to transpose
+  transposeMatrix(&A); // with this meth of input, we need to transpose
 
-  printf("\nA=\n"); printMatrix(A);
-  printf("\nB=\n"); printMatrix(B);
+  printf("\nA=\n"); printMatrix(&A);
+  printf("\nB=\n"); printMatrix(&B);
 
-  copySquareMatrix(A,B);
-  printf("\ncopying\nB=\n"); printMatrix(B);
+  copySquareMatrix(&A,&B);
+  printf("\ncopying\nB=\n"); printMatrix(&B);
   
-  deleteMatrix(A);
-  deleteMatrix(B);
   return 0;
 }
 
 
 int testMultiply() {
-  squareMatrix *A, *B, *C;
-  A = newSquareMatrix(100*100);
-  B = newSquareMatrix(100*100);
-  C = newSquareMatrix(100*100);
+  squareMatrix A, B, C;
   
-  resizeMatrix(A,3);
-  resizeMatrix(B,3);
+  resizeMatrix(&A,3);
+  resizeMatrix(&B,3);
   
-  double * p = A->data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0;
-  transposeMatrix(A); // with this meth of input, we need to transpose
+  transposeMatrix(&A); // with this meth of input, we need to transpose
   
-  p = B->data;
+  p = B.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 5.5;
   *p++ = 0.0; *p++ = 2.0; *p++ = 2.0;
-  transposeMatrix(B); // with this meth of input, we need to transpose
+  transposeMatrix(&B); // with this meth of input, we need to transpose
 
-  printf("\nA=\n"); printMatrix(A);
-  printf("\nB=\n"); printMatrix(B);
+  printf("\nA=\n"); printMatrix(&A);
+  printf("\nB=\n"); printMatrix(&B);
 
-  matrixMatrixMultiplication(A,B,C);
-  printf("\nC=A*B=\n"); printMatrix(C);
+  matrixMatrixMultiplication(&A,&B,&C);
+  printf("\nC=A*B=\n"); printMatrix(&C);
 
-  deleteMatrix(A);
-  deleteMatrix(B);
-  deleteMatrix(C);
+  return 0;
+}
+
+
+int testInvert() {
+  squareMatrix A, B, C;
+  
+  resizeMatrix(&A,3);
+  resizeMatrix(&B,3);
+  resizeMatrix(&C,3);
+  
+  double * p = A.data;
+  *p++ = 1.0; *p++ = 0.0; *p++ = 5.0;
+  *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
+  *p++ = 0.0; *p++ = 2.0; *p++ = 1.0;
+  transposeMatrix(&A); // with this meth of input, we need to transpose
+  
+  printf("\nA=\n"); printMatrix(&A);  
+  copySquareMatrix(&A,&B);
+  printf("\ncopying\nB=\n"); printMatrix(&B);
+
+  invertMatrix(&B);
+  printf("\ninverting\nB=\n"); printMatrix(&B);
+  
+  matrixMatrixMultiplication(&A,&B,&C);
+  printf("\nC=A*B=\n"); printMatrix(&C);
+  
   return 0;
 }
 
 
 int testSwaps() {
-  squareMatrix *A;
-  A = newSquareMatrix(100*100);
+  squareMatrix A;
+  resizeMatrix(&A,4);
   
-  resizeMatrix(A,4);
-  
-  double * p = A->data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 0.0; *p++ = 3.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0; *p++ = 3.0;
-  transposeMatrix(A); // with this meth of input, we need to transpose
+  transposeMatrix(&A); // with this meth of input, we need to transpose
   
-  printf("\nA=\n"); printMatrix(A);
-  matrixSwapRows(A,1,3);
-  printf("\nswaping rows 1-3\nA=\n"); printMatrix(A);
-  matrixSwapCols(A,0,2);
-  printf("\nswaping cols 0-2\nA=\n"); printMatrix(A);
+  printf("\nA=\n"); printMatrix(&A);
+  matrixSwapRows(&A,1,3);
+  printf("\nswaping rows 1-3\nA=\n"); printMatrix(&A);
+  matrixSwapCols(&A,0,2);
+  printf("\nswaping cols 0-2\nA=\n"); printMatrix(&A);
   
-
-  //matrixMatrixMultiplication(A,B,C);
-  //printf("\nC=A*B=\n"); printMatrix(C);
-
-  deleteMatrix(A);
   return 0;
 }
+
+
 
 int main() {
   printf("\n-------------\ntestCopy():\n");
@@ -250,6 +279,8 @@ int main() {
   testSwaps();
   printf("\n-------------\ntestTranspose():\n");
   testTranspose();
+  printf("\n-------------\ntestInvert():\n");
+  testInvert();
 
 
   return 0;
