@@ -4,74 +4,95 @@
 #include <string.h>
 
 
-extern int dgemm_(char*,char*,int*,int*,int*,double*,double*,int*,double*, int*, double*,double*, int*);
-extern int dswap_(int*, double*, int*, double*, int*);
-extern int dgetrf_(int*,int*,double*,int*,int*,int*);
-extern int dgetri_(int*,double*,int*,int*,double*,int*,int*);
-  
-#define dataBufferSize 10000
+// remainder:
+// int * ptr;
+// int const * ptrToConst;
+// int * const constPtr;
+// int const * const constPtrToConst;
+// At first, I added const AFTER each *, but in the end, it is just more confusing than nothing.
 
+
+extern int dgemm_(char const*, const char const*, int const*, int const*, int const*,
+                  double const*, double const*, int const*, double const*, 
+                  int const*, double const*, double * const, int const*);
+extern int dswap_(int const*, double*, int const*, double*, int const*);
+extern int dgetrf_(int const*, int const*, double const*, int const*,int*,int*);
+extern int dgetri_(int const*, double*, int const*, int const*, double*, int const*, int*);
+extern int dgemv_(const char*, int const*, int const*, double const*, double const*, int const*, double const*, int const*, double const*, double*, const int*);
+	
+double fabs(double);
+  
+#define dataBufferSize1 100
+#define dataBufferSize2 10000 // must be square of dataBufferSize1
 
 typedef struct {
   int N;
-  //int dataBufferSize; // can have a much larger buffer, in order to enable easy resizing
-  double data[dataBufferSize];
+  double data[dataBufferSize2];
 } squareMatrix;
-/*
-squareMatrix * newSquareMatrix(int N) {
-  if (dataBufferSize <= 0) return NULL;
 
-  // allocate a squareMatrix structure
-  squareMatrix * m = (squareMatrix *) malloc(sizeof(squareMatrix));
-  m->N = 0;
-  m->dataBufferSize = dataBufferSize;
-  m->data = (double *) malloc(m->dataBufferSize*sizeof(double));
-  // set all data to 0
-  int i;
-  for (i = 0; i < dataBufferSize; i++)
-    m->data[i] = 0.0;
-  return m;
-}
+typedef struct {
+  int N;
+  double data[dataBufferSize1];
+} vector;
 
-
-int deleteMatrix(squareMatrix * mtx) {
-  if (!mtx) return -1;
-  // free mtx's data
-  assert (mtx->data);
-  free(mtx->data);
-  // free mtx itself
-  free(mtx);
-  return 0;
-}
-*/
-
-int resizeMatrix(squareMatrix * mtx, int N) {
+int resizeVector(vector * x, int N) {
   assert(N >= 0);
-  assert(N*N <= dataBufferSize);
-  mtx->N=N;
-  //memcpy(cp->data, mtx->data, mtx->rows * mtx->cols * sizeof(double));
+  assert(N <= dataBufferSize1);
+  x->N=N;
   return 0;
 }
 
-int copySquareMatrix(squareMatrix * mtxIN, squareMatrix * mtxOUT) {
-  //assert(mtxOUT->dataBufferSize >= mtxIN->dataBufferSize);
-  mtxOUT->N=mtxIN->N;
-  memcpy(mtxOUT->data, mtxIN->data, mtxIN->N * mtxIN->N * sizeof(double));
+int resizeMatrix(squareMatrix * A, int N) {
+  assert(N >= 0);
+  assert(N*N <= dataBufferSize2);
+  A->N=N;
   return 0;
 }
 
+int doubleEqual(double const a, double const b) {
+    return fabs(a - b) < 0.00001;
+}
 
-int matrixMatrixMultiplication(squareMatrix * A, squareMatrix * B, squareMatrix * C) {
-  //assert(C->dataBufferSize >= A->dataBufferSize);
-  //assert(C->dataBufferSize >= B->dataBufferSize);
+//Y==X
+int areEqual_V(vector const * X, vector const * Y) {
+  if(X->N != Y->N) return 0;
+  int i;
+  for(i=0; i<X->N; i++) if(!doubleEqual(X->data[i], Y->data[i])) return 0;
+  return 1;
+}
+
+//B==A
+int areEqual_M(squareMatrix const * A, squareMatrix * B) {
+  if(A->N != B->N) return 0;
+  int i;
+  for(i=0; i<(A->N*A->N); i++) if(!doubleEqual(A->data[i], B->data[i])) return 0;
+  return 1;
+}
+
+
+//Y=X
+int copyVector(vector const * X, vector * Y) {
+  Y->N=X->N;
+  memcpy(Y->data, X->data, X->N * sizeof(double));
+  return 0;
+}
+
+//B=A
+int copySquareMatrix(squareMatrix const * A, squareMatrix * B) {
+  B->N=A->N;
+  memcpy(B->data, A->data, A->N*A->N * sizeof(double));
+  return 0;
+}
+
+//C=A*B
+int matrixMatrixMultiplication(squareMatrix const * A, squareMatrix const * B, squareMatrix * C) {
   assert(A->N == B->N);
   C->N=A->N;
   int N=A->N;
   double one=1.0;
   double zero=0.0;
-  char yes = 't';
-  //we need to transpose because lapack does not define the matrices the same way we do.
-  dgemm_(&yes,&yes,&N,&N,&N, &one, B->data, &N, A->data, &N, &zero, C->data, &N); 
+  char no = 'n';
+  dgemm_(&no,&no,&N,&N,&N, &one, A->data, &N, B->data, &N, &zero, C->data, &N); 
   return 0;
 }
 
@@ -91,19 +112,18 @@ int matrixSwapRows(squareMatrix * A, int col1, int col2) {
   int N=A->N;
   assert(col1 < N);
   assert(col2 < N);
-  //int one=1;
   dswap_(&N, &A->data[col1], &N, &A->data[col2], &N);
   return 0;
 }
 
-
-void swap_double(double* a, double* b)
+void swap_double(double * a, double * b)
 {
     double temp = *a;
     *a = *b;
     *b = temp;
 }
 
+//A^T
 int transposeMatrix(squareMatrix * A) {
   int i,j;
   for(i=0;i<A->N;i++)
@@ -114,22 +134,20 @@ int transposeMatrix(squareMatrix * A) {
 }
 
 
-
-
-
-
-
-int printMatrix(squareMatrix * mtx) {
-  if (!mtx){ 
+int printMatrix(squareMatrix const * A) {
+  if (!A){ 
     printf("oups.\n");
     return -1;
   }
   
   int i,j;
-  for (i = 0; i < mtx->N; i++) {
-    for (j = 0; j < mtx->N; j++) {
-      printf("% 6.2f ", ELEM(mtx, i, j));
-      //printf(".");
+  double val;//, tol=0.00001;
+  for (i = 0; i < A->N; i++) {
+    for (j = 0; j < A->N; j++) {
+      val = ELEM(A, i, j);
+      //if(fabs(val)>tol) 
+      printf("% 6.2f ", val);
+      //else printf("   .   ");
     }
     printf("\n");
   }
@@ -137,43 +155,114 @@ int printMatrix(squareMatrix * mtx) {
   return 0;
 }
 
-
-void invertMatrix(squareMatrix * A) {
-  //assert(A->N == TMP->N);
-  int INFO1=0;
-  int INFO2=0;
-  int IPIV[A->N];
-  int nEntry=A->N*A->N;
-  double WORK[nEntry]; 
-  dgetrf_(&A->N,&A->N,&A->data[0],&A->N,&IPIV[0],&INFO1);
-  dgetri_(&A->N,A->data,&A->N,&IPIV[0],&WORK[0],&nEntry,&INFO2);
-  if( !(INFO1 == 0) || !(INFO2 == 0) ) {
-    printf( "The algorithm failed to invert the matrix. %d %d\n", INFO1, INFO2);
-    exit( 1 );
+int printVector(vector const * X) {
+  if (!X){ 
+    printf("oups.\n");
+    return -1;
   }
-};
+  int i;
+  for (i = 0; i < X->N; i++) {
+    printf("% 6.2f ", X->data[i]);
+  }
+  printf("\n");
 
-
-
-int testTranspose() {
-  squareMatrix A;
-  resizeMatrix(&A,3);
-  
-  double * p = A.data;
-  *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
-  *p++ = 4.0; *p++ = 1.0; *p++ = 0.0;
-  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
-  printf("\nA=\n"); printMatrix(&A);
-  
-  transposeMatrix(&A);
-  printf("\ntransposing\nA=\n"); printMatrix(&A);
-  
+  fflush(stdout);
   return 0;
 }
 
 
 
-int testCopy() {
+// A=>A^-1
+void invertMatrix(squareMatrix * A) {
+  int INFO1=0;
+  int INFO2=0;
+  int IPIV[A->N];
+  int nEntry=A->N*A->N;
+  double WORK[nEntry]; 
+  dgetrf_(&A->N, &A->N, &A->data[0], &A->N, &IPIV[0], &INFO1);
+  dgetri_(&A->N, A->data, &A->N, &IPIV[0], &WORK[0], &nEntry, &INFO2);
+  if( !(INFO1 == 0) || !(INFO2 == 0) ) {
+    printf( "The algorithm failed to invert the matrix. %d %d\n", INFO1, INFO2);
+    exit( 1 );
+  }
+}
+
+// Y=A*X
+void matrixVectorProduct(squareMatrix const*A, vector const*X, vector *Y) {
+  int N=A->N;
+  assert(N == X->N);
+  assert(N == Y->N);
+  double one=1.0;
+  double zero=0.0;
+  char no = 'n';
+  int inc=1;
+  dgemv_(&no, &N, &N, &one, A->data, &N, X->data, &inc, &zero, Y->data, &inc);  //Bup * V.data +
+}
+
+
+//double STildeUp = 1./(Sup - ddot_(&dimOld, H.data(), &inc, VTildeUp.data(), &inc));   // ACHTUNG, knnte probleme bereiten !!!
+//double STildeDown = 1./(Sdown - ddot_(&dimOld, H.data(), &inc, VTildeDown.data(), &inc)); // ACHTUNG, knnte probleme bereiten !!!
+			
+
+
+
+// ---------------------------- testing routines -------------------------------
+
+
+int testMatrixVectorProduct(int verbose) {
+  //if(verbose) printf("\n-------------\ntestMatrixVectorProduct():\n");
+  squareMatrix A;
+  resizeMatrix(&A,3);
+  double * p = A.data;
+  *p++ = 1.0; *p++ = 5.0; *p++ = 2.0;
+  *p++ = 4.0; *p++ = 1.0; *p++ = 2.0;
+  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
+  if(verbose) {printf("\nA=\n"); printMatrix(&A);}
+  
+  vector X;
+  resizeVector(&X,3);
+  vector Y;
+  resizeVector(&Y,3);
+  p = X.data;
+  *p++ = 1.0; *p++ = 3.3; *p++ = 5.0;
+  if(verbose) {printf("\nX=\n"); printVector(&X);}
+  
+  matrixVectorProduct(&A,&X,&Y);
+  if(verbose) {printf("\nmultiplication\nY=A*X=\n"); printVector(&Y);}
+  
+  
+  vector Sol;
+  resizeVector(&Sol,3);
+  p = Sol.data;
+  *p++ = 29.2; *p++ = 18.3; *p++ = 13.6;
+  return !areEqual_V(&Y,&Sol);
+}
+
+
+int testTranspose(int verbose) {
+  //if(verbose) printf("\n-------------\ntestTranspose():\n");
+  squareMatrix A, Sol;
+  resizeMatrix(&A,3);
+  resizeMatrix(&Sol,3);
+  
+  double * p = A.data;
+  *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
+  *p++ = 4.0; *p++ = 1.0; *p++ = 0.0;
+  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
+  if(verbose) {printf("\nA=\n"); printMatrix(&A);}
+  
+  transposeMatrix(&A);
+  if(verbose) {printf("\ntransposing\nA=\n"); printMatrix(&A);}
+  
+  p = Sol.data;
+  *p++ = 1.0; *p++ = 4.0; *p++ = 3.0;
+  *p++ = 0.0; *p++ = 1.0; *p++ = 2.0;
+  *p++ = 0.0; *p++ = 0.0; *p++ = 1.0;
+  return !areEqual_M(&Sol,&A);
+}
+
+int testCopy(int verbose) {
+  //if(verbose) printf("\n-------------\ntestCopy():");
   squareMatrix A, B;
   resizeMatrix(&A,3);
   
@@ -183,21 +272,46 @@ int testCopy() {
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0;
   transposeMatrix(&A); // with this meth of input, we need to transpose
 
-  printf("\nA=\n"); printMatrix(&A);
-  printf("\nB=\n"); printMatrix(&B);
+  if(verbose){
+    printf("\nA=\n"); printMatrix(&A);
+    printf("\nB=\n"); printMatrix(&B);
+    printf("%s\n",areEqual_M(&A,&B)? "B==A": "B!=A");
+  }
 
   copySquareMatrix(&A,&B);
-  printf("\ncopying\nB=\n"); printMatrix(&B);
   
-  return 0;
+  if(verbose){
+    printf("\ncopying\nB=\n"); printMatrix(&B);
+    printf("%s\n",areEqual_M(&A,&B)? "B==A": "B!=A");
+  }
+
+  vector X,Y;
+  resizeVector(&X,3);
+  p = X.data;
+  *p++ = 1.0; *p++ = 3.3; *p++ = 5.0;
+  
+  if(verbose){
+    printf("\nX=\n"); printVector(&X);
+    printf("\nY=\n"); printVector(&Y);
+    printf("%s\n",areEqual_V(&X,&Y)? "X==Y": "X!=Y");
+  }
+
+  copyVector(&X,&Y);
+  if(verbose){
+    printf("\ncopying\nY=\n"); printVector(&Y);
+    printf("%s\n",areEqual_V(&X,&Y)? "X==Y": "X!=Y");
+  }
+
+  return !areEqual_V(&X,&Y) + !areEqual_M(&A,&B);
 }
 
-
-int testMultiply() {
-  squareMatrix A, B, C;
+int testMultiply(int verbose) {
+  //if(verbose) printf("\n-------------\ntestMultiply():\n");
+  squareMatrix A, B, C, Sol;
   
   resizeMatrix(&A,3);
   resizeMatrix(&B,3);
+  resizeMatrix(&Sol,3);
   
   double * p = A.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
@@ -211,46 +325,64 @@ int testMultiply() {
   *p++ = 0.0; *p++ = 2.0; *p++ = 2.0;
   transposeMatrix(&B); // with this meth of input, we need to transpose
 
-  printf("\nA=\n"); printMatrix(&A);
-  printf("\nB=\n"); printMatrix(&B);
+  if(verbose){
+    printf("\nA=\n"); printMatrix(&A);
+    printf("\nB=\n"); printMatrix(&B);
+  }
 
   matrixMatrixMultiplication(&A,&B,&C);
-  printf("\nC=A*B=\n"); printMatrix(&C);
+  if(verbose) {
+    printf("\nC=A*B=\n"); printMatrix(&C);
+  }
 
-  return 0;
+  //solution:
+  p = Sol.data;
+  *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
+  *p++ = 0.0; *p++ = 1.0; *p++ = 5.5;
+  *p++ = 0.0; *p++ = 4.0; *p++ = 13.0;
+  transposeMatrix(&Sol); // with this meth of input, we need to transpose
+  return !areEqual_M(&C,&Sol);
 }
 
-
-int testInvert() {
-  squareMatrix A, B, C;
+int testInvert(int verbose) {
+  //if(verbose) printf("\n-------------\ntestInvert():\n");
+  squareMatrix A, B, C, Sol;
   
   resizeMatrix(&A,3);
   resizeMatrix(&B,3);
   resizeMatrix(&C,3);
+  resizeMatrix(&Sol,3);
   
   double * p = A.data;
-  *p++ = 1.0; *p++ = 0.0; *p++ = 5.0;
-  *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
-  *p++ = 0.0; *p++ = 2.0; *p++ = 1.0;
+  *p++ = 1.0; *p++ = 3.3; *p++ = 5.0;
+  *p++ = 1.0; *p++ = 1.0; *p++ = 4.0;
+  *p++ = 2.0; *p++ = 2.0; *p++ = 1.0;
   transposeMatrix(&A); // with this meth of input, we need to transpose
   
-  printf("\nA=\n"); printMatrix(&A);  
+  if(verbose) {printf("\nA=\n"); printMatrix(&A);}
   copySquareMatrix(&A,&B);
-  printf("\ncopying\nB=\n"); printMatrix(&B);
+  if(verbose) {printf("\ncopying\nB=\n"); printMatrix(&B);}
 
   invertMatrix(&B);
-  printf("\ninverting\nB=\n"); printMatrix(&B);
+  if(verbose) {printf("\ninverting\nB=\n"); printMatrix(&B);}
   
   matrixMatrixMultiplication(&A,&B,&C);
-  printf("\nC=A*B=\n"); printMatrix(&C);
+  if(verbose) {printf("\nC=A*B=\n"); printMatrix(&C);}
   
-  return 0;
+  //solution:
+  p = Sol.data;
+  *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
+  *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
+  *p++ = 0.0; *p++ = 0.0; *p++ = 1.0;
+  transposeMatrix(&Sol); // with this meth of input, we need to transpose
+  return !areEqual_M(&C,&Sol);
 }
 
-
-int testSwaps() {
-  squareMatrix A;
+int testSwaps(int verbose) {
+  //if(verbose) printf("\n-------------\ntestSwapRow():\n");
+  squareMatrix A, Sol;
   resizeMatrix(&A,4);
+  resizeMatrix(&Sol,4);
   
   double * p = A.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0; *p++ = 0.0;
@@ -259,29 +391,56 @@ int testSwaps() {
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0; *p++ = 3.0;
   transposeMatrix(&A); // with this meth of input, we need to transpose
   
-  printf("\nA=\n"); printMatrix(&A);
+  if(verbose) {printf("\nA=\n"); printMatrix(&A);}
   matrixSwapRows(&A,1,3);
-  printf("\nswaping rows 1-3\nA=\n"); printMatrix(&A);
+  if(verbose) {printf("\nswaping rows 1-3\nA=\n"); printMatrix(&A);}
   matrixSwapCols(&A,0,2);
-  printf("\nswaping cols 0-2\nA=\n"); printMatrix(&A);
+  if(verbose) {printf("\nswaping cols 0-2\nA=\n"); printMatrix(&A);}
   
-  return 0;
+  //solution:
+  p = Sol.data;
+  *p++ = 0.0; *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
+  *p++ = 1.0; *p++ = 2.0; *p++ = 0.0; *p++ = 3.0;
+  *p++ = 1.0; *p++ = 2.0; *p++ = 0.0; *p++ = 0.0;
+  *p++ = 0.0; *p++ = 1.0; *p++ = 0.0; *p++ = 3.0;
+  transposeMatrix(&Sol); // with this meth of input, we need to transpose
+  return !areEqual_M(&A,&Sol);
 }
 
 
+// ---------------------------- main -------------------------------------------
+
+#define COLORNORMAL "\x1B[0m"
+#define COLORRED    "\033[1m\x1B[31m"
+#define COLORGREEN  "\033[1m\x1B[32m"
+
+int passOrFail(char * fctName, int numErr)
+{ 
+  int numChar = strlen(fctName), N=50, i;
+  printf("%s()  ",fctName);
+  for(i=0;i<N-numChar;i++) printf("-");
+  if(numErr==0) {
+    printf("   %sPASS%s\n",COLORGREEN,COLORNORMAL); //for the color
+    return 0;
+  }
+  else {
+    printf("   %sFAIL  %d errors. %s\n",COLORRED,numErr,COLORNORMAL); 
+    return 1;
+  }
+  
+}
 
 int main() {
-  printf("\n-------------\ntestCopy():\n");
-  testCopy();
-  printf("\n-------------\ntestMultiply():\n");
-  testMultiply();
-  printf("\n-------------\ntestSwapRow():\n");
-  testSwaps();
-  printf("\n-------------\ntestTranspose():\n");
-  testTranspose();
-  printf("\n-------------\ntestInvert():\n");
-  testInvert();
+  int verbose=0, Nfail=0;
+  Nfail+= passOrFail("testCopy",                testCopy(verbose));
+  Nfail+= passOrFail("testMultiply",            testMultiply(verbose));
+  Nfail+= passOrFail("testSwaps",               testSwaps(verbose));
+  Nfail+= passOrFail("testTranspose",           testTranspose(verbose));
+  Nfail+= passOrFail("testInvert",              testInvert(verbose));
+  Nfail+= passOrFail("testMatrixVectorProduct", testMatrixVectorProduct(verbose));
 
-
+  if(Nfail==0) printf("%s100%% of the test PASSED%s\n",COLORGREEN,COLORNORMAL);
+  else printf("%sOh no. ABORT!%s\n",COLORRED,COLORNORMAL);
+  
   return 0;
 }
