@@ -12,13 +12,15 @@
 // At first, I added const AFTER each *, but in the end, it is just more confusing than nothing.
 
 
-extern int dgemm_(char const*, const char const*, int const*, int const*, int const*,
+int dgemm_(char const*, char const*, int const*, int const*, int const*,
                   double const*, double const*, int const*, double const*, 
-                  int const*, double const*, double * const, int const*);
-extern int dswap_(int const*, double*, int const*, double*, int const*);
-extern int dgetrf_(int const*, int const*, double const*, int const*,int*,int*);
-extern int dgetri_(int const*, double*, int const*, int const*, double*, int const*, int*);
-extern int dgemv_(const char*, int const*, int const*, double const*, double const*, int const*, double const*, int const*, double const*, double*, const int*);
+                  int const*, double const*, double *, int const*);
+int dswap_(int const*, double*, int const*, double*, int const*);
+int dgetrf_(int const*, int const*, double const*, int const*,int*,int*);
+int dgetri_(int const*, double*, int const*, int const*, double*, int const*, int*);
+int dgemv_(char const*, int const*, int const*, double const*, double const*, int const*, double const*, int const*, double const*, double*, int const*);
+double ddot_(int const*, double const*, int const*, double const*, int const*);
+int dger_(int const*, int const*, double const*, double const*, int const*, double const*, int const*, double *, int const*);
 	
 double fabs(double);
   
@@ -50,7 +52,7 @@ int resizeMatrix(squareMatrix * A, int N) {
 }
 
 int doubleEqual(double const a, double const b) {
-    return fabs(a - b) < 0.00001;
+    return fabs(a - b) < 0.000000001;
 }
 
 //Y==X
@@ -84,6 +86,23 @@ int copySquareMatrix(squareMatrix const * A, squareMatrix * B) {
   return 0;
 }
 
+
+#define ELEM(mtx, i, j) (mtx->data[j * mtx->N + i])
+//B=A
+//where dim(B)=NxN and dim(A)=(A->N)x(A->N)
+int copySubMatrix(squareMatrix const * A, squareMatrix * B, int N) {
+  assert(N>=0);
+  int copyLength = (A->N < N) ? A->N : N; //choose the smallest dimension between A->N and N. 
+  B->N=N;
+  
+  int i=0;	
+  for(i = 0; i < copyLength; i++) {
+    memcpy(&ELEM(B,0,i), &ELEM(A,0,i), sizeof(double)*copyLength);
+  }
+  return 0;
+}
+
+
 //C=A*B
 int matrixMatrixMultiplication(squareMatrix const * A, squareMatrix const * B, squareMatrix * C) {
   assert(A->N == B->N);
@@ -95,9 +114,6 @@ int matrixMatrixMultiplication(squareMatrix const * A, squareMatrix const * B, s
   dgemm_(&no,&no,&N,&N,&N, &one, A->data, &N, B->data, &N, &zero, C->data, &N); 
   return 0;
 }
-
-#define ELEM(mtx, i, j) \
-  mtx->data[j * mtx->N + i]
 
 int matrixSwapCols(squareMatrix * A, int row1, int row2) {
   int N=A->N;
@@ -122,6 +138,14 @@ void swap_double(double * a, double * b)
     *a = *b;
     *b = temp;
 }
+
+void swap_ptrOfDoubles(double * a, double * b)
+{
+    double * temp = a;
+    a = b;
+    b = temp;
+}
+
 
 //A^T
 int transposeMatrix(squareMatrix * A) {
@@ -199,14 +223,105 @@ void matrixVectorProduct(squareMatrix const*A, vector const*X, vector *Y) {
   dgemv_(&no, &N, &N, &one, A->data, &N, X->data, &inc, &zero, Y->data, &inc);  //Bup * V.data +
 }
 
+// return X.Y
+double scalarProduct(vector const*X, vector const*Y) {
+  assert(X->N==Y->N);
+  int inc=1;
+  return ddot_(&X->N, X->data, &inc, Y->data, &inc);
+}
 
-//double STildeUp = 1./(Sup - ddot_(&dimOld, H.data(), &inc, VTildeUp.data(), &inc));   // ACHTUNG, knnte probleme bereiten !!!
-//double STildeDown = 1./(Sdown - ddot_(&dimOld, H.data(), &inc, VTildeDown.data(), &inc)); // ACHTUNG, knnte probleme bereiten !!!
-			
+
+
+// Suppose a matrix A composed of the block matrices Aij:
+// A = [ A11 A12 ]
+//     [ A21 A22 ]
+//
+// which is the inverse of D, such that:
+// [ D11 D12 ]  [ A11 A12 ] = [ 1 0 ]
+// [ D21 D22 ]  [ A11 A12 ]   [ 0 1 ]
+//
+// then we can prove directly that the Schur complement is:
+// D11^(-1) = A11 - A12 A22^(-1) A21
+//
+// At the output of the function S = D11^-1 (the Schur complement).
+// Here, dimensions are:
+// dim(A) = NxN, 
+// dim(A11)=(N-1)x(N-1), dim(A12)=1x(N-1), dim(A21)=(N-1)xN, dim(A22)=1x1
+// Same for Dij and dim(S)=(N-1)x(N-1).
+int schurComplement(squareMatrix const*A, squareMatrix *S) {
+  int inc = 1;
+  int N = A->N;
+  int Nm1 = N-1;
+  //S->N=Nm1;
+  //assert(S->N==N-1);
+  assert(Nm1>0);
+  copySubMatrix(A,S,Nm1);
+
+  double factor = -1./ELEM(A,Nm1,Nm1);
+  // this next line does S = S - A12 A22^(-1) A21;
+  dger_(&S->N, &S->N, &factor, &ELEM(A,0,Nm1), &inc, &ELEM(A,Nm1,0), &A->N, S->data, &S->N);
+  return 0;
+}
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 // ---------------------------- testing routines -------------------------------
+
+
+int testShermanMorrison(int verbose) {
+  squareMatrix A,B,S;
+  resizeMatrix(&A,4);
+  double * p = A.data;
+  *p++ = 1.0; *p++ = 5.0; *p++ = 2.0; *p++ = 0.9;
+  *p++ = 4.0; *p++ = 1.0; *p++ = 2.0; *p++ = 0.3;
+  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0; *p++ = 8.9;
+  *p++ = 2.0; *p++ = 1.5; *p++ = 5.0; *p++ = 3.0;
+  if(verbose) {printf("\nA=\n"); printMatrix(&A);}
+  
+  schurComplement(&A,&S);
+  if(verbose) {printf("\ncalculate Schur complement\nS=\n"); printMatrix(&S);}
+
+  invertMatrix(&A);
+  if(verbose) {printf("\nA^-1=\n"); printMatrix(&A);}
+  copySubMatrix(&A,&B,3);
+
+  invertMatrix(&B);
+  if(verbose) {
+    printf("\ncalculate inverse of the 3x3 submatrix of A^-1\nB=\n"); printMatrix(&B);
+    printf("%s\n",areEqual_M(&S,&B)? "B==S": "B!=S");
+  }
+  
+  return !areEqual_M(&S,&B);
+}
 
 
 int testMatrixVectorProduct(int verbose) {
@@ -263,12 +378,12 @@ int testTranspose(int verbose) {
 
 int testCopy(int verbose) {
   //if(verbose) printf("\n-------------\ntestCopy():");
-  squareMatrix A, B;
+  squareMatrix A, B, C;
   resizeMatrix(&A,3);
   
   double * p = A.data;
-  *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
-  *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
+  *p++ = 1.0; *p++ = 4.0; *p++ = 0.0;
+  *p++ = 2.0; *p++ = 1.5; *p++ = 0.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0;
   transposeMatrix(&A); // with this meth of input, we need to transpose
 
@@ -284,6 +399,14 @@ int testCopy(int verbose) {
     printf("\ncopying\nB=\n"); printMatrix(&B);
     printf("%s\n",areEqual_M(&A,&B)? "B==A": "B!=A");
   }
+
+  copySubMatrix(&A,&C,2);
+  
+  if(verbose){
+    printf("\ncopying\nC=\n"); printMatrix(&C);
+  }
+
+  // ----------------------------
 
   vector X,Y;
   resizeVector(&X,3);
@@ -302,6 +425,7 @@ int testCopy(int verbose) {
     printf("%s\n",areEqual_V(&X,&Y)? "X==Y": "X!=Y");
   }
 
+  
   return !areEqual_V(&X,&Y) + !areEqual_M(&A,&B);
 }
 
@@ -408,6 +532,55 @@ int testSwaps(int verbose) {
 }
 
 
+int testScalarProduct(int verbose) {
+  //if(verbose) printf("\n-------------\ntestCopy():");
+
+  vector X,Y;
+  resizeVector(&X,3);
+  resizeVector(&Y,3);
+  double * p = X.data;
+  *p++ = 1.0; *p++ = 3.3; *p++ = 5.0;
+  p = Y.data;
+  *p++ = 2.0; *p++ = 1.3; *p++ = 0.3;
+  
+  if(verbose){
+    printf("\nX=\n"); printVector(&X);
+    printf("\nY=\n"); printVector(&Y);
+  }
+  
+  double a=scalarProduct(&X,&Y);
+  if(verbose) printf("\nscalar product\na=X.Y=% 4.4f\n", a);
+  
+  return !doubleEqual(a,7.79);
+}
+
+int testSchurComplement(int verbose) {
+  squareMatrix A,B,S;
+  resizeMatrix(&A,4);
+  double * p = A.data;
+  *p++ = 1.0; *p++ = 5.0; *p++ = 2.0; *p++ = 0.9;
+  *p++ = 4.0; *p++ = 1.0; *p++ = 2.0; *p++ = 0.3;
+  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0; *p++ = 8.9;
+  *p++ = 2.0; *p++ = 1.5; *p++ = 5.0; *p++ = 3.0;
+  if(verbose) {printf("\nA=\n"); printMatrix(&A);}
+  
+  schurComplement(&A,&S);
+  if(verbose) {printf("\ncalculate Schur complement\nS=\n"); printMatrix(&S);}
+
+  invertMatrix(&A);
+  if(verbose) {printf("\nA^-1=\n"); printMatrix(&A);}
+  copySubMatrix(&A,&B,3);
+
+  invertMatrix(&B);
+  if(verbose) {
+    printf("\ncalculate inverse of the 3x3 submatrix of A^-1\nB=\n"); printMatrix(&B);
+    printf("%s\n",areEqual_M(&S,&B)? "B==S": "B!=S");
+  }
+  
+  return !areEqual_M(&S,&B);
+}
+
+
 // ---------------------------- main -------------------------------------------
 
 #define COLORNORMAL "\x1B[0m"
@@ -430,7 +603,7 @@ int passOrFail(char * fctName, int numErr)
 }
 
 int main() {
-  int verbose=1;
+  int verbose=0;
   int Nfail=0;
   Nfail+= passOrFail("testCopy",                testCopy(verbose));
   Nfail+= passOrFail("testMultiply",            testMultiply(verbose));
@@ -438,6 +611,9 @@ int main() {
   Nfail+= passOrFail("testTranspose",           testTranspose(verbose));
   Nfail+= passOrFail("testInvert",              testInvert(verbose));
   Nfail+= passOrFail("testMatrixVectorProduct", testMatrixVectorProduct(verbose));
+  Nfail+= passOrFail("testScalarProduct",       testScalarProduct(verbose));
+  Nfail+= passOrFail("testSchurComplement",     testSchurComplement(verbose));
+  Nfail+= passOrFail("testShermanMorrison",     testShermanMorrison(1));
 
   if(Nfail==0) printf("%s100%% of the test PASSED%s\n\n",COLORGREEN,COLORNORMAL);
   else printf("%sOh no. ABORT!%s\n\n",COLORRED,COLORNORMAL);
