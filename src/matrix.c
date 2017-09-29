@@ -427,11 +427,11 @@ int passOrFail(char * fctName, int numErr)
     printf("   %sFAIL  %d errors. %s\n",COLORRED,numErr,COLORNORMAL); 
     return 1;
   }
-  
 }
 
 int main() {
-  int verbose=0, Nfail=0;
+  int verbose=1;
+  int Nfail=0;
   Nfail+= passOrFail("testCopy",                testCopy(verbose));
   Nfail+= passOrFail("testMultiply",            testMultiply(verbose));
   Nfail+= passOrFail("testSwaps",               testSwaps(verbose));
@@ -439,8 +439,8 @@ int main() {
   Nfail+= passOrFail("testInvert",              testInvert(verbose));
   Nfail+= passOrFail("testMatrixVectorProduct", testMatrixVectorProduct(verbose));
 
-  if(Nfail==0) printf("%s100%% of the test PASSED%s\n",COLORGREEN,COLORNORMAL);
-  else printf("%sOh no. ABORT!%s\n",COLORRED,COLORNORMAL);
+  if(Nfail==0) printf("%s100%% of the test PASSED%s\n\n",COLORGREEN,COLORNORMAL);
+  else printf("%sOh no. ABORT!%s\n\n",COLORRED,COLORNORMAL);
   
   return 0;
 }
