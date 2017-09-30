@@ -30,7 +30,7 @@ double fabs(double);
 typedef struct {
   int N;
   double data[dataBufferSize2];
-} squareMatrix;
+} matrix;
 
 typedef struct {
   int N;
@@ -44,7 +44,7 @@ int resizeVector(vector * x, int N) {
   return 0;
 }
 
-int resizeMatrix(squareMatrix * A, int N) {
+int resizeMatrix(matrix * A, int N) {
   assert(N >= 0);
   assert(N*N <= dataBufferSize2);
   A->N=N;
@@ -64,7 +64,7 @@ int areEqual_V(vector const * X, vector const * Y) {
 }
 
 //B==A
-int areEqual_M(squareMatrix const * A, squareMatrix * B) {
+int areEqual_M(matrix const * A, matrix * B) {
   if(A->N != B->N) return 0;
   int i;
   for(i=0; i<(A->N*A->N); i++) if(!doubleEqual(A->data[i], B->data[i])) return 0;
@@ -80,7 +80,7 @@ int copyVector(vector const * X, vector * Y) {
 }
 
 //B=A
-int copySquareMatrix(squareMatrix const * A, squareMatrix * B) {
+int copyMatrix(matrix const * A, matrix * B) {
   B->N=A->N;
   memcpy(B->data, A->data, A->N*A->N * sizeof(double));
   return 0;
@@ -90,7 +90,7 @@ int copySquareMatrix(squareMatrix const * A, squareMatrix * B) {
 #define ELEM(mtx, i, j) (mtx->data[j * mtx->N + i])
 //B=A
 //where dim(B)=NxN and dim(A)=(A->N)x(A->N)
-int copySubMatrix(squareMatrix const * A, squareMatrix * B, int N) {
+int copySubMatrix(matrix const * A, matrix * B, int N) {
   assert(N>=0);
   int copyLength = (A->N < N) ? A->N : N; //choose the smallest dimension between A->N and N. 
   B->N=N;
@@ -104,7 +104,7 @@ int copySubMatrix(squareMatrix const * A, squareMatrix * B, int N) {
 
 
 //C=A*B
-int matrixMatrixMultiplication(squareMatrix const * A, squareMatrix const * B, squareMatrix * C) {
+int matrixMatrixMultiplication(matrix const * A, matrix const * B, matrix * C) {
   assert(A->N == B->N);
   C->N=A->N;
   int N=A->N;
@@ -115,7 +115,7 @@ int matrixMatrixMultiplication(squareMatrix const * A, squareMatrix const * B, s
   return 0;
 }
 
-int matrixSwapCols(squareMatrix * A, int row1, int row2) {
+int matrixSwapCols(matrix * A, int row1, int row2) {
   int N=A->N;
   assert(row1 < N);
   assert(row2 < N);
@@ -124,7 +124,7 @@ int matrixSwapCols(squareMatrix * A, int row1, int row2) {
   return 0;
 }
 
-int matrixSwapRows(squareMatrix * A, int col1, int col2) {
+int matrixSwapRows(matrix * A, int col1, int col2) {
   int N=A->N;
   assert(col1 < N);
   assert(col2 < N);
@@ -148,7 +148,7 @@ void swap_ptrOfDoubles(double * a, double * b)
 
 
 //A^T
-int transposeMatrix(squareMatrix * A) {
+int transposeMatrix(matrix * A) {
   int i,j;
   for(i=0;i<A->N;i++)
     for(j=0;j<i;j++){
@@ -158,7 +158,7 @@ int transposeMatrix(squareMatrix * A) {
 }
 
 
-int printMatrix(squareMatrix const * A) {
+int printMatrix(matrix const * A) {
   if (!A){ 
     printf("oups.\n");
     return -1;
@@ -197,7 +197,7 @@ int printVector(vector const * X) {
 
 
 // A=>A^-1
-void invertMatrix(squareMatrix * A) {
+void invertMatrix(matrix * A) {
   int INFO1=0;
   int INFO2=0;
   int IPIV[A->N];
@@ -212,7 +212,7 @@ void invertMatrix(squareMatrix * A) {
 }
 
 // Y=A*X
-void matrixVectorProduct(squareMatrix const*A, vector const*X, vector *Y) {
+void matrixVectorProduct(matrix const*A, vector const*X, vector *Y) {
   int N=A->N;
   assert(N == X->N);
   assert(N == Y->N);
@@ -248,7 +248,24 @@ double scalarProduct(vector const*X, vector const*Y) {
 // dim(A) = NxN, 
 // dim(A11)=(N-1)x(N-1), dim(A12)=1x(N-1), dim(A21)=(N-1)xN, dim(A22)=1x1
 // Same for Dij and dim(S)=(N-1)x(N-1).
-int schurComplement(squareMatrix const*A, squareMatrix *S) {
+int schurComplement(matrix const*A, matrix *S) {
+  int inc = 1;
+  int N = A->N;
+  int Nm1 = N-1;
+  //S->N=Nm1;
+  //assert(S->N==N-1);
+  assert(Nm1>0);
+  copySubMatrix(A,S,Nm1);
+
+  double factor = -1./ELEM(A,Nm1,Nm1);
+  // this next line does S = S - A12 A22^(-1) A21;
+  dger_(&S->N, &S->N, &factor, &ELEM(A,0,Nm1), &inc, &ELEM(A,Nm1,0), &A->N, S->data, &S->N);
+  return 0;
+}
+
+
+
+int shermanMorrison(matrix const*A, matrix *S) {
   int inc = 1;
   int N = A->N;
   int Nm1 = N-1;
@@ -298,15 +315,16 @@ int schurComplement(squareMatrix const*A, squareMatrix *S) {
 
 
 int testShermanMorrison(int verbose) {
-  squareMatrix A,B,S;
+  matrix A,B,S;
   resizeMatrix(&A,4);
   double * p = A.data;
-  *p++ = 1.0; *p++ = 5.0; *p++ = 2.0; *p++ = 0.9;
-  *p++ = 4.0; *p++ = 1.0; *p++ = 2.0; *p++ = 0.3;
-  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0; *p++ = 8.9;
-  *p++ = 2.0; *p++ = 1.5; *p++ = 5.0; *p++ = 3.0;
+  *p++ = 1.0; *p++ = 5.0; *p++ = 2.0;
+  *p++ = 4.0; *p++ = 1.0; *p++ = 2.0;
+  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
   if(verbose) {printf("\nA=\n"); printMatrix(&A);}
   
+    
+
   schurComplement(&A,&S);
   if(verbose) {printf("\ncalculate Schur complement\nS=\n"); printMatrix(&S);}
 
@@ -326,7 +344,7 @@ int testShermanMorrison(int verbose) {
 
 int testMatrixVectorProduct(int verbose) {
   //if(verbose) printf("\n-------------\ntestMatrixVectorProduct():\n");
-  squareMatrix A;
+  matrix A;
   resizeMatrix(&A,3);
   double * p = A.data;
   *p++ = 1.0; *p++ = 5.0; *p++ = 2.0;
@@ -356,7 +374,7 @@ int testMatrixVectorProduct(int verbose) {
 
 int testTranspose(int verbose) {
   //if(verbose) printf("\n-------------\ntestTranspose():\n");
-  squareMatrix A, Sol;
+  matrix A, Sol;
   resizeMatrix(&A,3);
   resizeMatrix(&Sol,3);
   
@@ -378,7 +396,7 @@ int testTranspose(int verbose) {
 
 int testCopy(int verbose) {
   //if(verbose) printf("\n-------------\ntestCopy():");
-  squareMatrix A, B, C;
+  matrix A, B, C;
   resizeMatrix(&A,3);
   
   double * p = A.data;
@@ -393,7 +411,7 @@ int testCopy(int verbose) {
     printf("%s\n",areEqual_M(&A,&B)? "B==A": "B!=A");
   }
 
-  copySquareMatrix(&A,&B);
+  copyMatrix(&A,&B);
   
   if(verbose){
     printf("\ncopying\nB=\n"); printMatrix(&B);
@@ -431,7 +449,7 @@ int testCopy(int verbose) {
 
 int testMultiply(int verbose) {
   //if(verbose) printf("\n-------------\ntestMultiply():\n");
-  squareMatrix A, B, C, Sol;
+  matrix A, B, C, Sol;
   
   resizeMatrix(&A,3);
   resizeMatrix(&B,3);
@@ -470,7 +488,7 @@ int testMultiply(int verbose) {
 
 int testInvert(int verbose) {
   //if(verbose) printf("\n-------------\ntestInvert():\n");
-  squareMatrix A, B, C, Sol;
+  matrix A, B, C, Sol;
   
   resizeMatrix(&A,3);
   resizeMatrix(&B,3);
@@ -484,7 +502,7 @@ int testInvert(int verbose) {
   transposeMatrix(&A); // with this meth of input, we need to transpose
   
   if(verbose) {printf("\nA=\n"); printMatrix(&A);}
-  copySquareMatrix(&A,&B);
+  copyMatrix(&A,&B);
   if(verbose) {printf("\ncopying\nB=\n"); printMatrix(&B);}
 
   invertMatrix(&B);
@@ -504,7 +522,7 @@ int testInvert(int verbose) {
 
 int testSwaps(int verbose) {
   //if(verbose) printf("\n-------------\ntestSwapRow():\n");
-  squareMatrix A, Sol;
+  matrix A, Sol;
   resizeMatrix(&A,4);
   resizeMatrix(&Sol,4);
   
@@ -555,7 +573,7 @@ int testScalarProduct(int verbose) {
 }
 
 int testSchurComplement(int verbose) {
-  squareMatrix A,B,S;
+  matrix A,B,S;
   resizeMatrix(&A,4);
   double * p = A.data;
   *p++ = 1.0; *p++ = 5.0; *p++ = 2.0; *p++ = 0.9;
