@@ -2,7 +2,7 @@ syntax: glob
 afmCond
 *.o
 *.orig
-gmon.out
+g.out
 tmp
 conductivities*.dat
 ctINT

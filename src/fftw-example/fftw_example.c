@@ -2,7 +2,7 @@
 
 #include <fftw3.h>
 
-#define NUM_POINTS 32768
+#define NUM_POINTS 65536
 
 
 /* Never mind this bit */
@@ -17,7 +17,7 @@ void acquire_from_somewhere(fftw_complex* signal) {
     /* Generate two sine waves of different frequencies and
      * amplitudes.
      */
-
+    
     int i;
     for (i = 0; i < NUM_POINTS; ++i) {
         double theta = (double)i /1000.0  ;
@@ -25,8 +25,8 @@ void acquire_from_somewhere(fftw_complex* signal) {
         signal[i][REAL] = 1.0 * cos(10.0 * theta) +
                           0.5 * cos(25.0 * theta);
 
-        signal[i][IMAG] = 1.0 * sin(10.0 * theta) +
-                          0.5 * sin(25.0 * theta);
+        signal[i][IMAG] = 0.0 * sin(10.0 * theta) +
+                          0.0 * sin(25.0 * theta);
     }
 }
 
@@ -58,6 +58,6 @@ int main() {
     do_something_with(result);
 
     fftw_destroy_plan(plan);
-
+    printf("NUM_POINTS*sizeof(fftw_complex)= %d\n",NUM_POINTS*sizeof(fftw_complex));
     return 0;
 }
