@@ -2,6 +2,6 @@ OPTIONS = -std=c99 -pedantic -Wall
 EXEC = ctINT
 
 all: executable
-executable: src/main.c
-	gcc $(OPTIONS) -o $(EXEC) src/matrix.c -lm -llapack -lblas -lgfortran
+executable: src/test.c
+	gcc $(OPTIONS) -o $(EXEC) src/test.c -lm -llapack -lblas -lgfortran
 

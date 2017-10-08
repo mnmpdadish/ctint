@@ -1,5 +1,4 @@
 syntax: glob
-afmCond
 *.o
 *.orig
 g.out
