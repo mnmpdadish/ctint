@@ -4,7 +4,7 @@
 
 #define SIZE 290000000
 
-double nGlobal[SIZE];  // commented because with large size = Killed (wtf does that mean)
+//double nGlobal[SIZE];  // commented because with large size = Killed (wtf does that mean)
 
 double createArrayRetunElement(int num) {
   double n[num];
@@ -24,7 +24,7 @@ int main() {
   int i, N=SIZE;
   double value=0.;
   double total=0.;
-  //double nLocal[SIZE]; // commented because with large size = segmentation fault
+  double nLocal[SIZE]; // commented because with large size = segmentation fault
   double * nPtr;
   nPtr = (double *) malloc(SIZE * sizeof (double));
   if (nPtr) printf("Allocated %zu mbytes from %p to %p\n", SIZE*sizeof (double)/1024/1024, nPtr, nPtr + SIZE*sizeof (double));
