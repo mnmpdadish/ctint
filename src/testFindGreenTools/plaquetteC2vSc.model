@@ -1,0 +1,32 @@
+sites
+(0,0,0)
+(1,0,0)
+(1,1,0)
+(0,1,0)
+
+symmetry_generator
+#choose the representation
+1 4 3 2
+3 2 1 4
+#2 1 4 3
+#4 3 2 1
+
+green_function_symmetries
+#put as much as you can to constrain your problem:
+1 4 3 2 : +-   # Reflection relative to a diagonal (change of sign of the Gorkov function)
+3 2 1 4 : +-   # Reflection relative to another diagonal (change of sign of the Gorkov function)
+8 5 6 7 4 1 2 3 : +- # Time reversal symmetry (spin up become spin down) under a 90 degrees rotation (change of sign of the Gorkov function)
+1 2 3 4 : +-
+
+
+
+
+2 3 4 1 : +-   # 90 degrees rotation (change of sign of the Gorkov function)
+5 6 7 8 1 2 3 4 : ++ # Time reversal symmetry (spin up become spin down)
+2 1 4 3 : ++  # Left-right reflection (absent with AFM)
+4 3 2 1 : ++  # Bottom-up reflection (absent with AFM) 
+################ Examples of other symmetries for the green function
+#1 2 3 4 : +-  # This symmetry kill the off diagonal elements of the nambu Green function (because it is the identity and there is a minus sign for the Gorkov function)
+#1 2 3 4 5 6 7 8: +-  # This symmetry kill the off diagonal elements of the nambu Green function (because it is the identity and there is a minus sign for the Gorkov function)
+
+
