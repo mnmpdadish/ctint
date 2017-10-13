@@ -21,6 +21,7 @@ typedef struct {
 } Symmetries;
 
 int allocateSymmetries(Symmetries * sym, int nSym, int nSites) {
+  assert(nSites<=64);
   sym->permutation = (Permutation *) malloc(nSym * sizeof (Permutation));
   sym->n=nSym;
   int i;
@@ -50,9 +51,9 @@ int addElementToPermutation(Permutation * perm, unsigned int value) {
 
 char charHexa(int digit) {
   //any cluster should not have more than 64 sites, even in 2050 xD
-  char characters[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!."; 
+  char characters[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!?"; 
   char char1;
-  if(digit < 36 && digit >= 0) char1 = characters[digit];
+  if(digit < 64 && digit >= 0) char1 = characters[digit];
   else char1 = '.';
   return char1;
 }
@@ -110,7 +111,7 @@ int countLineFlag(FILE * file, char *flag) {
         else break;
       }
     }
-    printf("\n");
+    //printf("\n");
   }
   return N;
 }
@@ -190,6 +191,18 @@ int printGreenSym(GreenSym * greenSym) {
 }
 
 
+int countIndependantGreen(GreenSym * greenSym) {  
+  int i,j,N=greenSym->nSites, nIndep;
+  for(i=0;i<N;i++){
+    for(j=0;j<N;j++){
+      if(greenSym->i[N*i+j]==i && greenSym->j[N*i+j]==j) nIndep++;
+    }
+  } 
+  return nIndep;
+}
+
+
+
 int symmetrizeOneGreenELement(GreenSym * greenSym, Symmetries * sym) {  
   int changed=0,i,j,k, N=greenSym->nSites;
   for(k=0; k<sym->n; k++){
@@ -230,10 +243,11 @@ int symmetrizeOneGreenELement(GreenSym * greenSym, Symmetries * sym) {
 
 
 int main() {
-  int nSites=16;
-  FILE * file = fopen("plaquette4x4.in", "rt");
-  if(file == NULL) {printf("file %s not found", "plaquette4x4.in"); exit(1);}
-  printf("reading symmetries from plaquette4x4.in:\n");
+  int nSites=64;
+  char fileName[]="plaquette8x8.in";
+  FILE * file = fopen(fileName, "rt");
+  if(file == NULL) {printf("file %s not found", fileName); exit(1);}
+  printf("reading symmetries from %s:\n", fileName);
 
   //Symmetries symmetries
   int nSym=countLineFlag(file, "symmetries");
@@ -252,16 +266,12 @@ int main() {
   buildGreenSym(&greenSym,nSites);
   printf("\n");
   printGreenSym(&greenSym);
-  while(symmetrizeOneGreenELement(&greenSym,&sym)){
-  //int i;
-  //for(i=0;i<10;i++){
-  //  symmetrizeOneGreenELement(&greenSym,&sym);
-  //  printf("\n");
-  //  printGreenSym(&greenSym);
-  }
+  while(symmetrizeOneGreenELement(&greenSym,&sym)){}
   printf("\n");
   printGreenSym(&greenSym);
   
+  printf("nIndep=%d\n",countIndependantGreen(&greenSym));
+
   return 0;
 }
 
