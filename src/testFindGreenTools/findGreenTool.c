@@ -36,8 +36,9 @@ int addElementToPermutation(Permutation * perm, unsigned int value) {
   //the four next lines are there to ensure that the permutation has only one of 
   //each number, between 0 and nSites-1.
   for(i=0;i<perm->nAssigned;i++){
-    assert(perm->data[i] != value);
+    assert(perm->data[i] != value );
   }
+  //printf("%d %d\n", value, perm->nSites);
   assert(value<perm->nSites && value>=0);
 
   perm->data[perm->nAssigned]=value;
@@ -154,12 +155,86 @@ void readSymmetries(FILE * file, int nSites, Symmetries *sym) {
 }
 
 
+typedef struct {
+  unsigned int *i;
+  unsigned int *j;
+  unsigned int nElement;
+  unsigned int nSites;
+} GreenSym;
+
+int buildGreenSym(GreenSym * greenSym, int nSites) {
+  greenSym->i = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
+  greenSym->j = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
+  greenSym->nElement = nSites*nSites;
+  greenSym->nSites = nSites;
+  
+  int i,j;
+  for(i=0;i<nSites;i++){
+    for(j=0;j<nSites;j++){
+      greenSym->i[i*nSites+j]=(i<j)? i:j;
+      greenSym->j[i*nSites+j]=(i<j)? j:i;
+    }
+  } 
+  return 0;
+}
+
+int printGreenSym(GreenSym * greenSym) {  
+  int i,j,N=greenSym->nSites;
+  for(i=0;i<N;i++){
+    for(j=0;j<N;j++){
+      printf("%c%c ",charHexa(greenSym->i[N*i+j]),charHexa(greenSym->j[N*i+j]));
+    }
+    printf("\n");
+  } 
+  return 0;
+}
+
+
+int symmetrizeOneGreenELement(GreenSym * greenSym, Symmetries * sym) {  
+  int changed=0,i,j,k, N=greenSym->nSites;
+  for(k=0; k<sym->n; k++){
+    for(i=0;i<greenSym->nSites;i++){
+      for(j=0;j<greenSym->nSites;j++){
+        int permutation_i = i;
+        int permutation_j = j;
+        int isFirst=1, n=0;
+        while( ((permutation_i != i) || (permutation_j != j)) || isFirst) { //while didn't loop on orbit
+          n++;
+          permutation_i= sym->permutation[k].data[permutation_i];
+          permutation_j= sym->permutation[k].data[permutation_j];
+          int refIndex=N*i+j ;
+          int newIndex=N*permutation_i+permutation_j;
+          if( (greenSym->i[newIndex] != greenSym->i[refIndex]) || (greenSym->j[newIndex] != greenSym->j[refIndex]) ) {
+            //printf("k=%d  i=%d j=%d %d %d  %c%c %c%c  %d %d\n",k,i,j,permutation_i,permutation_j, charHexa(greenSym->i[refIndex]), charHexa(greenSym->j[refIndex]), charHexa(greenSym->i[newIndex]), charHexa(greenSym->j[newIndex]), refIndex, newIndex);
+            if( N*greenSym->i[refIndex] + greenSym->j[refIndex] < N*greenSym->i[newIndex] + greenSym->j[newIndex] ) {
+            //refIndex < newIndex){
+              greenSym->i[newIndex]=greenSym->i[refIndex];
+              greenSym->j[newIndex]=greenSym->j[refIndex];
+            }
+            else{
+              greenSym->i[refIndex]=greenSym->i[newIndex];
+              greenSym->j[refIndex]=greenSym->j[newIndex];
+            }
+            //printf("k=%d  i=%d j=%d %d %d  %c%c %c%c\n",k,i,j,permutation_i,permutation_j, charHexa(greenSym->i[refIndex]), charHexa(greenSym->j[refIndex]), charHexa(greenSym->i[newIndex]), charHexa(greenSym->j[newIndex]));
+
+            return 1;
+          }
+          isFirst=0;
+          if(n>20) exit(1);
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+
 int main() {
+  int nSites=16;
   FILE * file = fopen("plaquette4x4.in", "rt");
   if(file == NULL) {printf("file %s not found", "plaquette4x4.in"); exit(1);}
   printf("reading symmetries from plaquette4x4.in:\n");
 
-  int nSites=16;
   //Symmetries symmetries
   int nSym=countLineFlag(file, "symmetries");
   printf("nsym=%d\n", nSym);
@@ -170,7 +245,22 @@ int main() {
   //symmetries = (Permutation *) malloc(nSym * sizeof (Permutation *));
   readSymmetries(file, nSites, &sym);
   //sscanf(tempbuff, "%49s %49s\n", tmpstr1, tmpstr2);
-  printSymmetries(&sym); 
+  
+  printSymmetries(&sym);
+  
+  GreenSym greenSym;
+  buildGreenSym(&greenSym,nSites);
+  printf("\n");
+  printGreenSym(&greenSym);
+  while(symmetrizeOneGreenELement(&greenSym,&sym)){
+  //int i;
+  //for(i=0;i<10;i++){
+  //  symmetrizeOneGreenELement(&greenSym,&sym);
+  //  printf("\n");
+  //  printGreenSym(&greenSym);
+  }
+  printf("\n");
+  printGreenSym(&greenSym);
   
   return 0;
 }

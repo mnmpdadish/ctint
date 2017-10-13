@@ -136,10 +136,11 @@ def symmetrizeElementOneByOne(symmetryRuleList,greenFunction,gL,n_sites,verbose)
                permutation_i= sym[permutation_i]
                permutation_j= sym[permutation_j]
                factor = 1.0               
-               isConj=False
+               isConj = False
                      
                if (greenFunction[j,i].string() is not '0') and (greenFunction[permutation_j,permutation_i].string() is not '0'):
                   if not(greenFunction[permutation_j,permutation_i].isEqual(greenFunction[j,i],factor,isConj)): 
+                     if verbose > 7: print element.factors,i,j,permutation_i, permutation_j, factor, greenFunction[j,i].string(), greenFunction[permutation_j,permutation_i].string()
 
                      name0 = (greenFunction[j,i].dic.keys())[0]
                      name1 = (greenFunction[permutation_j,permutation_i].dic.keys())[0]
@@ -158,6 +159,9 @@ def symmetrizeElementOneByOne(symmetryRuleList,greenFunction,gL,n_sites,verbose)
                      if (name0 == name1):
                         greenFunction[j,i] = zero
                         greenFunction[permutation_j,permutation_i] = zero
+                     if verbose > 7: 
+                        print element.factors,i,j,permutation_i, permutation_j, factor, greenFunction[j,i].string(), greenFunction[permutation_j,permutation_i].string()
+                        print ' '
                      
                      return [True, symmetryRuleList2]
                isFirst = False
