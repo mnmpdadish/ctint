@@ -76,10 +76,12 @@ int printSymmetries(Symmetries * sym){
 
 
 
-int countNumberOfElementInOneLine(char *tempbuff){
+int countNumberOfElementInOneLine(const char *str1){
+  char str2[256]="";
+  strncpy(str2, str1, 256); //do a copy
   char *token, *saveptr;
   const char delimiter = ' ';
-  token = strtok_r(tempbuff, &delimiter, &saveptr);
+  token = strtok_r(str2, &delimiter, &saveptr);
 
   int N=0;
   while( token != NULL && *token != '\n') {
@@ -98,8 +100,8 @@ int countLineFlag(FILE * file, char *flag) {
   {
     if (fgets(tempbuff,256,file)) {
       if(found==0){
-        char tmpstr1[50];
-        sscanf(tempbuff, "%200s\n", tmpstr1);
+        char tmpstr1[50]; tmpstr1[0]='_';
+        sscanf(tempbuff, "%256s\n", tmpstr1);
         if (strcmp(tmpstr1,flag)==0) { 
           found=1;
           continue;
@@ -121,36 +123,50 @@ void readSymmetries(FILE * file, int nSites, Symmetries *sym) {
 
   rewind(file);
   char tempbuff[256];  //each line should not be above 256 char long.
-  int found=0, N, i;
+  int found=0, N=0, i=0;
   char name[]="symmetries";
+        
   while(!feof(file)) 
   {
     if (fgets(tempbuff,256,file)) {
+      printf("%d seen= %s",found, tempbuff);
       if(found==0){
-        char tmpstr1[50];
-        sscanf(tempbuff, "%200s\n", tmpstr1);
+        char tmpstr1[50]; tmpstr1[0]='_';
+        //printf("word= %s   fisrtletter=%c\n", tmpstr1, tempbuff[0]);
+        //exit(1);
+        sscanf(tempbuff, "%s\n", tmpstr1);
+        //printf("word= %s   fisrtletter=\n", tmpstr1, tempbuff[0]);
         if (strcmp(tmpstr1,name)==0) { 
           found=1;
-          break;
+          continue;
         }
       }
-    }
-  }
-  for(i=0; i<sym->n; i++){
-    if (fgets(tempbuff,256,file)) {
-      char *token, *saveptr;
-      const char delimiter = ' ';
-      token = strtok_r(tempbuff, &delimiter, &saveptr);
-      
-      int N=0;
-      while( token != NULL && *token != '\n') {
-        N++;
-        unsigned int number = atoi(token);
-        addElementToPermutation(&(sym->permutation[i]),number);
-        token = strtok_r(NULL, &delimiter, &saveptr);
+      else{
+        if(tempbuff[0] == '#') continue;
+        else if((tempbuff[0] != '\n') && countNumberOfElementInOneLine(tempbuff) != 0) {
+		      //else break;
+		      printf("tempbuff= %s",tempbuff);
+				  char *token, *saveptr;
+				  const char delimiter = ' ';
+				  token = strtok_r(tempbuff, &delimiter, &saveptr);
+				  
+				  int N=0;
+				  while( token != NULL && *token != '\n') {
+				    N++;
+				    unsigned int number = atoi(token);
+				    printf("number= %d\n",number);
+				    addElementToPermutation(&(sym->permutation[i]),number);
+				    token = strtok_r(NULL, &delimiter, &saveptr);
+				  }
+				  printf("tempbuff= %s",tempbuff);
+				  printf("\n %d %d %d\n",sym->permutation[i].nSites,sym->n,N);
+				  assert(sym->permutation[i].nSites == N);
+				  i++;
+		    }
+		    else break;
+        //else if((tempbuff[0] != '\n') && countNumberOfElementInOneLine(tempbuff) != 0) N++;
+        //else break;
       }
-      //printf("\n %d %d",sym->permutation[i].nSites,sym->n);
-      assert(sym->permutation[i].nSites == N);
     }
   }   
 }
