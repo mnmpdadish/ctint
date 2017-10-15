@@ -3,7 +3,7 @@
 #include <string.h>
 #include <assert.h>
 
-
+#include "stringUtil.h"
 
 
 
@@ -75,7 +75,7 @@ int printSymmetries(Symmetries * sym){
 
 
 
-
+/*
 int countNumberOfElementInOneLine(const char *str1){
   char str2[256]="";
   strncpy(str2, str1, 256); //do a copy
@@ -90,6 +90,8 @@ int countNumberOfElementInOneLine(const char *str1){
   }
   return N;
 }
+*/
+
 
 int countLineFlag(FILE * file, char *flag) {
 
@@ -123,13 +125,13 @@ void readSymmetries(FILE * file, int nSites, Symmetries *sym) {
 
   rewind(file);
   char tempbuff[256];  //each line should not be above 256 char long.
-  int found=0, N=0, i=0;
+  int found=0, i=0;
   char name[]="symmetries";
         
   while(!feof(file)) 
   {
     if (fgets(tempbuff,256,file)) {
-      printf("%d seen= %s",found, tempbuff);
+      //printf("%d seen= %s",found, tempbuff);
       if(found==0){
         char tmpstr1[50]; tmpstr1[0]='_';
         //printf("word= %s   fisrtletter=%c\n", tmpstr1, tempbuff[0]);
@@ -144,7 +146,19 @@ void readSymmetries(FILE * file, int nSites, Symmetries *sym) {
       else{
         if(tempbuff[0] == '#') continue;
         else if((tempbuff[0] != '\n') && countNumberOfElementInOneLine(tempbuff) != 0) {
+		      unsigned int nElement = countNumberOfElementInOneLine(tempbuff);
+          int arrayInt[nElement];
+          readIntInOneLine(tempbuff, arrayInt);
+          int j;
+          for(j=0;j<nElement;j++) {
+            //printf("number= %d\n",arrayInt[j]);
+            addElementToPermutation(&(sym->permutation[i]),arrayInt[j]);
+          }
+				    
+          
+          
 		      //else break;
+		      /*
 		      printf("tempbuff= %s",tempbuff);
 				  char *token, *saveptr;
 				  const char delimiter = ' ';
@@ -154,13 +168,13 @@ void readSymmetries(FILE * file, int nSites, Symmetries *sym) {
 				  while( token != NULL && *token != '\n') {
 				    N++;
 				    unsigned int number = atoi(token);
-				    printf("number= %d\n",number);
 				    addElementToPermutation(&(sym->permutation[i]),number);
 				    token = strtok_r(NULL, &delimiter, &saveptr);
 				  }
-				  printf("tempbuff= %s",tempbuff);
-				  printf("\n %d %d %d\n",sym->permutation[i].nSites,sym->n,N);
-				  assert(sym->permutation[i].nSites == N);
+				  */
+				  //printf("tempbuff= %s",tempbuff);
+				  //printf("\n %d %d %d\n",sym->permutation[i].nSites,sym->n,nElement);
+				  assert(sym->permutation[i].nSites == nElement);
 				  i++;
 		    }
 		    else break;
@@ -208,7 +222,7 @@ int printGreenSym(GreenSym * greenSym) {
 
 
 int countIndependantGreen(GreenSym * greenSym) {  
-  int i,j,N=greenSym->nSites, nIndep;
+  int i,j,N=greenSym->nSites, nIndep=0;
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
       if(greenSym->i[N*i+j]==i && greenSym->j[N*i+j]==j) nIndep++;
@@ -220,7 +234,7 @@ int countIndependantGreen(GreenSym * greenSym) {
 
 
 int symmetrizeOneGreenELement(GreenSym * greenSym, Symmetries * sym) {  
-  int changed=0,i,j,k, N=greenSym->nSites;
+  int i,j,k, N=greenSym->nSites;
   for(k=0; k<sym->n; k++){
     for(i=0;i<greenSym->nSites;i++){
       for(j=0;j<greenSym->nSites;j++){
