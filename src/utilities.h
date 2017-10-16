@@ -36,8 +36,8 @@ int dscal_(int const*, double const*, double*, int const*);
 
 double fabs(double);
   
-#define dataBufferSize1 100
-#define dataBufferSize2 10000 // must be square of dataBufferSize1
+#define DATA_BUFFER_SIZE_1 100
+#define DATA_BUFFER_SIZE_2 10000 // must be square of DATA_BUFFER_SIZE_1
 
 
 void readDouble(FILE * file, char * name,  double * value) {

@@ -13,7 +13,7 @@ typedef struct {
 
 typedef struct {
   int N;
-  Vertex m_vertex[dataBufferSize1];
+  Vertex m_vertex[DATA_BUFFER_SIZE_1];
 } MarkovChain;
 
 
@@ -28,7 +28,7 @@ int PrintMarkovChain(MarkovChain * markovChain){
 
 // add vertex at the end of the Markov chain:
 int InsertVertex(MarkovChain * markovChain) { 
-  assert(markovChain->N < dataBufferSize1);
+  assert(markovChain->N < DATA_BUFFER_SIZE_1);
   int N=markovChain->N;
 
   unsigned int nSites = 4;

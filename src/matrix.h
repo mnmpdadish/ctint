@@ -5,24 +5,24 @@
 
 typedef struct {
   int N;
-  double data[dataBufferSize2];
+  double data[DATA_BUFFER_SIZE_2];
 } matrix;
 
 typedef struct {
   int N;
-  double data[dataBufferSize1];
+  double data[DATA_BUFFER_SIZE_1];
 } vector;
 
 int resizeVector(vector * x, int N) {
   assert(N >= 0);
-  assert(N <= dataBufferSize1);
+  assert(N <= DATA_BUFFER_SIZE_1);
   x->N=N;
   return 0;
 }
 
 int resizeMatrix(matrix * A, int N) {
   assert(N >= 0);
-  assert(N*N <= dataBufferSize2);
+  assert(N*N <= DATA_BUFFER_SIZE_2);
   A->N=N;
   return 0;
 }
