@@ -1,6 +1,6 @@
 #pragma once 
 
-#define ARRAY_INIT_CAPACITY 2
+#define ARRAY_INIT_CAPACITY 32
 
 typedef struct {
     double *data;

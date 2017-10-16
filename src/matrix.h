@@ -1,7 +1,7 @@
 #pragma once
 
 #include "utilities.h"
-#include "matrix.h"
+//#include "matrix.h"
 
 typedef struct {
   int N;
@@ -34,9 +34,6 @@ int resetMatrix(matrix * A) {
 }
 
 
-int doubleEqual(double const a, double const b) {
-    return fabs(a - b) < 0.000000001;
-}
 
 //Y==X
 int areEqual_V(vector const * X, vector const * Y) {

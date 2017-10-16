@@ -40,6 +40,11 @@ double fabs(double);
 #define DATA_BUFFER_SIZE_2 10000 // must be square of DATA_BUFFER_SIZE_1
 
 
+int doubleEqual(double const a, double const b) {
+    return fabs(a - b) < 0.000000001;
+}
+
+
 void readDouble(FILE * file, char * name,  double * value) {
 
     rewind(file);
