@@ -70,6 +70,14 @@ void Array_double_free(Array_double *arr)
     free(arr->data);
 }
 
+//Y==X
+int Array_double_areEqual(Array_double const *arr1, Array_double const *arr2) {
+  if(arr1->size != arr2->size) return 0;
+  int i;
+  for(i=0; i<arr1->size; i++) if(!doubleEqual(arr1->data[i], arr2->data[i])) return 0;
+  return 1;
+}
+
 
 
 
@@ -128,3 +136,13 @@ void Array_int_free(Array_int *arr)
 {
     free(arr->data);
 }
+
+//Y==X
+int Array_int_areEqual(Array_int const *arr1, Array_int const *arr2) {
+  if(arr1->size != arr2->size) return 0;
+  int i;
+  for(i=0; i<arr1->size; i++) if(arr1->data[i] != arr2->data[i]) return 0;
+  return 1;
+}
+
+
