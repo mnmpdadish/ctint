@@ -4,5 +4,8 @@ syntax: glob
 g.out
 tmp
 conductivities*.dat
-ctINT
 */a.out
+
+ctINT
+findGreenTool
+tests

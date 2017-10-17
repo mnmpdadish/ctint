@@ -1,6 +1,6 @@
 
 #include "stringUtil_test.h"
-#include "../test.h"
+#include "../util/test.h"
 
 int main0()
 {

@@ -3,57 +3,49 @@
 #include <string.h>
 #include <assert.h>
 
-#include "stringUtil.h"
-//#include "../utilities.h"
+#include "../util/stringUtil.h"
+#include "../util/arrays/array.h"
 
 #define DATA_BUFFER_SIZE_W 200
 
 typedef struct {
-  //any cluster should not have more than 64 sites, even in 2050 xD
-  unsigned int data[64];
-  unsigned int nSites;
-  unsigned int nAssigned;
-} Permutation;
-
-
-typedef struct {
-  Permutation * permutations;
+  Array_int *permutations;
   unsigned int n;
   //unsigned int timeReversal;
 } Symmetries;
 
 int buildSymmetries(Symmetries * sym, int nSym, int nSites) {
-  assert(nSites<=64);
-  sym->permutations = (Permutation *) malloc(nSym * sizeof (Permutation));
+  //assert(nSites<=64);
+  sym->permutations = (Array_int *) malloc(nSym * sizeof (Array_int ));
   sym->n=nSym;
-  //sym->timeReversal=0;
   int i;
-  for(i=0;i<nSym;i++){
-    sym->permutations[i].nSites=nSites;
-    sym->permutations[i].nAssigned=0;
-  } 
+  for(i=0;i<nSym;i++) Array_int_init(&sym->permutations[i]);
   return 0;
 }
 
 int freeSymmetries(Symmetries * sym) {
+  int i;
+  for(i=0;i<sym->n;i++) Array_int_free(&sym->permutations[i]);
   free(sym->permutations);
   return 0;
 }
 
 
-int addElementToPermutation(Permutation * perm, unsigned int value) {
+int addElementToPermutation(Array_int *perm, unsigned int value, unsigned int nSites) {
   unsigned int i;
   //the four next lines are there to ensure that the permutation has only one of 
   //each number, between 0 and nSites-1.
-  for(i=0;i<perm->nAssigned;i++){
+  for(i=0;i<perm->size;i++){
     assert(perm->data[i] != value );
   }
   //printf("%d %d\n", value, perm->nSites);
-  assert(value<perm->nSites && value>=0);
+  assert(value<nSites && value>=0);
 
-  perm->data[perm->nAssigned]=value;
-  perm->nAssigned++;
-  assert(perm->nAssigned <= perm->nSites);
+  Array_int_push(perm, value);
+  
+   //perm->data[perm->size]=value;
+  //perm->nAssigned++;
+  //assert(perm->nAssigned <= perm->nSites);
   return 0;
 }
 
@@ -71,7 +63,7 @@ char charHexa(int digit) {
 int printSymmetries(Symmetries * sym){
   int i,j;
   for(i=0;i<sym->n;i++){
-    for(j=0;j<sym->permutations[i].nAssigned;j++){
+    for(j=0;j<sym->permutations[i].size;j++){
       printf("%c", charHexa(sym->permutations[i].data[j]));
     }
     printf("\n");
@@ -126,9 +118,9 @@ int readSymmetries(FILE * file, int nSites, Symmetries *sym) {
           int j;
           for(j=0;j<nElement;j++) {
             //printf("number= %d\n",arrayInt[j]);
-            addElementToPermutation(&(sym->permutations[i]),arrayInt[j]);
+            addElementToPermutation(&(sym->permutations[i]),arrayInt[j],nSites);
           }
-          assert(sym->permutations[i].nSites == nElement);
+          assert(nSites == nElement);
           i++;
         }
         else break;
@@ -140,10 +132,6 @@ int readSymmetries(FILE * file, int nSites, Symmetries *sym) {
 
 
 
-typedef struct {
-  unsigned int data[DATA_BUFFER_SIZE_W];
-  unsigned int nSample;
-} GreenFunction;
 
 
 typedef struct {
@@ -152,7 +140,8 @@ typedef struct {
   unsigned int nElement;
   unsigned int nSites;
   unsigned int nIndep;
-  GreenFunction * greenfunctions;
+  Array_double * greenfunctionsTAU;
+  //Array_complex *greenfunctionsTAU;
 } GreenMatrix;
 
 
@@ -235,10 +224,10 @@ int buildGreenMatrix(GreenMatrix * greenMatrix, int nSites, Symmetries *sym) {
     }
   } 
   
-  printf("\n");
+  printf("\nmost General matrix:\n");
   printGreenMatrix(greenMatrix);
   while(symmetrizeOneGreenElement(greenMatrix,sym));
-  printf("\n");
+  printf("\nsymmetrized matrix:\n");
   printGreenMatrix(greenMatrix);
   
   unsigned int nGreen = countIndependantGreen(greenMatrix);

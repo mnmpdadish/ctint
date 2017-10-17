@@ -1,8 +1,10 @@
+#pragma once
+
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "array.h"
-#include "../../test.h"
+//#include "../test.h"
 
 
 
@@ -82,7 +84,7 @@ int test_Array_int(int verbose)
 }
 
 
-
+/*
 int main() {
   int verbose=1;
   int Nfail=0;
@@ -94,3 +96,4 @@ int main() {
   
   return 0;
 }
+*/

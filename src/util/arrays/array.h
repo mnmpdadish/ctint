@@ -1,7 +1,20 @@
-#include <stdio.h>
-#include <stdlib.h>
+#pragma once 
 
-#include "array.h"
+#define ARRAY_INIT_CAPACITY 4
+
+typedef struct {
+    double *data;
+    unsigned int capacity;
+    unsigned int size;
+} Array_double;
+
+typedef struct {
+    int *data;
+    unsigned int capacity;
+    unsigned int size;
+} Array_int;
+
+
 
 void Array_double_init(Array_double *arr)
 {
