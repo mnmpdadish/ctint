@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -14,7 +16,7 @@ typedef struct {
   //unsigned int timeReversal;
 } Symmetries;
 
-int buildSymmetries(Symmetries * sym, int nSym, int nSites) {
+int initSymmetries(Symmetries * sym, int nSym, int nSites) {
   //assert(nSites<=64);
   sym->permutations = (Array_int *) malloc(nSym * sizeof (Array_int ));
   sym->n=nSym;
@@ -95,18 +97,18 @@ int countLineFlag(FILE * file, char *flag) {
 }
 
 
-int readSymmetries(FILE * file, int nSites, Symmetries *sym) {
+int readSymmetries(FILE * file, int nSites, Symmetries *sym, char *flag) {
   rewind(file);
   char tempbuff[256];  //each line should not be above 256 char long.
   int found=0, i=0;
-  char name[]="symmetries";
+  //char name[]="symmetries";
         
   while(!feof(file)) 
   {
     if (fgets(tempbuff,256,file)) {
       //printf("%d seen= %s",found, tempbuff);
       if(found==0){
-        if(strBeginWithToken(tempbuff,name)) found=1; 
+        if(strBeginWithToken(tempbuff,flag)) found=1; 
       }
       else{
         unsigned int nElement = countElementInStr(tempbuff, " \t\n");
@@ -141,10 +143,10 @@ typedef struct {
   unsigned int nSites;
   unsigned int nIndep;
   Array_double * greenfunctionsTAU;
+  Array_double * greenfunctionsIWn_Re;
+  Array_double * greenfunctionsIWn_Im;
   //Array_complex *greenfunctionsTAU;
 } GreenMatrix;
-
-
 
 
 int printGreenMatrix(GreenMatrix * greenMatrix) {  
@@ -157,6 +159,8 @@ int printGreenMatrix(GreenMatrix * greenMatrix) {
   } 
   return 0;
 }
+
+
 
 
 int countIndependantGreen(GreenMatrix * greenMatrix) {  
@@ -210,7 +214,7 @@ int symmetrizeOneGreenElement(GreenMatrix * greenMatrix, Symmetries * sym) {
 }
 
 
-int buildGreenMatrix(GreenMatrix * greenMatrix, int nSites, Symmetries *sym) {
+int initGreenMatrix(GreenMatrix * greenMatrix, int nSites, Symmetries *sym) {
   greenMatrix->i = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
   greenMatrix->j = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
   greenMatrix->nElement = nSites*nSites;
@@ -224,14 +228,17 @@ int buildGreenMatrix(GreenMatrix * greenMatrix, int nSites, Symmetries *sym) {
     }
   } 
   
-  printf("\nmost General matrix:\n");
-  printGreenMatrix(greenMatrix);
-  while(symmetrizeOneGreenElement(greenMatrix,sym));
-  printf("\nsymmetrized matrix:\n");
-  printGreenMatrix(greenMatrix);
+  //if(verbose){
+  //  printf("\nmost General matrix:\n");
+  //  printGreenMatrix(greenMatrix);
+  //}
   
-  unsigned int nGreen = countIndependantGreen(greenMatrix);
-  printf("nIndep=%d\n",nGreen);
+  while(symmetrizeOneGreenElement(greenMatrix,sym));  //this line symmetrize the matrix
+  
+  
+  greenMatrix->nIndep = countIndependantGreen(greenMatrix);
+  
+  //if(verbose) printf("nIndep=%d\n",nGreen);
   return 0;
 }
 
@@ -242,7 +249,7 @@ int freeGreenMatrix(GreenMatrix * greenMatrix) {
 }
 
 
-
+/*
 int main() {
   int nSites=16;
   char fileName[]="plaquette4x4.in";
@@ -268,5 +275,5 @@ int main() {
 
   return 0;
 }
-
+*/
 

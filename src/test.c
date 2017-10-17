@@ -8,9 +8,16 @@
 #include "util/arrays/array.h"
 
 int main() {
-  int verbose=1;
+  int verbose=0;
   int Nfail=0;
-  printf("\n\ntesting matrix operations:\n\n");
+  printf("\n--------------------\ntesting dynamic arrays:\n--------------------\n\n");
+  Nfail+= passOrFail("test_Array_double",       test_Array_double(verbose));
+  Nfail+= passOrFail("test_Array_int",          test_Array_int(verbose));
+
+  printf("\n--------------------\ntesting string utils:\n--------------------\n\n");
+  Nfail+= passOrFail("test_readIntInOneLine",   test_readIntInOneLine(verbose));
+
+  printf("\n--------------------\ntesting matrix operations:\n--------------------\n\n");
   Nfail+= passOrFail("testCopy",                testCopy(verbose));
   Nfail+= passOrFail("testMultiply",            testMultiply(verbose));
   Nfail+= passOrFail("testSwaps",               testSwaps(verbose));
@@ -21,13 +28,7 @@ int main() {
   Nfail+= passOrFail("testSchurComplement",     testSchurComplement(verbose));
   Nfail+= passOrFail("testAddRowColToInverse",  testAddRowColToInverse(verbose));
 
-  verbose=1;
-  printf("\n\ntesting string utils:\n\n");
-  Nfail+= passOrFail("test_readIntInOneLine",   test_readIntInOneLine(verbose));
   
-  printf("\n\ntesting dynamic arrays:\n\n");
-  Nfail+= passOrFail("test_Array_double",       test_Array_double(verbose));
-  Nfail+= passOrFail("test_Array_int",          test_Array_int(verbose));
 
   
   
