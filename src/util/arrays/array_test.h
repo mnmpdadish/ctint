@@ -31,17 +31,23 @@ int test_Array_double(int verbose)
   Array_double_push(&arr, 6);
   Array_double_push(&arr, 0.65);
   
-  for (i = 0; i < arr.size; i++)
-    printf("%4.2f ", arr.data[i]);
-  printf("\n");
+  if(verbose) { 
+    for (i = 0; i < arr.size; i++) printf("%4.2f ", arr.data[i]);
+    printf("\n");
+  }
 
-  printf("poped! %4.2f\n",Array_double_pop(&arr));
+  double pop = Array_double_pop(&arr);
+  
    
-  int solution[]={0.45, 34, 1e3, 3.45, 534, 16e3, 5, 4.45, 34, 6};
-  for (i = 0; i < arr.size ; i++)
-    printf("%4.2f ", arr.data[i]);
-    if(doubleEqual(arr.data[i],solution[i])) Nerror++;
-  printf("\n");
+  double solution[]={0.45, 34, 1e3, 3.45, 534, 16e3, 5, 4.45, 34, 6};
+  
+  for (i = 0; i < arr.size ; i++) if(!doubleEqual(arr.data[i],solution[i])) Nerror++;
+  
+  if(verbose) {
+    printf("poped! %4.2f\n",pop);
+    for (i = 0; i < arr.size; i++) printf("%4.2f ", arr.data[i]);
+    printf("\n");
+  }
   
   Array_double_free(&arr);
   return Nerror;
@@ -66,18 +72,24 @@ int test_Array_int(int verbose)
   Array_int_push(&arr, 4);
   Array_int_push(&arr, -34);
   
-  for (i = 0; i < arr.size; i++)
-    printf("%d ", arr.data[i]);
-  printf("\n");
 
-  printf("poped! %d\n",Array_int_pop(&arr));
+  if(verbose) { 
+    for (i = 0; i < arr.size; i++) printf("%d ", arr.data[i]);
+    printf("\n");
+  }
+
+  int pop = Array_int_pop(&arr);
   
   int solution[]={38,2,4,-34}; 
-  for (i = 0; i < arr.size ; i++)
-    printf("%d ", arr.data[i]);
-    if(arr.data[i]!=solution[i]) Nerror++;
-  printf("\n");
- 
+  for (i = 0; i < arr.size ; i++) if(arr.data[i]!=solution[i]) Nerror++;
+  
+  if(verbose) {
+    printf("poped! %d\n",pop);
+    for (i = 0; i < arr.size; i++) printf("%d ", arr.data[i]);
+    printf("\n");
+  }
+  
+  
   Array_int_free(&arr);
   
   return Nerror;

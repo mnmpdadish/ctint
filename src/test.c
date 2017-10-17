@@ -1,14 +1,14 @@
 
 #include "util/test.h"
 
-#include "findGreenTools/stringUtil_test.h"
+#include "util/stringUtil_test.h"
 #include "matrix_test.h"
 
 #include "util/arrays/array_test.h"
 #include "util/arrays/array.h"
 
 int main() {
-  int verbose=0;
+  int verbose=1;
   int Nfail=0;
   printf("\n\ntesting matrix operations:\n\n");
   Nfail+= passOrFail("testCopy",                testCopy(verbose));
