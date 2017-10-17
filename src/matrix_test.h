@@ -14,7 +14,7 @@ int testCopy(int verbose) {
   initMatrix(&B,0);
   initMatrix(&C,0);
   
-  double * p = A.buffer.data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 4.0; *p++ = 0.0;
   *p++ = 2.0; *p++ = 1.5; *p++ = 0.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0;
@@ -44,7 +44,7 @@ int testCopy(int verbose) {
   vector X,Y;
   initVector(&X,3);
   initVector(&Y,0);
-  p = X.buffer.data;
+  p = X.data;
   *p++ = 1.0; *p++ = 3.3; *p++ = 5.0;
   
   if(verbose){
@@ -77,13 +77,13 @@ int testAddRowColToInverse(int verbose) {
   initMatrix(&A,3);
   initMatrix(&B,3);
   initMatrix(&Sol,4);
-  double * p = A.buffer.data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 5.0; *p++ = 2.0;
   *p++ = 4.0; *p++ = 1.0; *p++ = 2.0;
   *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
   transposeMatrix(&A);
   
-  p = Sol.buffer.data;
+  p = Sol.data;
   *p++ = 1.0; *p++ = 5.0; *p++ = 2.0; *p++ = 5.0;
   *p++ = 4.0; *p++ = 1.0; *p++ = 2.0; *p++ = 2.0;
   *p++ = 3.0; *p++ = 2.0; *p++ = 1.0; *p++ = 1.0;
@@ -102,8 +102,8 @@ int testAddRowColToInverse(int verbose) {
   initVector(&R,3);
   initVector(&Qtilde,3);
   initVector(&Rtilde,3);
-  p = Q.buffer.data; *p++ = 5.0; *p++ = 2.0; *p++ = 1.0;
-  p = R.buffer.data; *p++ = 1.0; *p++ = 3.0; *p++ = 5.0;
+  p = Q.data; *p++ = 5.0; *p++ = 2.0; *p++ = 1.0;
+  p = R.data; *p++ = 1.0; *p++ = 3.0; *p++ = 5.0;
   
   double s = 6.0;
   
@@ -147,7 +147,7 @@ int testSchurComplement(int verbose) {
   initMatrix(&A,4);
   initMatrix(&B,4);
   initMatrix(&S,4);
-  double * p = A.buffer.data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 5.0; *p++ = 2.0; *p++ = 0.9;
   *p++ = 4.0; *p++ = 1.0; *p++ = 2.0; *p++ = 0.3;
   *p++ = 3.0; *p++ = 2.0; *p++ = 1.0; *p++ = 8.9;
@@ -180,7 +180,7 @@ int testMatrixVectorProduct(int verbose) {
   //if(verbose) printf("\n-------------\ntestMatrixVectorProduct():\n");
   matrix A;
   initMatrix(&A,3);
-  double * p = A.buffer.data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 5.0; *p++ = 2.0;
   *p++ = 4.0; *p++ = 1.0; *p++ = 2.0;
   *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
@@ -190,7 +190,7 @@ int testMatrixVectorProduct(int verbose) {
   initVector(&X,3);
   vector Y;
   initVector(&Y,3);
-  p = X.buffer.data;
+  p = X.data;
   *p++ = 1.0; *p++ = 3.3; *p++ = 5.0;
   if(verbose) {printf("\nX=\n"); printVector(&X);}
   
@@ -200,7 +200,7 @@ int testMatrixVectorProduct(int verbose) {
   
   vector Sol;
   initVector(&Sol,3);
-  p = Sol.buffer.data;
+  p = Sol.data;
   *p++ = 29.2; *p++ = 18.3; *p++ = 13.6;
 
   int Nerror = !areEqual_V(&Y,&Sol);
@@ -218,7 +218,7 @@ int testTranspose(int verbose) {
   initMatrix(&A,3);
   initMatrix(&Sol,3);
   
-  double * p = A.buffer.data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 4.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
@@ -227,7 +227,7 @@ int testTranspose(int verbose) {
   transposeMatrix(&A);
   if(verbose) {printf("\ntransposing\nA=\n"); printMatrix(&A);}
   
-  p = Sol.buffer.data;
+  p = Sol.data;
   *p++ = 1.0; *p++ = 4.0; *p++ = 3.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 2.0;
   *p++ = 0.0; *p++ = 0.0; *p++ = 1.0;
@@ -248,13 +248,13 @@ int testMultiply(int verbose) {
   initMatrix(&C,0);
   initMatrix(&Sol,3);
   
-  double * p = A.buffer.data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0;
   transposeMatrix(&A); // with this meth of input, we need to transpose
   
-  p = B.buffer.data;
+  p = B.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 5.5;
   *p++ = 0.0; *p++ = 2.0; *p++ = 2.0;
@@ -271,7 +271,7 @@ int testMultiply(int verbose) {
   }
 
   //solution:
-  p = Sol.buffer.data;
+  p = Sol.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 5.5;
   *p++ = 0.0; *p++ = 4.0; *p++ = 13.0;
@@ -294,7 +294,7 @@ int testInvert(int verbose) {
   initMatrix(&C,3);
   initMatrix(&Sol,3);
   
-  double * p = A.buffer.data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 3.3; *p++ = 5.0;
   *p++ = 1.0; *p++ = 1.0; *p++ = 4.0;
   *p++ = 2.0; *p++ = 2.0; *p++ = 1.0;
@@ -311,7 +311,7 @@ int testInvert(int verbose) {
   if(verbose) {printf("\nC=A*B=\n"); printMatrix(&C);}
   
   //solution:
-  p = Sol.buffer.data;
+  p = Sol.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 0.0; *p++ = 1.0;
@@ -331,7 +331,7 @@ int testSwaps(int verbose) {
   initMatrix(&A,4);
   initMatrix(&Sol,4);
   
-  double * p = A.buffer.data;
+  double * p = A.data;
   *p++ = 1.0; *p++ = 0.0; *p++ = 0.0; *p++ = 0.0;
   *p++ = 0.0; *p++ = 1.0; *p++ = 0.0; *p++ = 3.0;
   *p++ = 0.0; *p++ = 2.0; *p++ = 1.0; *p++ = 0.0;
@@ -345,7 +345,7 @@ int testSwaps(int verbose) {
   if(verbose) {printf("\nswaping cols 0-2\nA=\n"); printMatrix(&A);}
   
   //solution:
-  p = Sol.buffer.data;
+  p = Sol.data;
   *p++ = 0.0; *p++ = 0.0; *p++ = 1.0; *p++ = 0.0;
   *p++ = 1.0; *p++ = 2.0; *p++ = 0.0; *p++ = 3.0;
   *p++ = 1.0; *p++ = 2.0; *p++ = 0.0; *p++ = 0.0;
@@ -365,9 +365,9 @@ int testScalarProduct(int verbose) {
   vector X,Y;
   initVector(&X,3);
   initVector(&Y,3);
-  double * p = X.buffer.data;
+  double * p = X.data;
   *p++ = 1.0; *p++ = 3.3; *p++ = 5.0;
-  p = Y.buffer.data;
+  p = Y.data;
   *p++ = 2.0; *p++ = 1.3; *p++ = 0.3;
   
   if(verbose){

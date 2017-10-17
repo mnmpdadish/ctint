@@ -21,18 +21,18 @@
 // At first, I added const AFTER each *, but in the end, it is just more confusing than nothing.
 
 
-int dgemm_(char const*, char const*, int const*, int const*, int const*,
-                  double const*, double const*, int const*, double const*, 
-                  int const*, double const*, double *, int const*);
-int dswap_(int const*, double*, int const*, double*, int const*);
-int dgetrf_(int const*, int const*, double const*, int const*,int*,int*);
-int dgetri_(int const*, double*, int const*, int const*, double*, int const*, int*);
-int dgemv_(char const*, int const*, int const*, double const*, double const*, int const*, double const*, int const*, double const*, double*, int const*);
-double ddot_(int const*, double const*, int const*, double const*, int const*);
-int dger_(int const*, int const*, double const*, double const*, int const*, double const*, int const*, double *, int const*);
-int dcopy_(int const*, double const*, int const* , double*, int const*);
-int daxpy_(int const*, double const*, double const*, int const*, double*, int const*);
-int dscal_(int const*, double const*, double*, int const*);
+unsigned int dgemm_(char const*, char const*, unsigned int const*, unsigned int const*, unsigned int const*,
+                  double const*, double const*, unsigned int const*, double const*, 
+                  unsigned int const*, double const*, double *, unsigned int const*);
+unsigned int dswap_(unsigned int const*, double*, unsigned int const*, double*, unsigned int const*);
+unsigned int dgetrf_(unsigned int const*, unsigned int const*, double const*, unsigned int const*,unsigned int*,unsigned int*);
+unsigned int dgetri_(unsigned int const*, double*, unsigned int const*, unsigned int const*, double*, unsigned int const*, unsigned int*);
+unsigned int dgemv_(char const*, unsigned int const*, unsigned int const*, double const*, double const*, unsigned int const*, double const*, unsigned int const*, double const*, double*, unsigned int const*);
+double ddot_(unsigned int const*, double const*, unsigned int const*, double const*, unsigned int const*);
+unsigned int dger_(unsigned int const*, unsigned int const*, double const*, double const*, unsigned int const*, double const*, unsigned int const*, double *, unsigned int const*);
+unsigned int dcopy_(unsigned int const*, double const*, unsigned int const* , double*, unsigned int const*);
+unsigned int daxpy_(unsigned int const*, double const*, double const*, unsigned int const*, double*, unsigned int const*);
+unsigned int dscal_(unsigned int const*, double const*, double*, unsigned int const*);
 
 double fabs(double);
   

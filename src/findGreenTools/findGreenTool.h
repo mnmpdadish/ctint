@@ -215,6 +215,11 @@ int symmetrizeOneGreenElement(GreenMatrix * greenMatrix, Symmetries * sym) {
 
 
 int initGreenMatrix(GreenMatrix * greenMatrix, int nSites, Symmetries *sym) {
+
+  Array_double * greenfunctionsTAU;
+  Array_double * greenfunctionsIWn_Re;
+  Array_double * greenfunctionsIWn_Im;
+  
   greenMatrix->i = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
   greenMatrix->j = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
   greenMatrix->nElement = nSites*nSites;

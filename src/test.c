@@ -8,7 +8,7 @@
 #include "util/arrays/array.h"
 
 int main() {
-  int verbose=0;
+  int verbose=1;
   int Nfail=0;
   printf("\n--------------------\ntesting dynamic arrays:\n--------------------\n\n");
   Nfail+= passOrFail("test_Array_double",       test_Array_double(verbose));
@@ -27,7 +27,7 @@ int main() {
   Nfail+= passOrFail("testScalarProduct",       testScalarProduct(verbose));
   Nfail+= passOrFail("testSchurComplement",     testSchurComplement(verbose));
   Nfail+= passOrFail("testAddRowColToInverse",  testAddRowColToInverse(verbose));
-
+  
   
 
   
