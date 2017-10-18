@@ -23,3 +23,10 @@ int passOrFail(char * fctName, int numErr)
     return 1;
   }
 }
+
+int verdict(int Nfail)
+{   
+  if(Nfail==0) printf("%s100%% of the test PASSED%s\n\n",COLORGREEN,COLORNORMAL);
+  else printf("%sOh no. ABORT!%s\n\n",COLORRED,COLORNORMAL);
+  return 0;
+}  

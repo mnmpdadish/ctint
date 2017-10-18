@@ -17,8 +17,7 @@ int main() {
   Nfail+= passOrFail("test_readIntInOneLine",        test_readIntInOneLine(verbose));
   //Nfail+= passOrFail("test_readIntInParenthesis",    test_readIntInParenthesis(verbose));
   
-  if(Nfail==0) printf("%s100%% of the test PASSED%s\n\n",COLORGREEN,COLORNORMAL);
-  else printf("%sOh no. ABORT!%s\n\n",COLORRED,COLORNORMAL);
+  verdict(Nfail);
   
   return 0;
 }

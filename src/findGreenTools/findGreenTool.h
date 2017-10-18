@@ -52,7 +52,7 @@ int addElementToPermutation(Array_int *perm, unsigned int value, unsigned int nS
 }
 
 
-char charHexa(int digit) {
+char charHexa(unsigned int digit) {
   //any cluster should not have more than 64 sites, even in 2050 xD
   char characters[] = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!?"; 
   char char1;
@@ -142,9 +142,10 @@ typedef struct {
   unsigned int nElement;
   unsigned int nSites;
   unsigned int nIndep;
-  Array_double * greenfunctionsTAU;
-  Array_double * greenfunctionsIWn_Re;
-  Array_double * greenfunctionsIWn_Im;
+  double * greenfunctionsTAU;
+  //double * greenfunctionsIWn_Re;
+  //double * greenfunctionsIWn_Im;
+  unsigned int capacity;
   //Array_complex *greenfunctionsTAU;
 } GreenMatrix;
 
@@ -216,9 +217,6 @@ int symmetrizeOneGreenElement(GreenMatrix * greenMatrix, Symmetries * sym) {
 
 int initGreenMatrix(GreenMatrix * greenMatrix, int nSites, Symmetries *sym) {
 
-  Array_double * greenfunctionsTAU;
-  Array_double * greenfunctionsIWn_Re;
-  Array_double * greenfunctionsIWn_Im;
   
   greenMatrix->i = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
   greenMatrix->j = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));

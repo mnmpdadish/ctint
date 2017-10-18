@@ -28,12 +28,7 @@ int main() {
   Nfail+= passOrFail("testSchurComplement",     testSchurComplement(verbose));
   Nfail+= passOrFail("testAddRowColToInverse",  testAddRowColToInverse(verbose));
   
-  
-
-  
-  
-  if(Nfail==0) printf("%s100%% of the test PASSED%s\n\n",COLORGREEN,COLORNORMAL);
-  else printf("%sOh no. ABORT!%s\n\n",COLORRED,COLORNORMAL);
+  verdict(Nfail);
   
   return 0;
 }
