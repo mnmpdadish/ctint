@@ -13,26 +13,6 @@
 #include <string.h>
 
 
-// reminder:
-// int * ptr;
-// int const * ptrToConst;
-// int * const constPtr;
-// int const * const constPtrToConst;
-// At first, I added const AFTER each *, but in the end, it is just more confusing than nothing.
-
-
-unsigned int dgemm_(char const*, char const*, unsigned int const*, unsigned int const*, unsigned int const*,
-                  double const*, double const*, unsigned int const*, double const*, 
-                  unsigned int const*, double const*, double *, unsigned int const*);
-unsigned int dswap_(unsigned int const*, double*, unsigned int const*, double*, unsigned int const*);
-unsigned int dgetrf_(unsigned int const*, unsigned int const*, double const*, unsigned int const*,unsigned int*,unsigned int*);
-unsigned int dgetri_(unsigned int const*, double*, unsigned int const*, unsigned int const*, double*, unsigned int const*, unsigned int*);
-unsigned int dgemv_(char const*, unsigned int const*, unsigned int const*, double const*, double const*, unsigned int const*, double const*, unsigned int const*, double const*, double*, unsigned int const*);
-double ddot_(unsigned int const*, double const*, unsigned int const*, double const*, unsigned int const*);
-unsigned int dger_(unsigned int const*, unsigned int const*, double const*, double const*, unsigned int const*, double const*, unsigned int const*, double *, unsigned int const*);
-unsigned int dcopy_(unsigned int const*, double const*, unsigned int const* , double*, unsigned int const*);
-unsigned int daxpy_(unsigned int const*, double const*, double const*, unsigned int const*, double*, unsigned int const*);
-unsigned int dscal_(unsigned int const*, double const*, double*, unsigned int const*);
 
 double fabs(double);
   
@@ -44,6 +24,9 @@ int doubleEqual(double const a, double const b) {
     return fabs(a - b) < 0.000000001;
 }
 
+int complexEqual(double complex const a, double complex const b) {
+    return cabs(a - b) < 0.000000001;
+}
 
 void readDouble(FILE * file, char * name,  double * value) {
 

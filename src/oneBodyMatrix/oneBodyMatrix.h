@@ -10,7 +10,7 @@
 
 
 typedef struct {
-  char name;
+  char label;
   double coefficient;
   int positionVector[3]; 
 } Operator;
@@ -20,6 +20,7 @@ typedef struct {
   unsigned int n;
   unsigned int capacity;
   Operator * operators;
+  //double complex * 
 } tMatrix;
 
 

@@ -1,7 +1,27 @@
 #pragma once
 
 #include "util/utilities.h"
-//#include "matrix.h"
+
+// reminder:
+// int * ptr;
+// int const * ptrToConst;
+// int * const constPtr;
+// int const * const constPtrToConst;
+// At first, I added const AFTER each *, but in the end, it is just more confusing than nothing.
+
+unsigned int dgemm_(char const*, char const*, unsigned int const*, unsigned int const*, unsigned int const*,
+                  double const*, double const*, unsigned int const*, double const*, 
+                  unsigned int const*, double const*, double *, unsigned int const*);
+unsigned int dswap_(unsigned int const*, double*, unsigned int const*, double*, unsigned int const*);
+unsigned int dgetrf_(unsigned int const*, unsigned int const*, double const*, unsigned int const*,unsigned int*,unsigned int*);
+unsigned int dgetri_(unsigned int const*, double*, unsigned int const*, unsigned int const*, double*, unsigned int const*, unsigned int*);
+unsigned int dgemv_(char const*, unsigned int const*, unsigned int const*, double const*, double const*, unsigned int const*, double const*, unsigned int const*, double const*, double*, unsigned int const*);
+double ddot_(unsigned int const*, double const*, unsigned int const*, double const*, unsigned int const*);
+unsigned int dger_(unsigned int const*, unsigned int const*, double const*, double const*, unsigned int const*, double const*, unsigned int const*, double *, unsigned int const*);
+unsigned int dcopy_(unsigned int const*, double const*, unsigned int const* , double*, unsigned int const*);
+unsigned int daxpy_(unsigned int const*, double const*, double const*, unsigned int const*, double*, unsigned int const*);
+unsigned int dscal_(unsigned int const*, double const*, double*, unsigned int const*);
+
 
 #define INIT_CAPACITY 4
 
@@ -9,63 +29,52 @@ typedef struct {
   unsigned int N;
   unsigned int capacity;
   double *data;
-} matrix;
+} dMatrix;
 
-typedef struct {
-  unsigned int N;
-  unsigned int capacity;
-  double *data;
-  //double data[DATA_BUFFER_SIZE_1];
-} vector;
+typedef dMatrix dVector;
 
-unsigned int resizeVector(vector * x, unsigned int N) {
-  //assert(N >= 0);
-  //assert(N <= DATA_BUFFER_SIZE_1);
+unsigned int resize_dVector(dVector * x, unsigned int N) {
   while(N > x->capacity) x->data = realloc(x->data, (x->capacity *= 2) * sizeof(double));
   x->N=N;
   return 0;
 }
 
-unsigned int resizeMatrix(matrix * A, unsigned int N) {
-  //assert(N >= 0);
-  //assert(N*N <= DATA_BUFFER_SIZE_2);
+unsigned int resize_dMatrix(dMatrix * A, unsigned int N) {
   while(N*N > A->capacity) A->data = realloc(A->data, (A->capacity *= 2) * sizeof(double));
   A->N=N;
   return 0;
 }
 
-unsigned int resetMatrix(matrix * A) {
+/*
+unsigned int reset_dMatrix(dMatrix * A) {
   unsigned int i;
   for(i=0; i<(A->N*A->N); i++) A->data[i]=0;
   return 0;
 }
+*/
 
-
-unsigned int initVector(vector * x, unsigned int N) {
-  //Array_double_init(&x->buffer);
+unsigned int init_dVector(dVector * x, unsigned int N) {
   x->capacity = INIT_CAPACITY;
   x->data = malloc(x->capacity * sizeof(double));
   x->N=N;
-  resizeVector(x,N);
+  resize_dVector(x,N);
   return 0;
 }
 
-unsigned int initMatrix(matrix * A, unsigned int N) {
-  //Array_double_init(&A->buffer);
+unsigned int init_dMatrix(dMatrix * A, unsigned int N) {
   A->capacity = INIT_CAPACITY;
   A->data = malloc(A->capacity * sizeof(double));
   A->N=N;
-  resizeMatrix(A,N);
+  resize_dMatrix(A,N);
   return 0;
 }
 
-unsigned int freeVector(vector * x) {
-  //Array_double_free(&x->buffer);
+unsigned int free_dVector(dVector * x) {
   free(x->data);
   return 0;
 }
 
-unsigned int freeMatrix(matrix * A) {
+unsigned int free_dMatrix(dMatrix * A) {
   //Array_double_free(&A->buffer);
   free(A->data);
   return 0;
@@ -74,7 +83,7 @@ unsigned int freeMatrix(matrix * A) {
 
 
 //Y==X
-unsigned int areEqual_V(vector const * X, vector const * Y) {
+unsigned int areEqual_dVector(dVector const * X, dVector const * Y) {
   if(X->N != Y->N) return 0;
   unsigned int i;
   for(i=0; i<X->N; i++) if(!doubleEqual(X->data[i], Y->data[i])) return 0;
@@ -82,7 +91,7 @@ unsigned int areEqual_V(vector const * X, vector const * Y) {
 }
 
 //B==A
-unsigned int areEqual_M(matrix const * A, matrix * B) {
+unsigned int areEqual_dMatrix(dMatrix const * A, dMatrix * B) {
   if(A->N != B->N) return 0;
   unsigned int i;
   for(i=0; i<(A->N*A->N); i++) if(!doubleEqual(A->data[i], B->data[i])) return 0;
@@ -91,17 +100,17 @@ unsigned int areEqual_M(matrix const * A, matrix * B) {
 
 
 //Y=X
-unsigned int copyVector(vector const * X, vector * Y) {
+unsigned int copy_dVector(dVector const * X, dVector * Y) {
   //Y->N=X->N;
-  resizeVector(Y,X->N);
+  resize_dVector(Y,X->N);
   memcpy(Y->data, X->data, X->N * sizeof(double));
   return 0;
 }
 
 //B=A
-unsigned int copyMatrix(matrix const * A, matrix * B) {
+unsigned int copy_dMatrix(dMatrix const * A, dMatrix * B) {
   //B->N=A->N;
-  resizeMatrix(B,A->N);
+  resize_dMatrix(B,A->N);
   memcpy(B->data, A->data, A->N*A->N * sizeof(double));
   return 0;
 }
@@ -110,10 +119,10 @@ unsigned int copyMatrix(matrix const * A, matrix * B) {
 #define ELEM(mtx, i, j) (mtx->data[j * mtx->N + i])
 //B=A
 //where dim(B)=NxN and dim(A)=(A->N)x(A->N)
-unsigned int copySubMatrix(matrix const * A, matrix * B, unsigned int N) {
+unsigned int copySub_dMatrix(dMatrix const * A, dMatrix * B, unsigned int N) {
   assert(N>=0);
   unsigned int copyLength = (A->N < N) ? A->N : N; //choose the smallest dimension between A->N and N. 
-  resizeMatrix(B,N);
+  resize_dMatrix(B,N);
   
   unsigned int i=0;	
   for(i = 0; i < copyLength; i++) {
@@ -124,9 +133,9 @@ unsigned int copySubMatrix(matrix const * A, matrix * B, unsigned int N) {
 
 
 //C=A*B
-unsigned int matrixMatrixMultiplication(matrix const * A, matrix const * B, matrix * C) {
+unsigned int dMatrixMatrixMultiplication(dMatrix const * A, dMatrix const * B, dMatrix * C) {
   assert(A->N == B->N);
-  resizeMatrix(C,A->N);
+  resize_dMatrix(C,A->N);
   unsigned int N=A->N;
   double one=1.0;
   double zero=0.0;
@@ -135,7 +144,7 @@ unsigned int matrixMatrixMultiplication(matrix const * A, matrix const * B, matr
   return 0;
 }
 
-unsigned int matrixSwapCols(matrix * A, unsigned int row1, unsigned int row2) {
+unsigned int dMatrixSwapCols(dMatrix * A, unsigned int row1, unsigned int row2) {
   unsigned int N=A->N;
   assert(row1 < N);
   assert(row2 < N);
@@ -144,7 +153,7 @@ unsigned int matrixSwapCols(matrix * A, unsigned int row1, unsigned int row2) {
   return 0;
 }
 
-unsigned int matrixSwapRows(matrix * A, unsigned int col1, unsigned int col2) {
+unsigned int dMatrixSwapRows(dMatrix * A, unsigned int col1, unsigned int col2) {
   unsigned int N=A->N;
   assert(col1 < N);
   assert(col2 < N);
@@ -168,7 +177,7 @@ void swap_ptrOfDoubles(double * a, double * b)
 
 
 //A^T
-unsigned int transposeMatrix(matrix * A) {
+unsigned int transpose_dMatrix(dMatrix * A) {
   unsigned int i,j;
   for(i=0;i<A->N;i++)
     for(j=0;j<i;j++){
@@ -178,7 +187,7 @@ unsigned int transposeMatrix(matrix * A) {
 }
 
 
-unsigned int printMatrix(matrix const * A) {
+unsigned int print_dMatrix(dMatrix const * A) {
   if (!A){ 
     printf("oups.\n");
     return -1;
@@ -200,7 +209,7 @@ unsigned int printMatrix(matrix const * A) {
 }
 
 
-unsigned int printVector(vector const * X) {
+unsigned int print_dVector(dVector const * X) {
   if (!X){ 
     printf("oups.\n");
     return -1;
@@ -216,7 +225,7 @@ unsigned int printVector(vector const * X) {
 }
 
 
-unsigned int printVectorFactor(vector const * X, double f) {
+unsigned int print_dVectorFactor(dVector const * X, double f) {
   if (!X){ 
     printf("oups.\n");
     return -1;
@@ -233,7 +242,7 @@ unsigned int printVectorFactor(vector const * X, double f) {
 
 
 // A=>A^-1
-void invertMatrix(matrix * A) {
+void invert_dMatrix(dMatrix * A) {
   unsigned int INFO1=0;
   unsigned int INFO2=0;
   unsigned int IPIV[A->N];
@@ -242,17 +251,17 @@ void invertMatrix(matrix * A) {
   dgetrf_(&A->N, &A->N, &A->data[0], &A->N, &IPIV[0], &INFO1);
   dgetri_(&A->N, A->data, &A->N, &IPIV[0], &WORK[0], &nEntry, &INFO2);
   if( !(INFO1 == 0) || !(INFO2 == 0) ) {
-    printf( "The algorithm failed to invert the matrix. %d %d\n", INFO1, INFO2);
+    printf( "The algorithm failed to invert the dMatrix. %d %d\n", INFO1, INFO2);
     exit( 1 );
   }
 }
 
 // Y=A*X
-void matrixVectorProduct(matrix const*A, vector const*X, double const factor, vector *Y) {
+void dMatrixVectorProduct(dMatrix const*A, dVector const*X, double const factor, dVector *Y) {
   unsigned int N=A->N;
   assert(N == X->N);
   //assert(N == Y->N);
-  resizeVector(Y,N);
+  resize_dVector(Y,N);
   //double one=1.0;
   double zero=0.0;
   char no = 'n';
@@ -260,11 +269,11 @@ void matrixVectorProduct(matrix const*A, vector const*X, double const factor, ve
   dgemv_(&no, &N, &N, &factor, A->data, &N, X->data, &inc, &zero, Y->data, &inc); 
 }
 
-void vectorMatrixProduct(vector const*X, matrix const*A, double const factor, vector *Y) {
+void dVectorMatrixProduct(dVector const*X, dMatrix const*A, double const factor, dVector *Y) {
   unsigned int N=A->N;
   assert(N == X->N);
   //assert(N == Y->N);
-  resizeVector(Y,N);
+  resize_dVector(Y,N);
   //double one=1.0;
   double zero=0.0;
   char yes = 't';
@@ -274,13 +283,13 @@ void vectorMatrixProduct(vector const*X, matrix const*A, double const factor, ve
 
 
 // return X.Y
-double scalarProduct(vector const*X, vector const*Y) {
+double dScalarProduct(dVector const*X, dVector const*Y) {
   assert(X->N==Y->N);
   unsigned int inc=1;
   return ddot_(&X->N, X->data, &inc, Y->data, &inc);
 }
 
-void scaleVector(vector *X, double const scal){
+void scale_dVector(dVector *X, double const scal){
   unsigned int inc=1;
   dscal_(&X->N, &scal, X->data, &inc);
 }
@@ -303,14 +312,14 @@ void scaleVector(vector *X, double const scal){
 // dim(A) = NxN, 
 // dim(A11)=(N-1)x(N-1), dim(A12)=1x(N-1), dim(A21)=(N-1)xN, dim(A22)=1x1
 // Same for Dij and dim(S)=(N-1)x(N-1).
-unsigned int schurComplement(matrix const*A, matrix *S) {
+unsigned int dSchurComplement(dMatrix const*A, dMatrix *S) {
   unsigned int inc = 1;
   unsigned int N = A->N;
   unsigned int Nm1 = N-1;
   //S->N=Nm1;
   //assert(S->N==N-1);
   assert(Nm1>0);
-  copySubMatrix(A,S,Nm1);
+  copySub_dMatrix(A,S,Nm1);
 
   double factor = -1./ELEM(A,Nm1,Nm1);
   // this next line does S = S - A12 A22^(-1) A21;
@@ -320,71 +329,24 @@ unsigned int schurComplement(matrix const*A, matrix *S) {
 
 
 
-unsigned int addRowColToInverse(matrix const*A, vector const*Rtilde, vector const*Qtilde, double const sTilde, matrix *Ap1) {
+unsigned int dAddRowColToInverse(dMatrix const*A, dVector const*Rtilde, dVector const*Qtilde, double const sTilde, dMatrix *Ap1) {
   unsigned int inc = 1;
   unsigned int N = A->N;
   assert(N==Rtilde->N);
   assert(N==Qtilde->N);
   unsigned int Np1 = N+1;
-  copySubMatrix(A,Ap1,Np1);
+  copySub_dMatrix(A,Ap1,Np1);
 
-  //double one  = 1.0;
-  //double minus=-1.0;
-  //double zero = 0.0;
-  
   double factor = 1.0/sTilde;
   // got pAccept now.
   dger_(&N, &N, &factor, Qtilde->data, &inc, Rtilde->data, &inc, Ap1->data, &Np1);
-  //printf ("\nAp1=\n"); printMatrix(Ap1);
-  
-  //daxpy_(&N, &factor, Qtilde->data, &inc, &ELEM(Ap1,0,N), &inc);				
-  //printf ("\nAp1=\n"); printMatrix(Ap1);
   
   dcopy_(&N, Rtilde->data, &inc, &ELEM(Ap1,N,0), &Np1);
   dcopy_(&N, Qtilde->data, &inc, &ELEM(Ap1,0,N), &inc);
-  
-  
-  //printf ("\nAp1=\n"); printMatrix(Ap1);
-  
   ELEM(Ap1,N,N)=sTilde;
-  
-  
-  
-  
-
-  //double factor = -1./ELEM(A,Nm1,Nm1);
-  // this next line does S = S - A12 A22^(-1) A21;
-  //dger_(&S->N, &S->N, &factor, &ELEM(A,0,Nm1), &inc, &ELEM(A,Nm1,0), &A->N, S->data, &S->N);
   return 0;
 }
 		
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
