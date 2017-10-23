@@ -7,91 +7,7 @@
 
 #include "../util/stringUtil.h"
 #include "../util/arrays/array.h"
-
-typedef struct {
-  char label[64]; //name should be under 64 characters.
-  double coefficient;
-  int posDiff3D[3]; 
-} OperatorDef;
-
-
-typedef struct {
-  unsigned int n;
-  unsigned int capacity;
-  OperatorDef * operators;
-} tMatrix;
-
-
-int init_tMatrix(tMatrix * tMat) {
-  tMat->capacity = INIT_CAPACITY;
-  tMat->operators = (OperatorDef *) malloc(tMat->capacity * sizeof (OperatorDef ));
-  tMat->n=0;
-  return 0;
-}
-
-void addOperators_tMatrix(tMatrix * tMat, char label[64], double coefficient, int posDiff3D[3]) {
-  if(tMat->n > tMat->capacity) tMat->operators = realloc(tMat->operators, (tMat->capacity *= 2) * sizeof(OperatorDef));
-  memset(tMat->operators[tMat->n].label,0,64);
-  strcpy(tMat->operators[tMat->n].label,label);
-  tMat->operators[tMat->n].coefficient=coefficient;
-  unsigned int i;
-  for(i=0;i<3;i++) tMat->operators[tMat->n].posDiff3D[i]=posDiff3D[i];
-  tMat->n++;  
-}
-
-  
-
-void readOperators_tMatrix(FILE * file, tMatrix * tMat){
-  rewind(file);
-  char tempbuff[256];  //each line should not be above 256 char long.
-  int found=0;
-        
-  while(!feof(file)) 
-  {
-    if (fgets(tempbuff,256,file)) {
-      if(found==0){
-        if(strBeginWithToken(tempbuff,"one-body")) found=1; 
-      }
-      else{
-        unsigned int nElement = countElementInStr(tempbuff, " \t\n");
-        if(tempbuff[0] == '#') continue;
-        else if(((tempbuff[0] != '*') || (tempbuff[0] != '\n')) && nElement != 0) {
-          
-          char label[64];
-          float coefficient;
-          int posDiff3D[3];
-          int nRead;
-          nRead = sscanf(tempbuff,"%s (%d,%d,%d) %f \n",label, &posDiff3D[0],&posDiff3D[1],&posDiff3D[2],&coefficient);
-          addOperators_tMatrix(tMat, label, coefficient, posDiff3D);
-          
-          if(nRead!=5) {
-            printf("Cannot read correctly the one-body line: \n%s", tempbuff); 
-            exit(1);
-          }
-        }
-        else break;
-      }
-    }
-  }
-}
-
-
-
-void print_tMatrix(tMatrix * tMat) {
-  unsigned int i;
-  for(i=0;i<tMat->n;i++) {
-    printf("operator %d: '%s' with coeff %f and position difference vector: (%d,%d,%d)\n", 
-            i, tMat->operators[i].label, tMat->operators[i].coefficient,
-            tMat->operators[i].posDiff3D[0],
-            tMat->operators[i].posDiff3D[1],
-            tMat->operators[i].posDiff3D[2]);
-  }
-}
-
-
-void free_tMatrix(tMatrix * tMat) {
-  free(tMat->operators);
-}
+//#include "../matrixComplex.h"
 
 
 typedef struct {
@@ -99,6 +15,30 @@ typedef struct {
   int y;
   int z;
 } IntPosition;
+
+// c = a+f*b
+IntPosition addIntPosition(IntPosition a, IntPosition b, int f) {
+  IntPosition c;
+  c.x = a.x + f*b.x;
+  c.y = a.y + f*b.y;
+  c.z = a.z + f*b.z;
+  return c;
+}
+
+int isEqual_IntPosition(IntPosition a, IntPosition b) {
+  if(a.x != b.x) return 0;
+  if(a.y != b.y) return 0;
+  if(a.z != b.z) return 0;
+  return 1;
+}
+
+int isZero_IntPosition(IntPosition a) {
+  if(a.x != 0) return 0;
+  if(a.y != 0) return 0;
+  if(a.z != 0) return 0;
+  return 1;
+}
+
 
 typedef struct {
   unsigned int n;
@@ -173,4 +113,246 @@ void print_MultiplePositions(MultiplePositions * mPositions, char *flag) {
 void free_MultiplePositions(MultiplePositions * mPositions) {
   free(mPositions->positions);
 }
+
+
+
+
+
+
+
+
+typedef struct {
+  IntPosition R; //cluster origine position.
+  IntPosition r; //site position (relative to cluster origine)
+} Folding;
+
+
+int tripleProductInteger(IntPosition a, IntPosition b, IntPosition c) {
+  return a.x*(b.y*c.z - c.y*b.z) - a.y*(b.x*c.z - c.x*b.z) + a.z*(b.x*c.y - b.y*c.x);
+} 
+
+Folding Fold(IntPosition position, MultiplePositions sites, MultiplePositions superlattice){
+  assert(superlattice.n==3);
+  int volume = tripleProductInteger(superlattice.positions[0], superlattice.positions[1], superlattice.positions[2]);
+  if(volume<0) {
+    volume *=-1;
+    superlattice.positions[0].x*=-1; 
+    superlattice.positions[0].y*=-1; 
+    superlattice.positions[0].z*=-1;
+  }
+  int found = 0, i ;
+  IntPosition R, Q;//, Zeros;  
+  //Zeros.x=0; Zeros.y=0; Zeros.z=0;
+  for(i=0; i<sites.n; i++){
+    IntPosition r = addIntPosition(position, sites.positions[i] ,-1);
+    R.x = tripleProductInteger(r, superlattice.positions[1], superlattice.positions[2]);
+    R.y = tripleProductInteger(superlattice.positions[0], r, superlattice.positions[2]);
+    R.z = tripleProductInteger(superlattice.positions[0], superlattice.positions[1], r);
+    Q.x = R.x % volume;
+    Q.y = R.y % volume;
+    Q.z = R.z % volume;
+    if(isZero_IntPosition(Q) ){
+      found=1;
+      break;
+    }
+  }
+  if(found){
+    IntPosition foldingR;
+    foldingR.x = (superlattice.positions[0].x*R.x + superlattice.positions[1].x*R.y + superlattice.positions[2].x*R.z)/volume;
+    foldingR.y = (superlattice.positions[0].y*R.x + superlattice.positions[1].y*R.y + superlattice.positions[2].y*R.z)/volume;
+    foldingR.z = (superlattice.positions[0].z*R.x + superlattice.positions[1].z*R.y + superlattice.positions[2].z*R.z)/volume;
+    
+    Folding foldingResult;
+    foldingResult.R = foldingR; 
+    foldingResult.r=sites.positions[i];
+    
+    return foldingResult;
+  }
+  else{
+    printf("error: Unable to fold the position (%d,%d,%d) on the original cluster with this superlattice", position.x, position.y, position.z);
+    exit(1);
+  }
+  
+  
+}
+
+
+/*  
+   vol = (dot(e[0],cross(e[1],e[2])))   # equivalent to determinant, but keep the number integers
+   if vol < 0:
+      vol *= -1
+      e[0] *= -1 
+   e = transpose(e)
+   found = False
+   
+   for siteIndex in range(0,len(sites)):
+      site = sites[siteIndex]
+      r = position - site
+      R = CramersRuleInt(e,r)
+      Q = R % vol
+      if all(Q == array([0,0,0])):
+         found= True
+         break   
+   if found:
+      R2 = dot(e,R)//vol
+      return R2,site
+   else:
+      print 'Unable to fold the position',position, 'on the original cluster with this superlattice'
+      assert()
+
+*/
+
+// ------------------------------------------------------------------
+
+typedef struct {
+  unsigned int *index1;
+  unsigned int *index2;
+  double *value;
+  IntPosition *clusterPosition;
+  unsigned int n;
+  unsigned int capacity;
+} Sparse_tMatrix; // contains a list of 
+
+// ------------------------------------------------------------------
+
+typedef struct {
+  char label[64]; //name should be under 64 characters.
+  double coefficient;
+  IntPosition posDiff; 
+} OperatorDef;
+
+
+typedef struct {
+  unsigned int n;
+  unsigned int capacity;
+  OperatorDef * operators;
+  Sparse_tMatrix sparse;
+} tMatrix;
+
+
+int init_tMatrix(tMatrix * tMat) {
+  tMat->capacity = INIT_CAPACITY;
+  tMat->operators = (OperatorDef *) malloc(tMat->capacity * sizeof (OperatorDef ));
+  tMat->n=0;
+  
+  tMat->sparse.capacity = INIT_CAPACITY;
+  tMat->sparse.n = 0;
+  tMat->sparse.index1 = (unsigned int *) malloc(tMat->sparse.capacity * sizeof (unsigned int));
+  tMat->sparse.index2 = (unsigned int *) malloc(tMat->sparse.capacity * sizeof (unsigned int));
+  tMat->sparse.value  = (double *)       malloc(tMat->sparse.capacity * sizeof (double));
+  tMat->sparse.clusterPosition = (IntPosition *) malloc(tMat->sparse.capacity * sizeof (IntPosition));
+  return 0;
+}
+
+void addOperators_tMatrix(tMatrix * tMat, char label[64], double coefficient, int posDiff3D[3]) {
+  if(tMat->n > tMat->capacity) tMat->operators = realloc(tMat->operators, (tMat->capacity *= 2) * sizeof(OperatorDef));
+  memset(tMat->operators[tMat->n].label,0,64);
+  strcpy(tMat->operators[tMat->n].label,label);
+  tMat->operators[tMat->n].coefficient=coefficient;
+  tMat->operators[tMat->n].posDiff.x=posDiff3D[0];
+  tMat->operators[tMat->n].posDiff.y=posDiff3D[1];
+  tMat->operators[tMat->n].posDiff.z=posDiff3D[2];
+  tMat->n++;  
+}
+
+  
+
+void readOperators_tMatrix(FILE * file, tMatrix * tMat){
+  rewind(file);
+  char tempbuff[256];  //each line should not be above 256 char long.
+  int found=0;
+        
+  while(!feof(file)) 
+  {
+    if (fgets(tempbuff,256,file)) {
+      if(found==0){
+        if(strBeginWithToken(tempbuff,"one-body")) found=1; 
+      }
+      else{
+        unsigned int nElement = countElementInStr(tempbuff, " \t\n");
+        if(tempbuff[0] == '#') continue;
+        else if(((tempbuff[0] != '*') || (tempbuff[0] != '\n')) && nElement != 0) {
+          
+          char label[64];
+          float coefficient;
+          int posDiff3D[3];
+          int minusPosDiff3D[3];
+          int nRead,i;
+          nRead = sscanf(tempbuff,"%s (%d,%d,%d) %f \n",label, &posDiff3D[0],&posDiff3D[1],&posDiff3D[2],&coefficient);
+          addOperators_tMatrix(tMat, label, 0.5*coefficient, posDiff3D);
+          for(i=0;i<3;i++) minusPosDiff3D[i]=-posDiff3D[i];
+          addOperators_tMatrix(tMat, label, 0.5*coefficient, minusPosDiff3D);
+          
+          if(nRead!=5) {
+            printf("Cannot read correctly the one-body line: \n%s", tempbuff); 
+            exit(1);
+          }
+        }
+        else break;
+      }
+    }
+  }
+}
+
+void addElementSparse_tMatrix(tMatrix * tMat, unsigned int i1, unsigned int i2, IntPosition foldingR, double value) {
+  unsigned int N = tMat->sparse.n;
+  if(N == tMat->sparse.capacity) {
+    tMat->sparse.capacity *= 2;
+    //printf("new capacity = %d",tMat->sparse.capacity);
+    tMat->sparse.index1 = realloc(tMat->sparse.index1, (tMat->sparse.capacity ) * sizeof(unsigned int));
+    tMat->sparse.index2 = realloc(tMat->sparse.index2, (tMat->sparse.capacity) * sizeof(unsigned int));
+    tMat->sparse.value  = realloc(tMat->sparse.value, (tMat->sparse.capacity) * sizeof(double));
+    tMat->sparse.clusterPosition = realloc(tMat->sparse.clusterPosition, (tMat->sparse.capacity) * sizeof(IntPosition));
+  }
+  tMat->sparse.index1[N] = i1;
+  tMat->sparse.index2[N] = i2;
+  tMat->sparse.clusterPosition[N] = foldingR;
+  tMat->sparse.value[N] = value;
+  tMat->sparse.n++;
+}
+
+
+void defineSparse_tMatrix(tMatrix * tMat, MultiplePositions *sites, MultiplePositions *superlattice) {
+  unsigned int i,j,k;
+  for(i=0;i<tMat->n;i++){
+    for(j=0;j<sites->n;j++){
+      IntPosition newPosition1 = addIntPosition(sites->positions[j], tMat->operators[i].posDiff, 1);
+      Folding folding = Fold(newPosition1, *sites, *superlattice);
+      unsigned int newIndex=-1;
+      for(k=0;k<sites->n;k++) if(isZero_IntPosition(addIntPosition(sites->positions[k],  folding.r, -1))) newIndex = k;
+      addElementSparse_tMatrix(tMat,newIndex,j,folding.R,tMat->operators[i].coefficient); 
+    }
+  }
+}
+
+
+void print_tMatrix(tMatrix * tMat) {
+  unsigned int i;
+  for(i=0;i<tMat->n;i++) {
+    printf("operator %d: '%s' with coeff %f and position difference vector: (%d,%d,%d)\n", 
+            i, tMat->operators[i].label, tMat->operators[i].coefficient,
+            tMat->operators[i].posDiff.x,
+            tMat->operators[i].posDiff.y,
+            tMat->operators[i].posDiff.z);
+  }
+  printf("\n");
+  for(i=0;i<tMat->sparse.n;i++) {
+    printf("sparse(%d,%d) = % 6.3f and cluster position: (%d,%d,%d)\n", 
+            tMat->sparse.index1[i], tMat->sparse.index2[i], tMat->sparse.value[i],
+            tMat->sparse.clusterPosition[i].x,
+            tMat->sparse.clusterPosition[i].y,
+            tMat->sparse.clusterPosition[i].z);
+  }
+  printf("\n");
+}
+
+
+void free_tMatrix(tMatrix * tMat) {
+  free(tMat->operators);
+  free(tMat->sparse.index1);
+  free(tMat->sparse.index2);
+  free(tMat->sparse.value);
+  free(tMat->sparse.clusterPosition);
+}
+
 
