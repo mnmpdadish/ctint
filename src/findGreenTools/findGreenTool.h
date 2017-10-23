@@ -6,9 +6,10 @@
 #include <assert.h>
 
 #include "../util/stringUtil.h"
+#include "../util/utilities.h"
 #include "../util/arrays/array.h"
 
-#define DATA_BUFFER_SIZE_W 200
+//#define DATA_BUFFER_SIZE_W 200
 
 typedef struct {
   Array_int *permutations;
@@ -73,28 +74,6 @@ int printSymmetries(Symmetries * sym){
   return 0;
 }
       
-
-int countLineFlag(FILE * file, char *flag) {
-
-  rewind(file);
-  char tempbuff[256];  //each line should not be above 256 char long.
-  int found=0, N=0;
-  while(!feof(file)) 
-  {
-    if (fgets(tempbuff,256,file)) {
-      if(found==0){
-        if(strBeginWithToken(tempbuff,flag)) found=1; 
-      }
-      else{
-        if(tempbuff[0] == '#') continue;
-        else if((tempbuff[0] != '\n') && countElementInStr(tempbuff," \t\n") != 0) N++;
-        else break;
-      }
-    }
-    //printf("\n");
-  }
-  return N;
-}
 
 
 int readSymmetries(FILE * file, int nSites, Symmetries *sym, char *flag) {

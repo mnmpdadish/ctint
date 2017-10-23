@@ -97,6 +97,8 @@ int readIntInStr(char const*const str, int * arrayInt, char const*const delimite
 }
 
 
+
+
 // A parenthesisTuple should be a string of the form "(1,2,3)".
 // This function test this and read the 3 integers
 /*int readIntInParenthesis(char const*const parenthesisTuple, int arrayInt[3]) {

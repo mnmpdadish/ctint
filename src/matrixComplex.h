@@ -10,17 +10,27 @@
 // int const * const constPtrToConst;
 // At first, I added const AFTER each *, but in the end, it is just more confusing than nothing.
 
+// matrix matrix multiplication:
 unsigned int zgemm_(char const*, char const*, unsigned int const*, unsigned int const*, unsigned int const*,
                   double complex const*, double complex const*, unsigned int const*, double complex const*, 
                   unsigned int const*, double complex const*, double complex *, unsigned int const*);
 //unsigned int zswap_(unsigned int const*, double complex*, unsigned int const*, double complex*, unsigned int const*);
 unsigned int zgetrf_(unsigned int const*, unsigned int const*, double complex const*, unsigned int const*,unsigned int*,unsigned int*);
 unsigned int zgetri_(unsigned int const*, double complex*, unsigned int const*, unsigned int const*, double complex*, unsigned int const*, unsigned int*);
+
+// matrix vector multiplication
 unsigned int zgemv_(char const*, unsigned int const*, unsigned int const*, double complex const*, double complex const*, unsigned int const*, double complex const*, unsigned int const*, double complex const*, double complex*, unsigned int const*);
+
+// dot product of vectors:
 double complex zdotc_(unsigned int const*, double complex const*, unsigned int const*, double complex const*, unsigned int const*);
-//unsigned int zger_(unsigned int const*, unsigned int const*, double complex const*, double complex const*, unsigned int const*, double complex const*, unsigned int const*, double complex *, unsigned int const*);
+
+// copy arrays
 unsigned int zcopy_(unsigned int const*, double complex const*, unsigned int const* , double complex*, unsigned int const*);
+
+// add complex vectors (or matrices):
 unsigned int zaxpy_(unsigned int const*, double complex const*, double complex const*, unsigned int const*, double complex*, unsigned int const*);
+
+// multiplication by scalar
 unsigned int zscal_(unsigned int const*, double complex const*, double complex*, unsigned int const*);
 
 /*
@@ -34,7 +44,7 @@ void zgetrf_(const int*, const int*, std::complex<double>*, const int*, int*, in
 */
 
 
-#define INIT_CAPACITY 4
+//#define INIT_CAPACITY 4
 
 typedef struct {
   unsigned int N;
@@ -143,6 +153,18 @@ unsigned int copySub_cMatrix(cMatrix const * A, cMatrix * B, unsigned int N) {
 
 
 //C=A*B
+unsigned int cMatrixMatrixAddition(cMatrix const * A, cMatrix const * B, cMatrix * C, double complex factor) {
+  assert(A->N == B->N);
+  //resize_cMatrix(C,A->N);
+  copy_cMatrix(B,C);
+  unsigned int N2=A->N*A->N;
+  unsigned int one=1;
+  zaxpy_(&N2, &factor, A->data, &one, C->data, &one);
+  return 0;
+}
+
+
+//C=A*B
 unsigned int cMatrixMatrixMultiplication(cMatrix const * A, cMatrix const * B, cMatrix * C) {
   assert(A->N == B->N);
   resize_cMatrix(C,A->N);
@@ -180,6 +202,20 @@ void swap_conjugate_complex(double complex * a, double complex * b)
     *b = temp;
 }
 
+void swap_conjugate_complex_values(double complex a, double complex b)
+{
+    double complex temp = conj(a);
+    a = conj(b);
+    b = temp;
+}
+
+
+void conjugate_complex_values(double complex * a)
+{
+    *a = conj(*a);
+}
+
+
 void swap_complex(double complex * a, double complex * b)
 {
     double complex temp = *a;
@@ -199,10 +235,11 @@ unsigned int transpose_cMatrix(cMatrix * A) {
 
 //A^dag
 unsigned int dag_cMatrix(cMatrix * A) {
+  transpose_cMatrix(A);
   unsigned int i,j;
   for(i=0;i<A->N;i++)
-    for(j=0;j<i;j++){
-      swap_conjugate_complex(&ELEM(A,i,j),&ELEM(A,j,i));
+    for(j=0;j<A->N;j++){
+      conjugate_complex_values(&ELEM(A,i,j));
     }
   return 0;
 }

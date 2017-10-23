@@ -21,7 +21,8 @@ int test_readIntInOneLine(int verbose)
   for(i=0;i<nElement;i++) if(solution1[i] != arrayInt[i]) Nerror++;
   free(arrayInt);
   
-  //test 2
+  //test 2 // use sscanf("(%d,%d,%d)"); instead.
+  /*
   char parenthesisTuple[] = "(1,2,4)";
   int tupleInt[3] = {0,0,0};
   readIntInStr(parenthesisTuple, tupleInt, "(,)\t\n");
@@ -34,7 +35,7 @@ int test_readIntInOneLine(int verbose)
   }
   
   for(i=0;i<3;i++) if(solution2[i] != tupleInt[i]) Nerror++;
-  
+  */
   return Nerror;
 }
 

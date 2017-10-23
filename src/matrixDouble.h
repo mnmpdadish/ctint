@@ -23,7 +23,7 @@ unsigned int daxpy_(unsigned int const*, double const*, double const*, unsigned 
 unsigned int dscal_(unsigned int const*, double const*, double*, unsigned int const*);
 
 
-#define INIT_CAPACITY 4
+
 
 typedef struct {
   unsigned int N;

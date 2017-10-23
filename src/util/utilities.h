@@ -12,13 +12,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "stringUtil.h"
 
 
 double fabs(double);
   
-#define DATA_BUFFER_SIZE_1 100
-#define DATA_BUFFER_SIZE_2 10000 // must be square of DATA_BUFFER_SIZE_1
-
+//#define DATA_BUFFER_SIZE_1 100
+//#define DATA_BUFFER_SIZE_2 10000 // must be square of DATA_BUFFER_SIZE_1
+#define INIT_CAPACITY 16
 
 int doubleEqual(double const a, double const b) {
     return fabs(a - b) < 0.000000001;
@@ -65,4 +66,30 @@ void readInt(FILE * file, char * name,  int * value) {
     printf("\ncannot find the %s parameter in 'model.dat'", name);
     exit(1);
 }
+
+
+
+int countLineFlag(FILE * file, char *flag) {
+
+  rewind(file);
+  char tempbuff[256];  //each line should not be above 256 char long.
+  int found=0, N=0;
+  while(!feof(file)) 
+  {
+    if (fgets(tempbuff,256,file)) {
+      if(found==0){
+        if(strBeginWithToken(tempbuff,flag)) found=1; 
+      }
+      else{
+        if(tempbuff[0] == '#') continue;
+        else if((tempbuff[0] != '\n') && countElementInStr(tempbuff," \t\n") != 0) N++;
+        else break;
+      }
+    }
+    //printf("\n");
+  }
+  return N;
+}
+
+
 

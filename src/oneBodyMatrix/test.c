@@ -1,6 +1,4 @@
 
-#include "../util/stringUtil.h"
-#include "../util/arrays/array.h"
 #include "../util/test.h"
 #include "oneBodyMatrix_test.h"
 
