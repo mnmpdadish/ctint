@@ -144,6 +144,7 @@ class OneBodyMatrix:
          #print self.sparse_k[keys]
          for nn in range(0,len(self.sparse_k[keys])):
             matrix_k[keys[0],keys[1]]+=((self.sparse_k[keys])[nn][0])*exp(1j*dot(k_vector,(self.sparse_k[keys])[nn][1]))
+            print keys[0], keys[1], ((self.sparse_k[keys])[nn][0]), dot(k_vector,(self.sparse_k[keys])[nn][1])
 
          matrix_k[keys[1],keys[0]]=conj(matrix_k[keys[0],keys[1]]) # matrix is hermitic
       set_printoptions(precision=3)

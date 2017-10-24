@@ -22,11 +22,11 @@ double fabs(double);
 #define INIT_CAPACITY 16
 
 int doubleEqual(double const a, double const b) {
-    return fabs(a - b) < 0.000000001;
+    return fabs(a - b) < 0.000001;
 }
 
 int complexEqual(double complex const a, double complex const b) {
-    return cabs(a - b) < 0.000000001;
+    return cabs(a - b) < 0.000001;
 }
 
 void readDouble(FILE * file, char * name,  double * value) {

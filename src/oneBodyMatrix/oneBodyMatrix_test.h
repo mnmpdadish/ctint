@@ -8,7 +8,7 @@
 #include "oneBodyMatrix.h"
 
 int test_oneBodyMatrix(int verbose) {
-  int Nerror=1;
+  int Nerror=0;
   
   char fileName[]="testInputFiles/plaquette2x2.in";
   FILE * file = fopen(fileName, "rt");
@@ -50,7 +50,46 @@ int test_oneBodyMatrix(int verbose) {
   
   defineSparse_tMatrix(&tMat, &sites, &superlattice);
   print_tMatrix(&tMat);
-    
+  
+  cMatrix tMatrixK, Sol1;
+  init_cMatrix(&tMatrixK,sites.n);
+  init_cMatrix(&Sol1,4);
+  calculate_tMatrixK_2D(&tMat, &tMatrixK, 0.0, 0.25*M_PI);
+  //printf("\ntMatrixK=\n"); print_cMatrix(&tMatrixK);
+  
+  double complex * p = Sol1.data;
+  *p++=-0.8+0.0*I; *p++=-2.0+0.0*I;  *p++=-1.0-1.0*I; *p++= 0.6+0.6*I; 
+  *p++=-2.0+0.0*I; *p++=-0.8+0.0*I;  *p++= 0.6+0.6*I; *p++=-1.0-1.0*I; 
+  *p++=-1.0+1.0*I; *p++= 0.6-0.6*I;  *p++=-0.8+0.0*I; *p++=-2.0+0.0*I; 
+  *p++= 0.6-0.6*I; *p++=-1.0+1.0*I;  *p++=-2.0+0.0*I; *p++=-0.8+0.0*I; 
+  transpose_cMatrix(&Sol1); // with this meth of input, we need to transpose
+
+  if(verbose){
+    printf("\nsample of tMatrixK(0.0,pi/4)=\n"); print_cMatrix(&tMatrixK);
+    printf("%s\n",areEqual_cMatrix(&tMatrixK,&Sol1)? "tMatrixK==Sol1": "tMatrixK!=Sol1");
+  }
+  if(!areEqual_cMatrix(&tMatrixK,&Sol1)) Nerror++;
+
+  dMatrix hybFM, Sol2;
+  init_dMatrix(&hybFM,sites.n);
+  init_dMatrix(&Sol2,4);
+  calculate_hybFirstMoments(&tMat, &hybFM);
+  
+  double * q = Sol2.data;
+  *q++=2.43;  *q++=-0.2;  *q++=-0.2;  *q++=-0.24; 
+  *q++=-0.2;  *q++=2.43;  *q++=-0.24; *q++=-0.2; 
+  *q++=-0.2;  *q++=-0.24; *q++=2.43;  *q++=-0.2; 
+  *q++=-0.24; *q++=-0.2;  *q++=-0.2;  *q++=2.43; 
+  transpose_dMatrix(&Sol2); // with this meth of input, we need to transpose
+  
+  if(verbose){
+    printf("\nhybFM=\n"); print_dMatrix(&hybFM);
+    printf("\nSol2=\n");  print_dMatrix(&Sol2);
+    printf("%s\n",areEqual_dMatrix(&hybFM,&Sol2)? "hybFM==Sol2": "hybFM!=Sol2");
+  }
+  if(!areEqual_dMatrix(&hybFM,&Sol2)) Nerror++;
+  
+  
   free_tMatrix(&tMat);
   free_MultiplePositions(&sites);
   //free_MultiplePositions(&lattice);

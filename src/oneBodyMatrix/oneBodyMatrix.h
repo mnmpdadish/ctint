@@ -7,7 +7,8 @@
 
 #include "../util/stringUtil.h"
 #include "../util/arrays/array.h"
-//#include "../matrixComplex.h"
+#include "../matrixDouble.h"
+#include "../matrixComplex.h"
 
 
 typedef struct {
@@ -38,7 +39,6 @@ int isZero_IntPosition(IntPosition a) {
   if(a.z != 0) return 0;
   return 1;
 }
-
 
 typedef struct {
   unsigned int n;
@@ -225,6 +225,7 @@ typedef struct {
 typedef struct {
   unsigned int n;
   unsigned int capacity;
+  unsigned int nSites;
   OperatorDef * operators;
   Sparse_tMatrix sparse;
 } tMatrix;
@@ -279,9 +280,13 @@ void readOperators_tMatrix(FILE * file, tMatrix * tMat){
           int minusPosDiff3D[3];
           int nRead,i;
           nRead = sscanf(tempbuff,"%s (%d,%d,%d) %f \n",label, &posDiff3D[0],&posDiff3D[1],&posDiff3D[2],&coefficient);
-          addOperators_tMatrix(tMat, label, 0.5*coefficient, posDiff3D);
-          for(i=0;i<3;i++) minusPosDiff3D[i]=-posDiff3D[i];
-          addOperators_tMatrix(tMat, label, 0.5*coefficient, minusPosDiff3D);
+          addOperators_tMatrix(tMat, label, coefficient, posDiff3D);
+          int isNot_0_0_0=0;
+          for(i=0;i<3;i++) {
+            minusPosDiff3D[i]=-posDiff3D[i];
+            if(minusPosDiff3D[i] != posDiff3D[i]) isNot_0_0_0=1;
+          }
+          if(isNot_0_0_0) addOperators_tMatrix(tMat, label, coefficient, minusPosDiff3D);
           
           if(nRead!=5) {
             printf("Cannot read correctly the one-body line: \n%s", tempbuff); 
@@ -311,9 +316,9 @@ void addElementSparse_tMatrix(tMatrix * tMat, unsigned int i1, unsigned int i2, 
   tMat->sparse.n++;
 }
 
-
 void defineSparse_tMatrix(tMatrix * tMat, MultiplePositions *sites, MultiplePositions *superlattice) {
   unsigned int i,j,k;
+  tMat->nSites = sites->n;
   for(i=0;i<tMat->n;i++){
     for(j=0;j<sites->n;j++){
       IntPosition newPosition1 = addIntPosition(sites->positions[j], tMat->operators[i].posDiff, 1);
@@ -324,7 +329,6 @@ void defineSparse_tMatrix(tMatrix * tMat, MultiplePositions *sites, MultiplePosi
     }
   }
 }
-
 
 void print_tMatrix(tMatrix * tMat) {
   unsigned int i;
@@ -345,6 +349,60 @@ void print_tMatrix(tMatrix * tMat) {
   }
   printf("\n");
 }
+
+
+
+void calculate_tMatrixK_2D(tMatrix * tMat, cMatrix * tMatrixK, double kx, double ky) {
+  unsigned int i;
+  assert(tMatrixK->N==tMat->nSites);
+  reset_cMatrix(tMatrixK);
+  for(i=0;i<tMat->sparse.n;i++){
+    double phase = kx*tMat->sparse.clusterPosition[i].x+ky*tMat->sparse.clusterPosition[i].y;
+    double complex ek = cos(phase)+I*sin(phase); 
+  
+    ELEM(tMatrixK, tMat->sparse.index1[i], tMat->sparse.index2[i]) += tMat->sparse.value[i] * ek;
+  }
+}
+
+
+void calculate_hybFirstMoments(tMatrix * tMat, dMatrix * hybFM) {
+  unsigned int i,j,k,n1,n2; // i,j: the indices of the matrix, k is the dummy summation index
+  assert(hybFM->N==tMat->nSites);
+  reset_dMatrix(hybFM);
+  for(i=0;i<tMat->sparse.n;i++)
+    for(j=0;j<tMat->sparse.n;j++)
+      for(k=0;k<tMat->sparse.n;k++)
+        for(n1=0;n1<tMat->sparse.n;n1++) 
+          if( tMat->sparse.index1[n1]==i && tMat->sparse.index2[n1]==k && !isZero_IntPosition(tMat->sparse.clusterPosition[n1]) ) {
+            for(n2=0;n2<tMat->sparse.n;n2++)
+              if( tMat->sparse.index1[n2]==k && tMat->sparse.index2[n2]==j && !isZero_IntPosition(tMat->sparse.clusterPosition[n2]) )
+                if(isZero_IntPosition(addIntPosition(tMat->sparse.clusterPosition[n1],  tMat->sparse.clusterPosition[n2], 1)))
+                  ELEM(hybFM, i,j) += tMat->sparse.value[n1] * tMat->sparse.value[n2];
+          }
+}
+
+
+/*
+      for i1 in range(0,self.n_label):
+         for i2 in range(0,self.n_label):
+            for dum in range(0,self.n_label):
+               keys1 = (i1,dum) 
+               keys2 = (dum,i2)
+               if (keys1 in sparseK) and (keys2 in sparseK):
+                  for nn1 in range(0,len(sparseK[keys1])):
+                     for nn2 in range(0,len(sparseK[keys2])):
+                        if all((sparseK[keys1][nn1][1]+sparseK[keys2][nn2][1])==array([0,0,0])) :
+                           matrixHybFirstMoment[i1,i2] += ((sparseK[keys1])[nn1][0])*((sparseK[keys2])[nn2][0])
+      
+
+
+      #precalculate the k-indep matrix_0
+      matrix_0 =  zeros((self.n_label,self.n_label),dtype=complex)
+      for keys in self.sparse_0:
+         matrix_0[keys[0],keys[1]]=self.sparse_0[keys]
+         matrix_0[keys[1],keys[0]]=self.sparse_0[keys]
+      self.matrix_0 = matrix_0
+*/
 
 
 void free_tMatrix(tMatrix * tMat) {
