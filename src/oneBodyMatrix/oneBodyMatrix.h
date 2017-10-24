@@ -365,44 +365,31 @@ void calculate_tMatrixK_2D(tMatrix * tMat, cMatrix * tMatrixK, double kx, double
 }
 
 
-void calculate_hybFirstMoments(tMatrix * tMat, dMatrix * hybFM) {
-  unsigned int i,j,k,n1,n2; // i,j: the indices of the matrix, k is the dummy summation index
-  assert(hybFM->N==tMat->nSites);
-  reset_dMatrix(hybFM);
-  for(i=0;i<tMat->sparse.n;i++)
-    for(j=0;j<tMat->sparse.n;j++)
-      for(k=0;k<tMat->sparse.n;k++)
-        for(n1=0;n1<tMat->sparse.n;n1++) 
-          if( tMat->sparse.index1[n1]==i && tMat->sparse.index2[n1]==k && !isZero_IntPosition(tMat->sparse.clusterPosition[n1]) ) {
-            for(n2=0;n2<tMat->sparse.n;n2++)
-              if( tMat->sparse.index1[n2]==k && tMat->sparse.index2[n2]==j && !isZero_IntPosition(tMat->sparse.clusterPosition[n2]) )
-                if(isZero_IntPosition(addIntPosition(tMat->sparse.clusterPosition[n1],  tMat->sparse.clusterPosition[n2], 1)))
-                  ELEM(hybFM, i,j) += tMat->sparse.value[n1] * tMat->sparse.value[n2];
-          }
+
+
+double calculate_hybFirstMoments_ij(tMatrix * tMat, unsigned int i, unsigned int j) {
+  unsigned int k,n1,n2; // k is the dummy summation index, n1 and n2 are both the indices of the sparse matrix definition
+  double retVal = 0.0;
+  for(k=0; k<tMat->sparse.n; k++)
+    for(n1=0; n1<tMat->sparse.n; n1++) 
+      if( tMat->sparse.index1[n1]==i && tMat->sparse.index2[n1]==k && !isZero_IntPosition(tMat->sparse.clusterPosition[n1]) ) 
+      { // condition= vector clusterPosition must be different than 0,0,0 (must hop on a neigbor cluster).
+        for(n2=0; n2<tMat->sparse.n; n2++)
+          if( tMat->sparse.index1[n2]==k && tMat->sparse.index2[n2]==j && !isZero_IntPosition(tMat->sparse.clusterPosition[n2]) ) // same condition.
+            if(isZero_IntPosition(addIntPosition(tMat->sparse.clusterPosition[n1],  tMat->sparse.clusterPosition[n2], 1)))
+              retVal += tMat->sparse.value[n1] * tMat->sparse.value[n2];
+      }
+  return retVal;
 }
 
-
-/*
-      for i1 in range(0,self.n_label):
-         for i2 in range(0,self.n_label):
-            for dum in range(0,self.n_label):
-               keys1 = (i1,dum) 
-               keys2 = (dum,i2)
-               if (keys1 in sparseK) and (keys2 in sparseK):
-                  for nn1 in range(0,len(sparseK[keys1])):
-                     for nn2 in range(0,len(sparseK[keys2])):
-                        if all((sparseK[keys1][nn1][1]+sparseK[keys2][nn2][1])==array([0,0,0])) :
-                           matrixHybFirstMoment[i1,i2] += ((sparseK[keys1])[nn1][0])*((sparseK[keys2])[nn2][0])
-      
-
-
-      #precalculate the k-indep matrix_0
-      matrix_0 =  zeros((self.n_label,self.n_label),dtype=complex)
-      for keys in self.sparse_0:
-         matrix_0[keys[0],keys[1]]=self.sparse_0[keys]
-         matrix_0[keys[1],keys[0]]=self.sparse_0[keys]
-      self.matrix_0 = matrix_0
-*/
+void calculate_hybFirstMoments(tMatrix * tMat, dMatrix * hybFM) {
+  unsigned int i,j; // i,j: the indices of the matrix
+  assert(hybFM->N==tMat->nSites);
+  reset_dMatrix(hybFM);
+  for(i=0;i<tMat->nSites;i++)
+    for(j=0;j<tMat->nSites;j++) 
+      ELEM(hybFM, i,j) = calculate_hybFirstMoments_ij(tMat, i, j);
+}
 
 
 void free_tMatrix(tMatrix * tMat) {

@@ -25,14 +25,6 @@ int test_oneBodyMatrix(int verbose) {
   readSites(file, &sites, "sites");
   print_MultiplePositions(&sites,"sites");
   
-  /*
-  MultiplePositions lattice;
-  init_MultiplePositions(&lattice);
-  readSites(file, &lattice, "lattice");
-  print_MultiplePositions(&lattice,"lattice");
-  assert(lattice.n > 0 && lattice.n <= 3);
-  */
-  
   MultiplePositions superlattice;
   init_MultiplePositions(&superlattice);
   readSites(file, &superlattice, "superlattice");
@@ -65,7 +57,7 @@ int test_oneBodyMatrix(int verbose) {
   transpose_cMatrix(&Sol1); // with this meth of input, we need to transpose
 
   if(verbose){
-    printf("\nsample of tMatrixK(0.0,pi/4)=\n"); print_cMatrix(&tMatrixK);
+    printf("\nsample of tMatrixK(0,pi/4)=\n"); print_cMatrix(&tMatrixK);
     printf("%s\n",areEqual_cMatrix(&tMatrixK,&Sol1)? "tMatrixK==Sol1": "tMatrixK!=Sol1");
   }
   if(!areEqual_cMatrix(&tMatrixK,&Sol1)) Nerror++;
@@ -84,15 +76,15 @@ int test_oneBodyMatrix(int verbose) {
   
   if(verbose){
     printf("\nhybFM=\n"); print_dMatrix(&hybFM);
-    printf("\nSol2=\n");  print_dMatrix(&Sol2);
+    //printf("\nSol2=\n");  print_dMatrix(&Sol2);
     printf("%s\n",areEqual_dMatrix(&hybFM,&Sol2)? "hybFM==Sol2": "hybFM!=Sol2");
   }
   if(!areEqual_dMatrix(&hybFM,&Sol2)) Nerror++;
   
-  
+  free_cMatrix(&tMatrixK);
+  free_dMatrix(&hybFM);
   free_tMatrix(&tMat);
   free_MultiplePositions(&sites);
-  //free_MultiplePositions(&lattice);
   free_MultiplePositions(&superlattice);
 
   
