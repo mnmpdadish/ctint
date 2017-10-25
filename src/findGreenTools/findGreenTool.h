@@ -121,10 +121,10 @@ typedef struct {
   unsigned int nElement;
   unsigned int nSites;
   unsigned int nIndep;
-  double * greenfunctionsTAU;
+  //double * greenfunctionsTAU;
   //double * greenfunctionsIWn_Re;
   //double * greenfunctionsIWn_Im;
-  unsigned int capacity;
+  //unsigned int capacity;
   //Array_complex *greenfunctionsTAU;
 } GreenMatrix;
 
@@ -195,7 +195,6 @@ int symmetrizeOneGreenElement(GreenMatrix * greenMatrix, Symmetries * sym) {
 
 
 int initGreenMatrix(GreenMatrix * greenMatrix, int nSites, Symmetries *sym) {
-
   
   greenMatrix->i = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
   greenMatrix->j = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));

@@ -2,4 +2,4 @@
 all: build
 
 build: 
-	gcc -Wall -O2 test.c 
+	gcc -Wall -O2 test.c -lm 
