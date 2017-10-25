@@ -120,46 +120,64 @@ typedef struct {
   unsigned int *j;
   unsigned int nElement;
   unsigned int nSites;
+  unsigned int *indexIndep;
   unsigned int nIndep;
-  //double * greenfunctionsTAU;
-  //double * greenfunctionsIWn_Re;
-  //double * greenfunctionsIWn_Im;
-  //unsigned int capacity;
-  //Array_complex *greenfunctionsTAU;
-} GreenMatrix;
+  unsigned int *iFirstIndep;
+  unsigned int *jFirstIndep;
+} GreenSymmetriesMatrix;
 
 
-int printGreenMatrix(GreenMatrix * greenMatrix) {  
-  int i,j,N=greenMatrix->nSites;
+void printGreenSymmetriesMatrix(GreenSymmetriesMatrix * greenSymMat) {  
+  int i,j,N=greenSymMat->nSites;
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
-      printf("%c%c ",charHexa(greenMatrix->i[N*i+j]),charHexa(greenMatrix->j[N*i+j]));
+      printf("%c%c ",charHexa(greenSymMat->i[N*i+j]),charHexa(greenSymMat->j[N*i+j]));
+    }
+    printf("\n");
+  }
+  printf("\n");
+  for(i=0;i<N;i++){
+    for(j=0;j<N;j++){
+      printf("%2d ",greenSymMat->indexIndep[N*i+j]);
     }
     printf("\n");
   } 
-  return 0;
+}
+
+
+
+void nameGreenSymmetriesElement(GreenSymmetriesMatrix * greenSymMat, unsigned int i, unsigned int j, char name[2]) {  
+  int N=greenSymMat->nSites;
+  assert(i<N);
+  assert(j<N);
+  sprintf(name,"%c%c",charHexa(greenSymMat->i[N*i+j]),charHexa(greenSymMat->j[N*i+j]));
 }
 
 
 
 
-int countIndependantGreen(GreenMatrix * greenMatrix) {  
-  int i,j,N=greenMatrix->nSites, nIndep=0;
-  for(i=0;i<N;i++){
-    for(j=0;j<N;j++){
-      if(greenMatrix->i[N*i+j]==i && greenMatrix->j[N*i+j]==j) nIndep++;
-    }
-  } 
-  return nIndep;
+void indexIndependantGreen(GreenSymmetriesMatrix * greenSymMat) {  
+  int i,j,N=greenSymMat->nSites, nIndep=0;
+  for(i=0;i<N;i++)
+    for(j=0;j<N;j++)
+      if(greenSymMat->i[N*i+j]==i && greenSymMat->j[N*i+j]==j) {
+        greenSymMat->iFirstIndep[nIndep]= i;
+        greenSymMat->jFirstIndep[nIndep]= j;
+        greenSymMat->indexIndep[N*i+j] = nIndep++; //increment after the equality
+      }
+      else greenSymMat->indexIndep[N*i+j] = greenSymMat->indexIndep[N*greenSymMat->i[N*i+j]+greenSymMat->j[N*i+j]];
+  greenSymMat->nIndep = nIndep;
+  //return nIndep;
 }
 
 
 
-int symmetrizeOneGreenElement(GreenMatrix * greenMatrix, Symmetries * sym) {  
-  int i,j,k, N=greenMatrix->nSites;
+
+int symmetrizeOneGreenElement(GreenSymmetriesMatrix * greenSymMat, Symmetries * sym) {  
+  int i,j,k, N=greenSymMat->nSites;
   for(k=0; k<sym->n; k++){
-    for(i=0;i<greenMatrix->nSites;i++){
-      for(j=0;j<greenMatrix->nSites;j++){
+    for(i=0;i<greenSymMat->nSites;i++){
+      for(j=0;j<greenSymMat->nSites;j++){
         int permutation_i = i;
         int permutation_j = j;
         int isFirst=1, n=0;
@@ -169,18 +187,18 @@ int symmetrizeOneGreenElement(GreenMatrix * greenMatrix, Symmetries * sym) {
           permutation_j= sym->permutations[k].data[permutation_j];
           int refIndex=N*i+j ;
           int newIndex=N*permutation_i+permutation_j;
-          if( (greenMatrix->i[newIndex] != greenMatrix->i[refIndex]) || (greenMatrix->j[newIndex] != greenMatrix->j[refIndex]) ) {
-            //printf("k=%d  i=%d j=%d %d %d  %c%c %c%c  %d %d\n",k,i,j,permutation_i,permutation_j, charHexa(greenMatrix->i[refIndex]), charHexa(greenMatrix->j[refIndex]), charHexa(greenMatrix->i[newIndex]), charHexa(greenMatrix->j[newIndex]), refIndex, newIndex);
-            if( N*greenMatrix->i[refIndex] + greenMatrix->j[refIndex] < N*greenMatrix->i[newIndex] + greenMatrix->j[newIndex] ) {
+          if( (greenSymMat->i[newIndex] != greenSymMat->i[refIndex]) || (greenSymMat->j[newIndex] != greenSymMat->j[refIndex]) ) {
+            //printf("k=%d  i=%d j=%d %d %d  %c%c %c%c  %d %d\n",k,i,j,permutation_i,permutation_j, charHexa(greenSymMat->i[refIndex]), charHexa(greenSymMat->j[refIndex]), charHexa(greenSymMat->i[newIndex]), charHexa(greenSymMat->j[newIndex]), refIndex, newIndex);
+            if( N*greenSymMat->i[refIndex] + greenSymMat->j[refIndex] < N*greenSymMat->i[newIndex] + greenSymMat->j[newIndex] ) {
             //refIndex < newIndex){
-              greenMatrix->i[newIndex]=greenMatrix->i[refIndex];
-              greenMatrix->j[newIndex]=greenMatrix->j[refIndex];
+              greenSymMat->i[newIndex]=greenSymMat->i[refIndex];
+              greenSymMat->j[newIndex]=greenSymMat->j[refIndex];
             }
             else{
-              greenMatrix->i[refIndex]=greenMatrix->i[newIndex];
-              greenMatrix->j[refIndex]=greenMatrix->j[newIndex];
+              greenSymMat->i[refIndex]=greenSymMat->i[newIndex];
+              greenSymMat->j[refIndex]=greenSymMat->j[newIndex];
             }
-            //printf("k=%d  i=%d j=%d %d %d  %c%c %c%c\n",k,i,j,permutation_i,permutation_j, charHexa(greenMatrix->i[refIndex]), charHexa(greenMatrix->j[refIndex]), charHexa(greenMatrix->i[newIndex]), charHexa(greenMatrix->j[newIndex]));
+            //printf("k=%d  i=%d j=%d %d %d  %c%c %c%c\n",k,i,j,permutation_i,permutation_j, charHexa(greenSymMat->i[refIndex]), charHexa(greenSymMat->j[refIndex]), charHexa(greenSymMat->i[newIndex]), charHexa(greenSymMat->j[newIndex]));
 
             return 1; //every change result in a function exit with 1
           }
@@ -194,38 +212,44 @@ int symmetrizeOneGreenElement(GreenMatrix * greenMatrix, Symmetries * sym) {
 }
 
 
-int initGreenMatrix(GreenMatrix * greenMatrix, int nSites, Symmetries *sym) {
+int initGreenSymmetriesMatrix(GreenSymmetriesMatrix * greenSymMat, int nSites, Symmetries *sym) {
   
-  greenMatrix->i = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
-  greenMatrix->j = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
-  greenMatrix->nElement = nSites*nSites;
-  greenMatrix->nSites = nSites;
+  greenSymMat->i = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
+  greenSymMat->j = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
+  greenSymMat->iFirstIndep = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int)); //allocate more than needed here, why not
+  greenSymMat->jFirstIndep = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int)); //allocate more than needed here, why not
+  greenSymMat->indexIndep = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
+  greenSymMat->nElement = nSites*nSites;
+  greenSymMat->nSites = nSites;
   
   int i,j;
   for(i=0;i<nSites;i++){
     for(j=0;j<nSites;j++){
-      greenMatrix->i[i*nSites+j]=(i<j)? i:j;
-      greenMatrix->j[i*nSites+j]=(i<j)? j:i;
+      greenSymMat->i[i*nSites+j]=(i<j)? i:j;
+      greenSymMat->j[i*nSites+j]=(i<j)? j:i;
     }
   } 
   
   //if(verbose){
   //  printf("\nmost General matrix:\n");
-  //  printGreenMatrix(greenMatrix);
+  //  printGreenSymmetriesMatrix(greenSymMat);
   //}
   
-  while(symmetrizeOneGreenElement(greenMatrix,sym));  //this line symmetrize the matrix
+  while(symmetrizeOneGreenElement(greenSymMat,sym));  //this line symmetrize the matrix
   
   
-  greenMatrix->nIndep = countIndependantGreen(greenMatrix);
+  indexIndependantGreen(greenSymMat);
   
   //if(verbose) printf("nIndep=%d\n",nGreen);
   return 0;
 }
 
-int freeGreenMatrix(GreenMatrix * greenMatrix) {
-  free(greenMatrix->i);
-  free(greenMatrix->j);
+int freeGreenSymmetriesMatrix(GreenSymmetriesMatrix * greenSymMat) {
+  free(greenSymMat->i);
+  free(greenSymMat->j);
+  free(greenSymMat->iFirstIndep);
+  free(greenSymMat->jFirstIndep);
+  free(greenSymMat->indexIndep);
   return 0;
 }
 
@@ -246,12 +270,12 @@ int main() {
   readSymmetries(file, nSites, &sym);
   printSymmetries(&sym);
   
-  GreenMatrix greenMatrix;
-  buildGreenMatrix(&greenMatrix,nSites,&sym);
+  GreenSymmetriesMatrix greenSymMat;
+  buildGreenSymmetriesMatrix(&greenSymMat,nSites,&sym);
   
   // do stuff with green.
   
-  freeGreenMatrix(&greenMatrix);
+  freeGreenSymmetriesMatrix(&greenSymMat);
   freeSymmetries(&sym);
 
   return 0;

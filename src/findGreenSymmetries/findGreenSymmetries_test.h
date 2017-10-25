@@ -5,7 +5,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "findGreenTool.h"
+#include "findGreenSymmetries.h"
 
 int test_readSymmetriesPlaquettes2x2(int verbose) {
   int nSites=4;
@@ -22,27 +22,27 @@ int test_readSymmetriesPlaquettes2x2(int verbose) {
   readSymmetries(file, nSites, &sym, "symmetries");
   printSymmetries(&sym);
   
-  GreenMatrix greenMatrix;
-  initGreenMatrix(&greenMatrix,nSites,&sym);
+  GreenSymmetriesMatrix greenSymMat;
+  initGreenSymmetriesMatrix(&greenSymMat,nSites,&sym);
   
   if(verbose){
     printf("\nsymmetrized matrix:\n");
-    printGreenMatrix(&greenMatrix);
+    printGreenSymmetriesMatrix(&greenSymMat);
   }
   
   int solution_i[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   int solution_j[] = {0,1,2,3,1,0,3,2,2,3,0,1,3,2,1,0};
-  int Nerror=0,i,j,N=greenMatrix.nSites;
+  int Nerror=0,i,j,N=greenSymMat.nSites;
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
-      if((greenMatrix.i[N*i+j]!=solution_i[N*i+j]) || (greenMatrix.j[N*i+j]!=solution_j[N*i+j])) Nerror++;
+      if((greenSymMat.i[N*i+j]!=solution_i[N*i+j]) || (greenSymMat.j[N*i+j]!=solution_j[N*i+j])) Nerror++;
     }
   } 
   
   
   printf("\n");
   
-  freeGreenMatrix(&greenMatrix);
+  freeGreenSymmetriesMatrix(&greenSymMat);
   freeSymmetries(&sym);
 
   return Nerror;
@@ -63,12 +63,12 @@ int test_readSymmetriesPlaquettes4x4(int verbose) {
   readSymmetries(file, nSites, &sym, "symmetries");
   printSymmetries(&sym);
   
-  GreenMatrix greenMatrix;
-  initGreenMatrix(&greenMatrix,nSites,&sym);
+  GreenSymmetriesMatrix greenSymMat;
+  initGreenSymmetriesMatrix(&greenSymMat,nSites,&sym);
   
   if(verbose){
     printf("\nsymmetrized matrix:\n");
-    printGreenMatrix(&greenMatrix);
+    printGreenSymmetriesMatrix(&greenSymMat);
   }
   
   int solution_i[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,1,1,1,1,1,1,0,
@@ -93,18 +93,18 @@ int test_readSymmetriesPlaquettes4x4(int verbose) {
                       11,4,5,6,7,1,1,2,2,11,14,13,7,11,10,9,7,7,6,5,4,2,2,1,1,
                       15,11,7,3,11,10,6,2,7,6,5,1,3,2,1,0};
 
-  int Nerror=0,i,j,N=greenMatrix.nSites;
+  int Nerror=0,i,j,N=greenSymMat.nSites;
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
-      if((greenMatrix.i[N*i+j]!=solution_i[N*i+j]) || (greenMatrix.j[N*i+j]!=solution_j[N*i+j])) Nerror++;
+      if((greenSymMat.i[N*i+j]!=solution_i[N*i+j]) || (greenSymMat.j[N*i+j]!=solution_j[N*i+j])) Nerror++;
     }
   } 
   
-  if(verbose) printf("nIndep=%d\n",greenMatrix.nIndep);
+  if(verbose) printf("nIndep=%d\n",greenSymMat.nIndep);
   
   printf("\n");
   
-  freeGreenMatrix(&greenMatrix);
+  freeGreenSymmetriesMatrix(&greenSymMat);
   freeSymmetries(&sym);
 
   return Nerror;
@@ -126,17 +126,17 @@ int test_arbitrary(int verbose) {
   readSymmetries(file, nSites, &sym, "symmetries");
   printSymmetries(&sym);
   
-  GreenMatrix greenMatrix;
-  initGreenMatrix(&greenMatrix,nSites,&sym);
+  GreenSymmetriesMatrix greenSymMat;
+  initGreenSymmetriesMatrix(&greenSymMat,nSites,&sym);
   
   if(verbose){
     printf("\nsymmetrized matrix:\n");
-    printGreenMatrix(&greenMatrix);
-    printf("nIndep=%d\n",greenMatrix.nIndep);
+    printGreenSymmetriesMatrix(&greenSymMat);
+    printf("nIndep=%d\n",greenSymMat.nIndep);
     printf("\n");
   }
   
-  freeGreenMatrix(&greenMatrix);
+  freeGreenSymmetriesMatrix(&greenSymMat);
   freeSymmetries(&sym);
 
   return 0;

@@ -44,7 +44,7 @@ void readDouble(FILE * file, char * name,  double * value) {
             if (strcmp(tmpstr1,name)==0) { *value = atof(tmpstr2); return;} 
         }
     }
-    printf("\ncannot find the %s parameter in 'model.dat'", name);
+    printf("\ncannot find the %s parameter.\n", name);
     exit(1);
 }
 
@@ -63,7 +63,7 @@ void readInt(FILE * file, char * name,  int * value) {
             if (strcmp(tmpstr1,name)==0) { *value = atoi(tmpstr2); return;} 
         }
     }
-    printf("\ncannot find the %s parameter in 'model.dat'", name);
+    printf("\ncannot find the %s parameter.\n", name);
     exit(1);
 }
 

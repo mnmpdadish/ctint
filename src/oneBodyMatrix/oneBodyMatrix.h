@@ -352,6 +352,19 @@ void print_tMatrix(tMatrix * tMat) {
 
 
 
+double calculate_tMatrixLoc_ij(tMatrix * tMat, unsigned int i, unsigned int j) {
+  assert(i<tMat->nSites);
+  assert(j<tMat->nSites);
+  double retVal = 0.;
+  int k;
+  for(k=0;k<tMat->sparse.n;k++)
+    if(isZero_IntPosition(tMat->sparse.clusterPosition[k]))  // if local: clusterPosition = (0,0,0)
+      if(tMat->sparse.index1[k]==i && tMat->sparse.index2[k]==j) 
+        retVal += tMat->sparse.value[k];
+  return retVal;
+}
+
+
 void calculate_tMatrixK_2D(tMatrix * tMat, cMatrix * tMatrixK, double kx, double ky) {
   unsigned int i;
   assert(tMatrixK->N==tMat->nSites);
@@ -363,8 +376,6 @@ void calculate_tMatrixK_2D(tMatrix * tMat, cMatrix * tMatrixK, double kx, double
     ELEM(tMatrixK, tMat->sparse.index1[i], tMat->sparse.index2[i]) += tMat->sparse.value[i] * ek;
   }
 }
-
-
 
 
 double calculate_hybFirstMoments_ij(tMatrix * tMat, unsigned int i, unsigned int j) {

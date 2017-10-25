@@ -9,7 +9,7 @@
 #include "util/arrays/array.h"
 
 int main() {
-  int verbose=0;
+  int verbose=1;
   int Nfail=0;
   printf("\n\n\n--------------------\ntesting dynamic arrays:\n--------------------\n");
   Nfail+= passOrFail("test_Array_double",       test_Array_double(verbose));

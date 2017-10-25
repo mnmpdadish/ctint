@@ -5,6 +5,7 @@ g.out
 tmp
 conductivities*.dat
 */a.out
+green0*.dat
 
 ctINT
 findGreenTool
