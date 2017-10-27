@@ -93,32 +93,41 @@ typedef struct {
 
 typedef struct {
   unsigned int n;
-  functionComplex * tau;
-  functionComplex * mat;
-  double * hybFM;
+  //functionComplex * tau;
+  functionComplex * functions;
+  double * M1; //first moment
+  double * M2; //second moment
+  double * M3; //third moment
   double beta;
 } IndepFunctionComplex;
 
 void init_IndepFunctionComplex(IndepFunctionComplex * indepFun, Model * model) {
-  indepFun->n     = model->greenSymMat.nIndep;
-  indepFun->tau   = (functionComplex *) malloc(indepFun->n * sizeof (functionComplex));
-  indepFun->mat   = (functionComplex *) malloc(indepFun->n * sizeof (functionComplex));
-  indepFun->hybFM = (double *) malloc(indepFun->n * sizeof (double));
+  indepFun->n         = model->greenSymMat.nIndep;
+  //indepFun->tau       = (functionComplex *) malloc(indepFun->n * sizeof (functionComplex));
+  indepFun->functions = (functionComplex *) malloc(indepFun->n * sizeof (functionComplex));
+  indepFun->M1 = (double *) malloc(indepFun->n * sizeof (double));
+  indepFun->M2 = (double *) malloc(indepFun->n * sizeof (double));
+  indepFun->M3 = (double *) malloc(indepFun->n * sizeof (double));
   
   //naming the n functions:
   int k;
   for(k=0; k<indepFun->n; k++){
     int i=model->greenSymMat.iFirstIndep[k];
     int j=model->greenSymMat.jFirstIndep[k];
-    nameGreenSymmetriesElement(&model->greenSymMat, i, j, indepFun->mat[k].name);
+    nameGreenSymmetriesElement(&model->greenSymMat, i, j, indepFun->functions[k].name);
+    indepFun->M1[k] = 0.0;
+    indepFun->M2[k] = 0.0;
+    indepFun->M3[k] = 0.0;
   }
   indepFun->beta = model->beta;
 }
 
 void free_IndepFunctionComplex(IndepFunctionComplex * indepFun) {
-  free(indepFun->tau);
-  free(indepFun->mat);
-  free(indepFun->hybFM);
+  //free(indepFun->tau);
+  free(indepFun->functions);
+  free(indepFun->M1);
+  free(indepFun->M2);
+  free(indepFun->M3);
 }
 
 void precalculate_G0(IndepFunctionComplex * g0, Model * model) {
@@ -126,14 +135,16 @@ void precalculate_G0(IndepFunctionComplex * g0, Model * model) {
   for(k=0; k<g0->n; k++){
     int i=model->greenSymMat.iFirstIndep[k];
     int j=model->greenSymMat.jFirstIndep[k];
-    printf("i=%d, j=%d\n", i,j);
-    //nameGreenSymmetriesElement(&model->greenSymMat, i, j, g0->mat[k].name);
+    double tLoc_ij = calculate_tMatrixLoc_ij(&model->tMat, i, j);
+    double a = -model->muAux + tLoc_ij;
+    g0->M1[k] = 1.0;
+    g0->M2[k] = a;
+    g0->M3[k] = a*a; //+hybFM;
     for(n=0; n<N_PTS; n++){
       double complex z = I*(2.*n+1)*M_PI/g0->beta;
-      double tLoc_ij = calculate_tMatrixLoc_ij(&model->tMat, i, j);
       double complex hyb = 0.0;
-      g0->mat[k].data[n] = 1./( z- model->muAux - tLoc_ij - hyb);
-      if(n<100) printf("% 3.2e ",creal(g0->mat[k].data[n]));
+      g0->functions[k].data[n] = 1./( z + model->muAux - tLoc_ij - hyb);
+      //if(n<100) printf("% 3.2e ",creal(g0->functions[k].data[n]));
     }
     printf("\n\n");
   }
@@ -142,13 +153,20 @@ void precalculate_G0(IndepFunctionComplex * g0, Model * model) {
 
 void writeToFile_IndepFunctionComplex(FILE *fileOut, IndepFunctionComplex * indepFun) {
   int k,n;
-    
+  fprintf(fileOut, "# w_matsubara");
+  for(k=0; k<indepFun->n; k++){
+    fprintf(fileOut, "          %s_re         %s_im", (indepFun->functions[k].name ), (indepFun->functions[k].name ));
+  }
+  fprintf(fileOut, "\n");
+      
   for(n=0; n<N_PTS; n++){
     double omega_n = (2.*n+1)*M_PI/indepFun->beta;
+    double complex z = I*omega_n;
     if(n<100) fprintf(fileOut, "% 3.6e  ", omega_n);
     else break;
     for(k=0; k<indepFun->n; k++){
-      if(n<100) fprintf(fileOut, "% 3.6e % 3.6e  ", creal(indepFun->mat[k].data[n]), cimag(indepFun->mat[k].data[n]));
+      if(n<100) fprintf(fileOut, "% 3.6e % 3.6e  ", creal(indepFun->functions[k].data[n]), cimag(indepFun->functions[k].data[n]));
+      if(n<100) fprintf(fileOut, "% 3.6e % 3.6e  ", creal(indepFun->M2[k]/(z*z)), cimag(indepFun->M1[k]/z+indepFun->M3[k]/(z*z*z)) );
     }
     fprintf(fileOut,"\n");
   }
