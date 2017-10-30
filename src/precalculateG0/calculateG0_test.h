@@ -8,7 +8,7 @@
 #include "calculateG0.h"
 
 int test_Plaquettes2x2(int verbose) {
-  int Nerror=1;
+  int Nerror=0;
   char fileName[]="testInputFiles/plaquette2x2.model";
   FILE * file = fopen(fileName, "rt");
   if(file == NULL) {printf("file %s not found\n", fileName); exit(1);}
@@ -26,9 +26,13 @@ int test_Plaquettes2x2(int verbose) {
   calculate_G0_tau(&g0_matsubara,&g0_tau);
   
   FILE *fileOut = fopen("green0.dat","w");
-  //writeToFile_cMatrixFunction(fileOut, &g0_tau, &model);
   writeToFile_dMatrixFunction(fileOut, &g0_tau, &model);
   
+  
+  if(!doubleEqual(g0_tau.matrices[5].data[0], -0.73163549)) Nerror+=1;
+  if(!doubleEqual(g0_tau.matrices[5].data[1],  0.13809539)) Nerror+=1;
+  if(!doubleEqual(g0_tau.matrices[5].data[3],  0.19526103)) Nerror+=1;
+  //print_dMatrix(&g0_tau.matrices[5]);
   
   free_dMatrixFunction(&g0_tau);
   free_cMatrixFunction(&g0_matsubara);

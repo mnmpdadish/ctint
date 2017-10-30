@@ -197,7 +197,7 @@ unsigned int print_dMatrix(dMatrix const * A) {
     for (j = 0; j < A->N; j++) {
       val = ELEM(A, i, j);
       //if(fabs(val)>tol) 
-      printf("% 6.3f ", val);
+      printf("% 6.8f ", val);
       //else printf("   .   ");
     }
     printf("\n");
