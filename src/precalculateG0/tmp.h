@@ -93,24 +93,40 @@ typedef struct {
 
 typedef struct {
   unsigned int n;
-  //functionComplex * tau;
-  functionComplex * functions;
-  double * M0; //zeroth moment
-  double * M1; //first moment
-  double * M2; //second moment
-  double * M3; //third moment
+  cMatrix **mat;
+  cMatrix *M0; //zeroth moment
+  cMatrix *M1; //first moment
+  cMatrix *M2; //second moment
+  cMatrix *M3; //third moment
   double beta;
-} IndepFunctionComplex;
+} cMatrixFunction;
 
-void init_IndepFunctionComplex(IndepFunctionComplex * indepFun, Model * model) {
-  indepFun->n         = model->greenSymMat.nIndep;
-  //indepFun->tau       = (functionComplex *) malloc(indepFun->n * sizeof (functionComplex));
-  indepFun->functions = (functionComplex *) malloc(indepFun->n * sizeof (functionComplex));
-  indepFun->M0 = (double *) malloc(indepFun->n * sizeof (double));
-  indepFun->M1 = (double *) malloc(indepFun->n * sizeof (double));
-  indepFun->M2 = (double *) malloc(indepFun->n * sizeof (double));
-  indepFun->M3 = (double *) malloc(indepFun->n * sizeof (double));
+void init_cMatrixFunction(cMatrixFunction * cMatFun, Model * model) {
+
+  printf("salut\n"); fflush(stdout);
+  cMatFun->M0 = (cMatrix *) malloc(N_PTS * sizeof (cMatrix ));
+  cMatFun->M1 = (cMatrix *) malloc(N_PTS * sizeof (cMatrix ));
+  cMatFun->M2 = (cMatrix *) malloc(N_PTS * sizeof (cMatrix ));
+  cMatFun->M3 = (cMatrix *) malloc(N_PTS * sizeof (cMatrix ));
   
+  init_cMatrix(cMatFun->M0,model->sites.n);
+  init_cMatrix(cMatFun->M1,model->sites.n);
+  init_cMatrix(cMatFun->M2,model->sites.n);
+  init_cMatrix(cMatFun->M3,model->sites.n);
+  
+  printf("salut\n"); fflush(stdout);
+  cMatFun->mat = (cMatrix **) malloc(N_PTS * sizeof (cMatrix *));
+  printf("salut\n"); fflush(stdout);
+  
+  int n;
+  for(n=0; n<N_PTS; n++){
+    cMatFun->mat[n] = (cMatrix *) malloc(N_PTS * sizeof (cMatrix));
+    printf("%d ",n); fflush(stdout);
+    init_cMatrix(cMatFun->mat[n],model->sites.n);
+    reset_cMatrix(cMatFun->mat[n]);
+  }
+  
+  /*
   //naming the n functions:
   int k;
   for(k=0; k<indepFun->n; k++){
@@ -121,19 +137,60 @@ void init_IndepFunctionComplex(IndepFunctionComplex * indepFun, Model * model) {
     indepFun->M1[k] = 0.0;
     indepFun->M2[k] = 0.0;
     indepFun->M3[k] = 0.0;
+  }*/
+  cMatFun->beta = model->beta;
+}
+
+void free_cMatrixFunction(cMatrixFunction * cMatFun) {
+  free_cMatrix(cMatFun->M0);
+  free_cMatrix(cMatFun->M1);
+  free_cMatrix(cMatFun->M2);
+  free_cMatrix(cMatFun->M3);
+  int n;
+  for(n=0; n<N_PTS; n++) free_cMatrix(cMatFun->mat[n]);
+}
+
+void calculateG0_matsubara(cMatrixFunction * g0_matsubara, Model * model) {
+  int i,n;
+  cMatrix tLoc;
+  init_cMatrix(&tLoc,model->sites.n);
+  calculate_HoppingMatrixLoc(&model->tMat, &tLoc);
+  
+  for(n=0; n<N_PTS; n++){
+    reset_cMatrix(g0_matsubara->mat[n]);
+    double complex z = I*(2.*n+1)*M_PI/g0_matsubara->beta;
+    for(i=0; i<model->sites.n; i++) {
+      printf("i=%d \n",i);
+      printf("%f %f\n", creal(z + model->muAux), cimag(z + model->muAux));
+      ELEM(g0_matsubara->mat[n], i, i) = z + model->muAux; // g = diagonal(muAux)
+    }
+    //cMatrixMatrixAddition(g0_matsubara->mat[n],&tLoc,g0_matsubara->mat[n], -1.0);  // g = g-tLoc
+    //cMatrixMatrixAddition(&g0_matsubara->mat[n],&hyb_matsubara,&g0_matsubara->mat[n], 1.0); 
+    print_cMatrix(g0_matsubara->mat[n]);
+    print_cMatrix(&tLoc);
+    invert_cMatrix(g0_matsubara->mat[n]); // g=g^-1
   }
-  indepFun->beta = model->beta;
 }
 
-void free_IndepFunctionComplex(IndepFunctionComplex * indepFun) {
-  //free(indepFun->tau);
-  free(indepFun->functions);
-  free(indepFun->M0);
-  free(indepFun->M1);
-  free(indepFun->M2);
-  free(indepFun->M3);
-}
+/*
+void calculateInversFourierTransform(cMatrixFunction * g0_matsubara, cMatrixFunction * g0_tau) {
+  int k, n1, n2;
+  for(k=0; k<g0_mat->n; k++){
+    for(n1=0; n1<N_PTS; n1++){
+      g0_tau->functions[k].data[n1] = 0.0;
+      double tau = g0_mat->beta*n1/(N_PTS - 1);
 
+      for(n2=N_PTS-1; n2>=0; n2--){
+        double omega_n2 = (2.*n2+1)*M_PI/g0_mat->beta;
+        double complex expFactor = 2.*cexp(-I*omega_n2*tau)/(g0_mat->beta) ;
+        g0_tau->functions[k].data[n1] += expFactor * g0_mat->functions[k].data[n2];
+      }
+    }
+  }
+}
+*/
+
+/*
 void calculateIndependant_G0_mat(IndepFunctionComplex * g0_mat, Model * model) {
   int k,n;
   for(k=0; k<g0_mat->n; k++){
@@ -207,47 +264,31 @@ void calculateIndependant_G0_tau(IndepFunctionComplex * g0_mat, IndepFunctionCom
   calculateInversFourierTransform(g0_mat, g0_tau);
   addMoments_G0_tau(g0_mat, g0_tau);
 }
+*/
 
 
 
-/*
-void IFT(const std::vector<_SiteVector>& bufferMAT, std::vector<_SiteVector>& bufferIT) {
-		int tauN = 0;
-		for(typename std::vector<_SiteVector>::iterator itIT = bufferIT.begin(); itIT != bufferIT.end(); itIT++, tauN++) {
-			double tau = beta_*static_cast<double>(tauN)/static_cast<double>(bufferIT.size() - 1);
-			itIT->clear();
-			
-			int frequencyMAT = 2*bufferMAT.size() - 1;
-			for(typename std::vector<_SiteVector>::const_reverse_iterator itMAT = bufferMAT.rbegin(); itMAT != bufferMAT.rend(); itMAT++, frequencyMAT -= 2) {
-				double omega = static_cast<double>(frequencyMAT)*M_PI/beta_;
-				
-				complex fact(2.*std::cos(-omega*tau)/beta_, 2.*std::sin(-omega*tau)/beta_);
-				for(_Site i = 0; i < _SiteVector::VEC_DIM; ++i) 
-					(*itIT)(i) += fact*(*itMAT)(i);
-			}
-		}
-	};
-	*/
-
-
-void writeToFile_IndepFunctionComplex(FILE *fileOut, IndepFunctionComplex * indepFun) {
+void writeToFile_cMatrixFunction(FILE *fileOut, cMatrixFunction * cMatFun, Model * model) {
   int k,n;
+  
   fprintf(fileOut, "# w_matsubara");
-  for(k=0; k<indepFun->n; k++){
-    fprintf(fileOut, "          %s_re         %s_im", (indepFun->functions[k].name ), (indepFun->functions[k].name ));
+  for(k=0; k<model->greenSymMat.nIndep; k++) {
+    int i=model->greenSymMat.iFirstIndep[k];
+    int j=model->greenSymMat.jFirstIndep[k];
+    char nameReal[2];
+    char nameImag[2];
+    nameGreenSymmetriesElement(&model->greenSymMat, i, j, nameReal);
+    nameGreenSymmetriesElement(&model->greenSymMat, i, j, nameImag);
+    fprintf(fileOut, "          %s_re         %s_im", nameReal, nameImag);
   }
-  fprintf(fileOut, "\n");
-      
+  
   for(n=0; n<N_PTS; n++){
-    double omega_n = (2.*n+1)*M_PI/indepFun->beta;
-    //double complex z = I*omega_n;
+    double omega_n = (2.*n+1)*M_PI/cMatFun->beta;
     fprintf(fileOut, "% 3.6e  ", omega_n);
-    //else break;
-    for(k=0; k<indepFun->n; k++){
-      fprintf(fileOut, "% 3.6e % 3.6e  ", creal(indepFun->functions[k].data[n]), cimag(indepFun->functions[k].data[n]));
-      //moments: (they fit)
-      //if(n<100) fprintf(fileOut, "% 3.6e % 3.6e  ", creal(indepFun->M2[k]/(z*z)), cimag(indepFun->M1[k]/z+indepFun->M3[k]/(z*z*z)) );
-      //if(n<100) fprintf(fileOut, "% 3.6e % 3.6e  ", creal(indepFun->functions[k].data[n]-indepFun->M2[k]/(z*z)), cimag(indepFun->functions[k].data[n]-(indepFun->M1[k]/z+indepFun->M3[k]/(z*z*z))) );
+    for(k=0; k<model->greenSymMat.nIndep; k++) {
+      int i=model->greenSymMat.iFirstIndep[k];
+      int j=model->greenSymMat.jFirstIndep[k];
+      fprintf(fileOut, "% 3.6e % 3.6e  ", creal(ELEM(cMatFun->mat[n], i, j)), cimag(ELEM(cMatFun->mat[n], i, j)) );
     }
     fprintf(fileOut,"\n");
   }

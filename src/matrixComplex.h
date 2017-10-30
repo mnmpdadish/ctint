@@ -137,6 +137,7 @@ unsigned int copy_cMatrix(cMatrix const * A, cMatrix * B) {
 
 
 #define ELEM(mtx, i, j) (mtx->data[j * mtx->N + i])
+#define ELEM_VAL(mtx, i, j) (mtx.data[j * mtx.N + i])
 //B=A
 //where dim(B)=NxN and dim(A)=(A->N)x(A->N)
 unsigned int copySub_cMatrix(cMatrix const * A, cMatrix * B, unsigned int N) {
@@ -152,16 +153,25 @@ unsigned int copySub_cMatrix(cMatrix const * A, cMatrix * B, unsigned int N) {
 }
 
 
-//C=A*B
+//C=factor*A+B
 unsigned int cMatrixMatrixAddition(cMatrix const * A, cMatrix const * B, cMatrix * C, double complex factor) {
   assert(A->N == B->N);
   //resize_cMatrix(C,A->N);
-  copy_cMatrix(B,C);
+  if(B!=C) copy_cMatrix(B,C);
   unsigned int N2=A->N*A->N;
   unsigned int one=1;
   zaxpy_(&N2, &factor, A->data, &one, C->data, &one);
   return 0;
 }
+
+//A=factorA*A+factorB*B
+unsigned int cMatrixMatrixAdditionInPlace(cMatrix * A, cMatrix const * B, double complex factorA, double complex factorB) {
+  assert(A->N == B->N);
+  unsigned int i;
+  for(i=0; i<(A->N*A->N); i++) A->data[i]=factorA*A->data[i]+factorB*B->data[i];
+  return 0;
+}
+
 
 
 //C=A*B

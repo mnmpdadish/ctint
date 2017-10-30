@@ -279,7 +279,7 @@ int test_cAddition(int verbose) {
     printf("\nB=\n"); print_cMatrix(&B);
   }
 
-  cMatrixMatrixAddition(&A,&B,&C, 1.0);
+  cMatrixMatrixAddition(&A,&B,&A, 1.0);  // to addition in place, do: cMatrixMatrixAddition(&A,&B,&B, 1.0)
   if(verbose) {
     printf("\nC=A+B=\n"); 
     print_cMatrix(&C);

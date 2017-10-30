@@ -17,22 +17,21 @@ int test_Plaquettes2x2(int verbose) {
   Model model;
   read_Model(file,&model);
   
-  MatrixFunctionComplex g0_matsubara;
-  init_MatrixFunctionComplex(&g0_matsubara, &model);
-  /*
-  init_IndepFunctionComplex(&g0_mat, &model);
-  init_IndepFunctionComplex(&g0_tau, &model);
-  calculateIndependant_G0_mat(&g0_mat, &model);
+  cMatrixFunction g0_matsubara;
+  dMatrixFunction g0_tau;
+  init_cMatrixFunction(&g0_matsubara, &model);
+  init_dMatrixFunction(&g0_tau, &model);
   
+  calculate_G0_matsubara(&g0_matsubara, &model);
+  calculate_G0_tau(&g0_matsubara,&g0_tau);
   
   FILE *fileOut = fopen("green0.dat","w");
-  calculateIndependant_G0_tau(&g0_mat, &g0_tau);
-  writeToFile_IndepFunctionComplex(fileOut, &g0_tau);
+  //writeToFile_cMatrixFunction(fileOut, &g0_tau, &model);
+  writeToFile_dMatrixFunction(fileOut, &g0_tau, &model);
   
-  free_IndepFunctionComplex(&g0_mat);
-  free_IndepFunctionComplex(&g0_tau);
-  */
-  free_MatrixFunctionComplex(&g0_matsubara);
+  
+  free_dMatrixFunction(&g0_tau);
+  free_cMatrixFunction(&g0_matsubara);
   free_Model(&model);
   
   return Nerror;

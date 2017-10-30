@@ -351,7 +351,7 @@ void print_HoppingMatrix(HoppingMatrix * tMat) {
 }
 
 
-/*
+
 double calculate_HoppingMatrixLoc_ij(HoppingMatrix * tMat, unsigned int i, unsigned int j) {
   assert(i<tMat->nSites);
   assert(j<tMat->nSites);
@@ -363,7 +363,7 @@ double calculate_HoppingMatrixLoc_ij(HoppingMatrix * tMat, unsigned int i, unsig
         retVal += tMat->sparse.value[k];
   return retVal;
 }
-*/
+
 
 void calculate_HoppingMatrixLoc(HoppingMatrix * tMat, cMatrix * tMatrixLoc) {
   unsigned int k;
