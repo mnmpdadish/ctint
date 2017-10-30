@@ -2,7 +2,7 @@
 #include "../util/stringUtil.h"
 #include "../util/arrays/array.h"
 #include "../util/test.h"
-#include "precalculateG0_test.h"
+#include "calculateG0_test.h"
 
 int main() {
   int verbose=1;

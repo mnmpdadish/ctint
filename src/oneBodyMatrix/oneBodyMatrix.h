@@ -211,7 +211,7 @@ typedef struct {
   IntPosition *clusterPosition;
   unsigned int n;
   unsigned int capacity;
-} Sparse_tMatrix; // contains a list of 
+} Sparse_HoppingMatrix; // contains a list of 
 
 // ------------------------------------------------------------------
 
@@ -227,11 +227,11 @@ typedef struct {
   unsigned int capacity;
   unsigned int nSites;
   OperatorDef * operators;
-  Sparse_tMatrix sparse;
-} tMatrix;
+  Sparse_HoppingMatrix sparse;
+} HoppingMatrix;
 
 
-int init_tMatrix(tMatrix * tMat) {
+int init_HoppingMatrix(HoppingMatrix * tMat) {
   tMat->capacity = INIT_CAPACITY;
   tMat->operators = (OperatorDef *) malloc(tMat->capacity * sizeof (OperatorDef ));
   tMat->n=0;
@@ -245,7 +245,7 @@ int init_tMatrix(tMatrix * tMat) {
   return 0;
 }
 
-void addOperators_tMatrix(tMatrix * tMat, char label[64], double coefficient, int posDiff3D[3]) {
+void addOperators_HoppingMatrix(HoppingMatrix * tMat, char label[64], double coefficient, int posDiff3D[3]) {
   if(tMat->n > tMat->capacity) tMat->operators = realloc(tMat->operators, (tMat->capacity *= 2) * sizeof(OperatorDef));
   memset(tMat->operators[tMat->n].label,0,64);
   strcpy(tMat->operators[tMat->n].label,label);
@@ -258,7 +258,7 @@ void addOperators_tMatrix(tMatrix * tMat, char label[64], double coefficient, in
 
   
 
-void readOperators_tMatrix(FILE * file, tMatrix * tMat){
+void readOperators_HoppingMatrix(FILE * file, HoppingMatrix * tMat){
   rewind(file);
   char tempbuff[256];  //each line should not be above 256 char long.
   int found=0;
@@ -280,13 +280,13 @@ void readOperators_tMatrix(FILE * file, tMatrix * tMat){
           int minusPosDiff3D[3];
           int nRead,i;
           nRead = sscanf(tempbuff,"%s (%d,%d,%d) %f \n",label, &posDiff3D[0],&posDiff3D[1],&posDiff3D[2],&coefficient);
-          addOperators_tMatrix(tMat, label, coefficient, posDiff3D);
+          addOperators_HoppingMatrix(tMat, label, coefficient, posDiff3D);
           int isNot_0_0_0=0;
           for(i=0;i<3;i++) {
             minusPosDiff3D[i]=-posDiff3D[i];
             if(minusPosDiff3D[i] != posDiff3D[i]) isNot_0_0_0=1;
           }
-          if(isNot_0_0_0) addOperators_tMatrix(tMat, label, coefficient, minusPosDiff3D);
+          if(isNot_0_0_0) addOperators_HoppingMatrix(tMat, label, coefficient, minusPosDiff3D);
           
           if(nRead!=5) {
             printf("Cannot read correctly the one-body line: \n%s", tempbuff); 
@@ -299,7 +299,7 @@ void readOperators_tMatrix(FILE * file, tMatrix * tMat){
   }
 }
 
-void addElementSparse_tMatrix(tMatrix * tMat, unsigned int i1, unsigned int i2, IntPosition foldingR, double value) {
+void addElementSparse_HoppingMatrix(HoppingMatrix * tMat, unsigned int i1, unsigned int i2, IntPosition foldingR, double value) {
   unsigned int N = tMat->sparse.n;
   if(N == tMat->sparse.capacity) {
     tMat->sparse.capacity *= 2;
@@ -316,7 +316,7 @@ void addElementSparse_tMatrix(tMatrix * tMat, unsigned int i1, unsigned int i2, 
   tMat->sparse.n++;
 }
 
-void defineSparse_tMatrix(tMatrix * tMat, MultiplePositions *sites, MultiplePositions *superlattice) {
+void defineSparse_HoppingMatrix(HoppingMatrix * tMat, MultiplePositions *sites, MultiplePositions *superlattice) {
   unsigned int i,j,k;
   tMat->nSites = sites->n;
   for(i=0;i<tMat->n;i++){
@@ -325,12 +325,12 @@ void defineSparse_tMatrix(tMatrix * tMat, MultiplePositions *sites, MultiplePosi
       Folding folding = Fold(newPosition1, *sites, *superlattice);
       unsigned int newIndex=-1;
       for(k=0;k<sites->n;k++) if(isZero_IntPosition(addIntPosition(sites->positions[k],  folding.r, -1))) newIndex = k;
-      addElementSparse_tMatrix(tMat,newIndex,j,folding.R,tMat->operators[i].coefficient); 
+      addElementSparse_HoppingMatrix(tMat,newIndex,j,folding.R,tMat->operators[i].coefficient); 
     }
   }
 }
 
-void print_tMatrix(tMatrix * tMat) {
+void print_HoppingMatrix(HoppingMatrix * tMat) {
   unsigned int i;
   for(i=0;i<tMat->n;i++) {
     printf("operator %d: '%s' with coeff %f and position difference vector: (%d,%d,%d)\n", 
@@ -351,8 +351,8 @@ void print_tMatrix(tMatrix * tMat) {
 }
 
 
-
-double calculate_tMatrixLoc_ij(tMatrix * tMat, unsigned int i, unsigned int j) {
+/*
+double calculate_HoppingMatrixLoc_ij(HoppingMatrix * tMat, unsigned int i, unsigned int j) {
   assert(i<tMat->nSites);
   assert(j<tMat->nSites);
   double retVal = 0.;
@@ -363,9 +363,21 @@ double calculate_tMatrixLoc_ij(tMatrix * tMat, unsigned int i, unsigned int j) {
         retVal += tMat->sparse.value[k];
   return retVal;
 }
+*/
+
+void calculate_HoppingMatrixLoc(HoppingMatrix * tMat, cMatrix * tMatrixLoc) {
+  unsigned int k;
+  assert(tMatrixLoc->N==tMat->nSites);
+  reset_cMatrix(tMatrixLoc);
+  for(k=0;k<tMat->sparse.n;k++){
+    if(isZero_IntPosition(tMat->sparse.clusterPosition[k]))  // if local: clusterPosition = (0,0,0)
+      ELEM(tMatrixLoc, tMat->sparse.index1[k], tMat->sparse.index2[k]) += tMat->sparse.value[k];
+  }
+}
 
 
-void calculate_tMatrixK_2D(tMatrix * tMat, cMatrix * tMatrixK, double kx, double ky) {
+
+void calculate_tMatrixK_2D(HoppingMatrix * tMat, cMatrix * tMatrixK, double kx, double ky) {
   unsigned int i;
   assert(tMatrixK->N==tMat->nSites);
   reset_cMatrix(tMatrixK);
@@ -378,7 +390,7 @@ void calculate_tMatrixK_2D(tMatrix * tMat, cMatrix * tMatrixK, double kx, double
 }
 
 
-double calculate_hybFirstMoments_ij(tMatrix * tMat, unsigned int i, unsigned int j) {
+double calculate_hybFirstMoments_ij(HoppingMatrix * tMat, unsigned int i, unsigned int j) {
   unsigned int k,n1,n2; // k is the dummy summation index, n1 and n2 are both the indices of the sparse matrix definition
   double retVal = 0.0;
   for(k=0; k<tMat->sparse.n; k++)
@@ -393,7 +405,7 @@ double calculate_hybFirstMoments_ij(tMatrix * tMat, unsigned int i, unsigned int
   return retVal;
 }
 
-void calculate_hybFirstMoments(tMatrix * tMat, dMatrix * hybFM) {
+void calculate_hybFirstMoments(HoppingMatrix * tMat, dMatrix * hybFM) {
   unsigned int i,j; // i,j: the indices of the matrix
   assert(hybFM->N==tMat->nSites);
   reset_dMatrix(hybFM);
@@ -403,7 +415,7 @@ void calculate_hybFirstMoments(tMatrix * tMat, dMatrix * hybFM) {
 }
 
 
-void free_tMatrix(tMatrix * tMat) {
+void free_HoppingMatrix(HoppingMatrix * tMat) {
   free(tMat->operators);
   free(tMat->sparse.index1);
   free(tMat->sparse.index2);

@@ -15,10 +15,10 @@ int test_oneBodyMatrix(int verbose) {
   if(file == NULL) {printf("file %s not found\n", fileName); exit(1);}
   printf("\nreading one-body operators from %s:\n", fileName);
 
-  tMatrix tMat;
-  init_tMatrix(&tMat);
-  readOperators_tMatrix(file, &tMat);
-  //print_tMatrix(&tMat);
+  HoppingMatrix tMat;
+  init_HoppingMatrix(&tMat);
+  readOperators_HoppingMatrix(file, &tMat);
+  //print_HoppingMatrix(&tMat);
   
   MultiplePositions sites;
   init_MultiplePositions(&sites);
@@ -40,8 +40,8 @@ int test_oneBodyMatrix(int verbose) {
   if(folding.r.x !=1   || folding.r.y !=1   || folding.r.z != 0) Nerror++;
   
   
-  defineSparse_tMatrix(&tMat, &sites, &superlattice);
-  print_tMatrix(&tMat);
+  defineSparse_HoppingMatrix(&tMat, &sites, &superlattice);
+  print_HoppingMatrix(&tMat);
   
   cMatrix tMatrixK, Sol1;
   init_cMatrix(&tMatrixK,sites.n);
@@ -83,7 +83,7 @@ int test_oneBodyMatrix(int verbose) {
   
   free_cMatrix(&tMatrixK);
   free_dMatrix(&hybFM);
-  free_tMatrix(&tMat);
+  free_HoppingMatrix(&tMat);
   free_MultiplePositions(&sites);
   free_MultiplePositions(&superlattice);
 

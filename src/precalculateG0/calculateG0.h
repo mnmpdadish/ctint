@@ -93,24 +93,27 @@ typedef struct {
 
 typedef struct {
   unsigned int n;
-  //functionComplex * tau;
-  functionComplex * functions;
-  double * M0; //zeroth moment
-  double * M1; //first moment
-  double * M2; //second moment
-  double * M3; //third moment
+  cMatrix mat[N_PTS];
+  cMatrix M0; //zeroth moment
+  cMatrix M1; //first moment
+  cMatrix M2; //second moment
+  cMatrix M3; //third moment
   double beta;
-} IndepFunctionComplex;
+} MatrixFunctionComplex;
 
-void init_IndepFunctionComplex(IndepFunctionComplex * indepFun, Model * model) {
-  indepFun->n         = model->greenSymMat.nIndep;
-  //indepFun->tau       = (functionComplex *) malloc(indepFun->n * sizeof (functionComplex));
-  indepFun->functions = (functionComplex *) malloc(indepFun->n * sizeof (functionComplex));
-  indepFun->M0 = (double *) malloc(indepFun->n * sizeof (double));
-  indepFun->M1 = (double *) malloc(indepFun->n * sizeof (double));
-  indepFun->M2 = (double *) malloc(indepFun->n * sizeof (double));
-  indepFun->M3 = (double *) malloc(indepFun->n * sizeof (double));
+void init_MatrixFunctionComplex(MatrixFunctionComplex * matFunC, Model * model) {
   
+  init_cMatrix(&matFunC->M0,model->sites.n);
+  init_cMatrix(&matFunC->M1,model->sites.n);
+  init_cMatrix(&matFunC->M2,model->sites.n);
+  init_cMatrix(&matFunC->M3,model->sites.n);
+  int n;
+  for(n=0; n<N_PTS; n++){
+    init_cMatrix(&matFunC->mat[n],model->sites.n);
+    reset_cMatrix(&matFunC->mat[n]);
+  }
+  
+  /*
   //naming the n functions:
   int k;
   for(k=0; k<indepFun->n; k++){
@@ -121,19 +124,28 @@ void init_IndepFunctionComplex(IndepFunctionComplex * indepFun, Model * model) {
     indepFun->M1[k] = 0.0;
     indepFun->M2[k] = 0.0;
     indepFun->M3[k] = 0.0;
+  }*/
+  matFunC->beta = model->beta;
+}
+
+void free_MatrixFunctionComplex(MatrixFunctionComplex * matFunC) {
+  free_cMatrix(&matFunC->M0);
+  free_cMatrix(&matFunC->M1);
+  free_cMatrix(&matFunC->M2);
+  free_cMatrix(&matFunC->M3);
+  int n;
+  for(n=0; n<N_PTS; n++) free_cMatrix(&matFunC->mat[n]);
+}
+
+void calculateG0_matsubara(MatrixFunctionComplex * g0_matsubara, Model * model) {
+  int k,n;
+  for(n=0; n<N_PTS; n++){
+    
   }
-  indepFun->beta = model->beta;
 }
+  
 
-void free_IndepFunctionComplex(IndepFunctionComplex * indepFun) {
-  //free(indepFun->tau);
-  free(indepFun->functions);
-  free(indepFun->M0);
-  free(indepFun->M1);
-  free(indepFun->M2);
-  free(indepFun->M3);
-}
-
+/*
 void calculateIndependant_G0_mat(IndepFunctionComplex * g0_mat, Model * model) {
   int k,n;
   for(k=0; k<g0_mat->n; k++){
@@ -210,25 +222,6 @@ void calculateIndependant_G0_tau(IndepFunctionComplex * g0_mat, IndepFunctionCom
 
 
 
-/*
-void IFT(const std::vector<_SiteVector>& bufferMAT, std::vector<_SiteVector>& bufferIT) {
-		int tauN = 0;
-		for(typename std::vector<_SiteVector>::iterator itIT = bufferIT.begin(); itIT != bufferIT.end(); itIT++, tauN++) {
-			double tau = beta_*static_cast<double>(tauN)/static_cast<double>(bufferIT.size() - 1);
-			itIT->clear();
-			
-			int frequencyMAT = 2*bufferMAT.size() - 1;
-			for(typename std::vector<_SiteVector>::const_reverse_iterator itMAT = bufferMAT.rbegin(); itMAT != bufferMAT.rend(); itMAT++, frequencyMAT -= 2) {
-				double omega = static_cast<double>(frequencyMAT)*M_PI/beta_;
-				
-				complex fact(2.*std::cos(-omega*tau)/beta_, 2.*std::sin(-omega*tau)/beta_);
-				for(_Site i = 0; i < _SiteVector::VEC_DIM; ++i) 
-					(*itIT)(i) += fact*(*itMAT)(i);
-			}
-		}
-	};
-	*/
-
 
 void writeToFile_IndepFunctionComplex(FILE *fileOut, IndepFunctionComplex * indepFun) {
   int k,n;
@@ -255,4 +248,4 @@ void writeToFile_IndepFunctionComplex(FILE *fileOut, IndepFunctionComplex * inde
 
 
 
-
+*/
