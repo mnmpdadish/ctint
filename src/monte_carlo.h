@@ -157,7 +157,7 @@ int InsertVertex(MonteCarlo * mc) {
     mc->Stilde_up = 1.0/( mc->S_up - dScalarProduct(&mc->R, &mc->Qtilde_up) );
     mc->Stilde_down = 1.0/( mc->S_down - dScalarProduct(&mc->R, &mc->Qtilde_down) );
     
-    double pAcc = 1.0;//-2.*mc->model.sites.n*mc->model.beta*mc->model.auxU/ ( ((double)mc->vertices.N)*mc->Stilde_up*mc->Stilde_down );
+    double pAcc = -2.*mc->model.sites.n*mc->model.beta*mc->model.auxU/ ( ((double)mc->vertices.N)*mc->Stilde_up*mc->Stilde_down );
     //printf("pAcc=%f\n",pAcc);
     if(urng() < fabs(pAcc)) {
 			
@@ -219,7 +219,7 @@ void RemoveVertex(MonteCarlo * mc) {
     //double factUp = -1./ELEM_VAL(mc->M_up,p,p);
     //double factDown = -1./ELEM_VAL(mc->M_down,p,p);
 		//double pAcc = mc->vertices.N / (-2.0*mc->model.sites.n * mc->model.beta * mc->model.auxU * factUp * factDown);
-    double pAcc = 1.0;//(mc->vertices.N*ELEM_VAL(mc->M_up,p,p)*ELEM_VAL(mc->M_down,p,p) ) / (-2.0*mc->model.sites.n * mc->model.beta * mc->model.auxU);
+    double pAcc = (mc->vertices.N*ELEM_VAL(mc->M_up,p,p)*ELEM_VAL(mc->M_down,p,p) ) / (-2.0*mc->model.sites.n * mc->model.beta * mc->model.auxU);
     
     if(urng() < fabs(pAcc)) {
       if(pAcc < .0) mc->sign *= -1;
