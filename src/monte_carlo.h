@@ -100,7 +100,7 @@ void Print_MonteCarlo(MonteCarlo * mc){
 double auxUp(Vertex const * vertex, MonteCarlo *mc)   { return vertex->auxSpin ? mc->model.delta : -1. - mc->model.delta;}
 double auxDown(Vertex const * vertex, MonteCarlo *mc) { return vertex->auxSpin ? -1. - mc->model.delta : mc->model.delta;}
 double urng() {return (double)rand()/(double)(RAND_MAX);}
-double irng(unsigned int N) {return rand()%N;}
+unsigned int irng(unsigned int N) {return rand()%N;}
 
 
 double green0(Vertex const * vertexI, Vertex const * vertexJ, MonteCarlo *mc) { 
@@ -132,8 +132,8 @@ int InsertVertex(MonteCarlo * mc) {
   
   mc->S_up = green0(&newVertex, &newVertex, mc) + auxUp(&newVertex, mc);
   mc->S_down = green0(&newVertex, &newVertex, mc) + auxDown(&newVertex, mc);
-  printf("S_up=%f\n",mc->S_up);
-  printf("S_down=%f\n",mc->S_down);
+  //printf("S_up=%f\n",mc->S_up);
+  //printf("S_down=%f\n",mc->S_down);
   
   if(mc->vertices.N>0){
     assert(mc->M_up.N == mc->vertices.N);
@@ -157,8 +157,8 @@ int InsertVertex(MonteCarlo * mc) {
     mc->Stilde_up = 1.0/( mc->S_up - dScalarProduct(&mc->R, &mc->Qtilde_up) );
     mc->Stilde_down = 1.0/( mc->S_down - dScalarProduct(&mc->R, &mc->Qtilde_down) );
     
-    double pAcc = -2.*mc->model.sites.n*mc->model.beta*mc->model.auxU/ ( ((double)mc->vertices.N)*mc->Stilde_up*mc->Stilde_down );
-    printf("pAcc=%f\n",pAcc);
+    double pAcc = 1.0;//-2.*mc->model.sites.n*mc->model.beta*mc->model.auxU/ ( ((double)mc->vertices.N)*mc->Stilde_up*mc->Stilde_down );
+    //printf("pAcc=%f\n",pAcc);
     if(urng() < fabs(pAcc)) {
 			
       dVectorMatrixProduct(&mc->R, &mc->M_up, -mc->Stilde_up, &mc->Rtilde_up);
@@ -210,16 +210,40 @@ int InsertVertex(MonteCarlo * mc) {
 
 
 
-// remove vertex at a position (swap position with last vertex):
-void RemoveVertex(MonteCarlo * mc, unsigned int position) { 
-  assert(mc->vertices.N >= position);
-
-  mc->vertices.N--;  // the vertex is not deleted, it is just forgotten
-  int N = mc->vertices.N;
-
-  mc->vertices.m_vertex[position].tau     = mc->vertices.m_vertex[N].tau;
-  mc->vertices.m_vertex[position].site    = mc->vertices.m_vertex[N].site;
-  mc->vertices.m_vertex[position].auxSpin = mc->vertices.m_vertex[N].auxSpin;
+// remove a vertex:
+void RemoveVertex(MonteCarlo * mc) { 
+  assert(mc->M_up.N == mc->vertices.N);
+  assert(mc->M_down.N == mc->vertices.N);
+  if(mc->vertices.N > 0){
+    unsigned int p = irng(mc->vertices.N);
+    //double factUp = -1./ELEM_VAL(mc->M_up,p,p);
+    //double factDown = -1./ELEM_VAL(mc->M_down,p,p);
+		//double pAcc = mc->vertices.N / (-2.0*mc->model.sites.n * mc->model.beta * mc->model.auxU * factUp * factDown);
+    double pAcc = 1.0;//(mc->vertices.N*ELEM_VAL(mc->M_up,p,p)*ELEM_VAL(mc->M_down,p,p) ) / (-2.0*mc->model.sites.n * mc->model.beta * mc->model.auxU);
+    
+    if(urng() < fabs(pAcc)) {
+      if(pAcc < .0) mc->sign *= -1;
+      //printf("%d ==? %d\n",mc->M_up.N, mc->vertices.N);
+      
+      mc->vertices.N--;  // the vertex is not deleted, it is just forgotten
+      int N = mc->vertices.N;
+      dMatrixSwapRows(&mc->M_up,p,N);
+      dMatrixSwapCols(&mc->M_up,p,N);
+      dMatrixSwapRows(&mc->M_down,p,N);
+      dMatrixSwapCols(&mc->M_down,p,N);
+      
+      dSchurComplement(&mc->M_up,  &mc->Mdummy_up);
+      dSchurComplement(&mc->M_down,&mc->Mdummy_down);
+      
+      copy_dMatrix(&mc->Mdummy_up,  &mc->M_up);
+      copy_dMatrix(&mc->Mdummy_down,&mc->M_down);
+      
+      
+      mc->vertices.m_vertex[p].tau     = mc->vertices.m_vertex[N].tau;
+      mc->vertices.m_vertex[p].site    = mc->vertices.m_vertex[N].site;
+      mc->vertices.m_vertex[p].auxSpin = mc->vertices.m_vertex[N].auxSpin;
+    }
+  }
 }
 
 
