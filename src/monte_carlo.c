@@ -17,19 +17,19 @@ int main() {
   unsigned int seed = 1000000;
   srand(seed);
   
-  int i, N=100000;
-  int cleanUpdate=10000;
+  int i, N=11;
+  int cleanUpdate=10;
   for(i=0;i<N;i++) {
-    double pRemove = 1.0/25.0*mc.vertices.N * (double)rand()/(double)(RAND_MAX);
-    if (pRemove > 0.5) {
-      int pos=rand()%mc.vertices.N;
-      //printf("\n%d",pos);
-      RemoveVertex(&mc, pos);
+    //double pRemove = (double)rand()/(double)(RAND_MAX);
+    InsertVertex(&mc);
+    printf("\n\n\nnormal:\n");
+    Print_MonteCarlo(&mc);
+    if(i%cleanUpdate==0){
+      CleanUpdate(&mc);
+      printf("clean:\n");
+      Print_MonteCarlo(&mc);
     }
-    else { 
-      InsertVertex(&mc);
-    }
-    if(i%cleanUpdate==0) Print_MonteCarlo(&mc);
+    
     //usleep(10000);  
   }
   free_MonteCarlo(&mc);//vertices.N=0;

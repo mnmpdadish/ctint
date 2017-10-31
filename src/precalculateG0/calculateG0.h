@@ -24,6 +24,11 @@ typedef struct {
   double mu;
   double muAux;
   double U;
+  double auxU;
+  double delta;
+  int nUpdates;
+  int cleanUpdate;
+  int measureUpdate;
 } Model;
 
 
@@ -60,12 +65,18 @@ void read_Model(FILE * file, Model * model) {
   
   printf("\n");
   
-  
   readDouble(file, "U",     &model->U);
   readDouble(file, "mu",    &model->mu);
   readDouble(file, "beta",  &model->beta);  
+  readDouble(file, "delta",  &model->delta);  
+  
+  readInt(file, "nUpdates",  &model->nUpdates);  
+  readInt(file, "cleanUpdate",  &model->cleanUpdate);  
+  readInt(file, "measureUpdate",  &model->measureUpdate);  
   
   model->muAux = model->mu - model->U/2.0;
+  model->auxU = model->U/2.0;
+
   
 }
 
