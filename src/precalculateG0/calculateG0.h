@@ -11,7 +11,7 @@
 #include "../util/utilities.h"
 #include "../util/arrays/array.h"
 
-#define N_PTS 1000
+#define N_PTS 2000
 
 typedef struct {
   HoppingMatrix tMat;
@@ -221,11 +221,7 @@ void addMoments_G0_tau(cMatrixFunction * g0_matsubara, dMatrixFunction * g0_tau)
   double beta = g0_tau->beta;
   for(n=0; n<N_PTS; n++){
     double tau = g0_tau->beta*n/(N_PTS - 1);
-    //printf("before:\n"); print_cMatrix(&g0_tau->matrices[n]);
-    //printf("M1:\n"); print_cMatrix(&g0_matsubara->M1);
     dMatrix_cMatrixAdditionInPlace(&g0_tau->matrices[n],&g0_matsubara->M1, 1.0, -0.5);  
-    //printf("after: \n"); print_cMatrix(&g0_tau->matrices[n]);
-    //exit(1);
     dMatrix_cMatrixAdditionInPlace(&g0_tau->matrices[n],&g0_matsubara->M2, 1.0, 0.5*(tau-0.5*beta));  
     dMatrix_cMatrixAdditionInPlace(&g0_tau->matrices[n],&g0_matsubara->M3, 1.0, 0.25*(beta-tau)*tau);  
   }
@@ -234,9 +230,9 @@ void addMoments_G0_tau(cMatrixFunction * g0_matsubara, dMatrixFunction * g0_tau)
 
 void calculate_G0_tau(cMatrixFunction * g0_matsubara, dMatrixFunction * g0_tau) {
   g0_tau->beta = g0_matsubara->beta;
-  //removeMoments_G0_matsubara(g0_matsubara);
+  removeMoments_G0_matsubara(g0_matsubara);
   calculateInversFourierTransform(g0_matsubara, g0_tau);
-  //addMoments_G0_tau(g0_matsubara, g0_tau);
+  addMoments_G0_tau(g0_matsubara, g0_tau);
 }
 
 
