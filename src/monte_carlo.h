@@ -21,7 +21,13 @@ typedef struct {
 
 typedef struct {
   VerticesChain vertices;
-  dMatrixFunction g0_tau;
+  cMatrixFunction g_matsubara; //interacting Green Function to sample.
+  cMatrixFunction g0_matsubara; //non-intearcting Green Function.
+  
+  cMatrix dummy1; 
+  cMatrix dummy2; 
+  
+  dMatrixFunction g0_tau; //non-intearcting Green Function to interpolate (in order to evaluate fast often).
   dMatrix *M_up;   // These two matrices are THE matrices
   dMatrix *M_down; // Same notation as Gull. 
   dMatrix *Mdummy_up; // We use pointer for the M matrices because we want to 
@@ -42,13 +48,16 @@ typedef struct {
 
 void init_MonteCarlo(MonteCarlo * mc, Model * model) {
   init_dMatrixFunction(&mc->g0_tau, model);
+  init_cMatrixFunction(&mc->g_matsubara, model);
   
-  cMatrixFunction g0_matsubara;
-  init_cMatrixFunction(&g0_matsubara, model);
-  calculate_G0_matsubara(&g0_matsubara, model);
-  calculate_G0_tau(&g0_matsubara,&mc->g0_tau);
-  free_cMatrixFunction(&g0_matsubara);
-
+  init_cMatrix(&mc->dummy1, model->sites.n);
+  init_cMatrix(&mc->dummy2, model->sites.n);
+  
+  //cMatrixFunction g0_matsubara;
+  init_cMatrixFunction(&mc->g0_matsubara, model);
+  calculate_G0_matsubara(&mc->g0_matsubara, model);
+  calculate_G0_tau(&mc->g0_matsubara,&mc->g0_tau);
+  
   mc->M_up     = malloc(sizeof(dMatrix));
   mc->M_down    = malloc(sizeof(dMatrix));
   mc->Mdummy_up  = malloc(sizeof(dMatrix));
@@ -77,6 +86,8 @@ void init_MonteCarlo(MonteCarlo * mc, Model * model) {
 void free_MonteCarlo(MonteCarlo * mc) {
   free(mc->vertices.m_vertex);
   free_dMatrixFunction(&mc->g0_tau);
+  free_cMatrixFunction(&mc->g0_matsubara);
+  free_cMatrixFunction(&mc->g_matsubara);
   //free_dMatrixFunction(&mc->g0_tau_down);
   free_dMatrix(mc->M_up);
   free_dMatrix(mc->M_down);
@@ -117,7 +128,7 @@ double green0(Vertex const * vertexI, Vertex const * vertexJ, MonteCarlo *mc) {
     diff_tau -= mc->model.beta;
     aps = -1.;
   }
-  double ntau = fabs(diff_tau) * (N_PTS -1) /mc->model.beta;
+  double ntau = fabs(diff_tau) * (N_PTS_TAU -1) /mc->model.beta;
   unsigned int ntau0= (unsigned int) ntau;
   
   double val_n  = ELEM_VAL(mc->g0_tau.matrices[ntau0], vertexI->site, vertexJ->site);
@@ -280,50 +291,88 @@ void CleanUpdate(MonteCarlo * mc) {
 }
 
 
+
+
+
+
+
+
+
+
+
+
+//#define N_PTS_OUT 200
+// -------------------------------------------------------------------------
+
+/*
+typedef struct {
+  double data[N_PTS_TAU];
+} functionDouble;
+
+typedef struct {
+  unsigned int n;
+  functionDouble * func;
+} IndepFunctionDouble;
+
+void init_IndepFunctionDouble(IndepFunctionDouble * indepFun, Model * model) {
+  indepFun->n    = model->greenSymMat.nIndep;
+  indepFun->func = (functionDouble *) malloc(indepFun->n * sizeof (functionDouble));
+
+  int k;
+  for(k=0; k<indepFun->n; k++){
+    int i=model->greenSymMat.iFirstIndep[k];
+    int j=model->greenSymMat.jFirstIndep[k];
+  }
+}
+
+void free_IndepFunctionDouble(IndepFunctionDouble * indepFun) {
+  free(indepFun->func);
+}
+*/
+
+
 int measure(MonteCarlo * mc) {
+  unsigned int N = mc->vertices.N;
+  double complex exp_IomegaN_tau[N];
+  double complex indepM_sampled[mc->model.greenSymMat.nIndep];
+  unsigned int sites[N];
+  int n,p1,p2,k,i,j;
+  
+  for(p1=0;p1<N;p1++) sites[p1] = mc->vertices.m_vertex[p1].site;
+  
+  for(n=0;n<N_PTS_MAT;n++){
+    double omega_n = (2.*n+1)*M_PI/mc->model.beta; 
+    reset_cMatrix(&mc->g_matsubara.matrices[n]);
+    reset_cMatrix(&mc->dummy1);
+    reset_cMatrix(&mc->dummy2);
+    for(p1=0;p1<N;p1++) {
+      double tau = mc->vertices.m_vertex[p1].tau;
+      exp_IomegaN_tau[p1] = cexp(-I*omega_n*tau)/(mc->model.beta); //precalculate every green function
+    }
+    for(k=0;k<mc->model.greenSymMat.nIndep; k++) indepM_sampled[k]=0.0;
     
+    for(p1=0;p1<N;p1++) {
+      for(p2=0;p2<N;p2++) {
+        unsigned int index = mc->model.greenSymMat.indexIndep[N*sites[p1]+sites[p2]];
+        indepM_sampled[index] += exp_IomegaN_tau[p1]*conj(exp_IomegaN_tau[p1])*( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2));
+      }
+    }
+    
+    for(i=0;i<mc->model.sites.n;i++) {
+      for(j=0;j<mc->model.sites.n;j++) {
+        unsigned int index = mc->model.greenSymMat.indexIndep[N*i+j];
+        //unsigned int jRef = mc->model.greenSymMat->i[N*i+j];
+        ELEM_VAL(mc->dummy1,i,j) = indepM_sampled[index] / mc->model.beta; 
+      }
+    }
+    // the three lines are: g = g0 - g0*dummy1*g0
+    cMatrixMatrixMultiplication(&mc->g0_matsubara.matrices[n], &mc->dummy1, &mc->dummy2); // dummy2 = g0*dummy1
+    cMatrixMatrixMultiplication(&mc->dummy2, &mc->g0_matsubara.matrices[n], &mc->dummy1); // dummy1 = dummy2*g0
+    cMatrixMatrixAddition(&mc->g0_matsubara.matrices[n], &mc->dummy1, &mc->dummy2, -1.0); // dummy2 = -g0 + dummy1
+    cMatrixMatrixAdditionInPlace(&mc->g_matsubara.matrices[n], &mc->dummy2, 1.0, 1.0); // g = -dummy1 + g0
+
+
+  }
   return 1;
 }
 
-
-
-
-/*
-void measure__() {
-		signMeas_ += static_cast<double>(sign_);
-		
-		std::vector<std::vector<std::pair<_Vertex*, int> > > tempVertex(_SiteVector::VEC_DIM); int p = 0;
-		for(typename std::vector<_Vertex*>::const_iterator it = vertices_.begin(); it != vertices_.end(); ++it, ++p) tempVertex.at((*it)->site()).push_back(std::make_pair(*it, p));
-		
-		const double DeltaInv = static_cast<double>(NItO_)/beta_;
-		for(_Site i = 0; i < _SiteVector::VEC_DIM; i++) 
-			for(_Site j = 0; j < _SiteVector::VEC_DIM; j++) {
-				VDVECTOR<double>& KTemp = K_[model_.siteDiff(i,j)];
-				for(typename std::vector<std::pair<_Vertex*, int> >::const_iterator itI = tempVertex.at(i).begin(); itI != tempVertex.at(i).end(); ++itI)
-					for(typename std::vector<std::pair<_Vertex*, int> >::const_iterator itJ = tempVertex.at(j).begin(); itJ != tempVertex.at(j).end(); ++itJ) {
-						if(itI->first != itJ->first) {
-							double Ksign = sign_*.5*(Bup_->at(itI->second, itJ->second) + Bdown_->at(itI->second, itJ->second));
-							double time = itI->first->time() - itJ->first->time(); 
-							if(time < .0) {
-								Ksign *= -1.;
-								time += beta_;
-							}
-							
-							int index = static_cast<int>(DeltaInv*time);
-							double Dtime = time - static_cast<double>(index + .5)/DeltaInv;
-							KTemp(4*index) += Ksign; 
-							Ksign *= Dtime;
-							KTemp(4*index + 1) += Ksign;
-							Ksign *= Dtime;
-							KTemp(4*index + 2) += Ksign;
-							Ksign *= Dtime;
-							KTemp(4*index + 3) += Ksign;
-						} else 
-							KDirac_ += sign_*.5*(Bup_->at(itI->second, itJ->second) + Bdown_->at(itI->second, itJ->second)); 
-					}
-			}
-		
-		ExpOrder_ += static_cast<double>(sign_*vertices_.size());
-	};
-
-*/

@@ -17,10 +17,13 @@ int main() {
   unsigned int seed = 1000000;
   srand(seed);
   
-  int i, N=50000;
-  for(i=0;i<N;i++) {
+  int update_i, N=10000, measure_i=500;
+  for(update_i=0;update_i<N;update_i++) {
     if(urng()<0.5) InsertVertex(&mc);
     else RemoveVertex(&mc);
+    if(update_i % measure_i) {
+      //measure(&mc);
+    }
   }
   //printf("\n\n\nnormal:\n");
   //Print_MonteCarlo(&mc);

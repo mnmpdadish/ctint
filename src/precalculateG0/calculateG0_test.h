@@ -29,9 +29,9 @@ int test_Plaquettes2x2(int verbose) {
   writeToFile_dMatrixFunction(fileOut, &g0_tau, &model);
   
   
-  if(!doubleEqual(g0_tau.matrices[5].data[0], -0.73163549)) Nerror+=1;
-  if(!doubleEqual(g0_tau.matrices[5].data[1],  0.13809539)) Nerror+=1;
-  if(!doubleEqual(g0_tau.matrices[5].data[3],  0.19526103)) Nerror+=1;
+  if(!doubleEqual(g0_tau.matrices[5].data[0], -0.74174358)) Nerror+=1;
+  if(!doubleEqual(g0_tau.matrices[5].data[1],  0.13809594)) Nerror+=1;
+  if(!doubleEqual(g0_tau.matrices[5].data[3],  0.19526082)) Nerror+=1;
   //print_dMatrix(&g0_tau.matrices[5]);
   
   free_dMatrixFunction(&g0_tau);

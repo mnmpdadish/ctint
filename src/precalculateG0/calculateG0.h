@@ -11,7 +11,9 @@
 #include "../util/utilities.h"
 #include "../util/arrays/array.h"
 
-#define N_PTS 500
+#define N_PTS_MAT 200
+#define N_PTS_TAU 1000
+
 
 typedef struct {
   HoppingMatrix tMat;
@@ -96,14 +98,15 @@ void free_Model(Model * model) {
 
 // -------------------------------------------------------------------------
 
+/*
 typedef struct {
   double complex data[N_PTS];
   char name[2];
 } functionComplex;
-
+*/
 
 typedef struct {
-  cMatrix matrices[N_PTS];
+  cMatrix matrices[N_PTS_MAT];
   cMatrix M0; //zeroth moment
   cMatrix M1; //first moment
   cMatrix M2; //second moment
@@ -112,7 +115,7 @@ typedef struct {
 } cMatrixFunction;
 
 typedef struct {
-  dMatrix matrices[N_PTS];
+  dMatrix matrices[N_PTS_TAU];
   double beta;
 } dMatrixFunction;
 
@@ -128,7 +131,7 @@ void init_cMatrixFunction(cMatrixFunction * cMatFun, Model * model) {
   reset_cMatrix(&cMatFun->M2);
   reset_cMatrix(&cMatFun->M3);
   int n;
-  for(n=0; n<N_PTS; n++){
+  for(n=0; n<N_PTS_MAT; n++){
     init_cMatrix(&cMatFun->matrices[n],model->sites.n);
     reset_cMatrix(&cMatFun->matrices[n]);
   }
@@ -141,13 +144,13 @@ void free_cMatrixFunction(cMatrixFunction * cMatFun) {
   free_cMatrix(&cMatFun->M2);
   free_cMatrix(&cMatFun->M3);
   int n;
-  for(n=0; n<N_PTS; n++) free_cMatrix(&cMatFun->matrices[n]);
+  for(n=0; n<N_PTS_MAT; n++) free_cMatrix(&cMatFun->matrices[n]);
 }
 
 
 void init_dMatrixFunction(dMatrixFunction * dMatFun, Model * model) {
   int n;
-  for(n=0; n<N_PTS; n++){
+  for(n=0; n<N_PTS_TAU; n++){
     init_dMatrix(&dMatFun->matrices[n],model->sites.n);
     reset_dMatrix(&dMatFun->matrices[n]);
   }
@@ -156,7 +159,7 @@ void init_dMatrixFunction(dMatrixFunction * dMatFun, Model * model) {
 
 void free_dMatrixFunction(dMatrixFunction * dMatFun) {
   int n;
-  for(n=0; n<N_PTS; n++) free_dMatrix(&dMatFun->matrices[n]);
+  for(n=0; n<N_PTS_TAU; n++) free_dMatrix(&dMatFun->matrices[n]);
 }
 
 
@@ -175,7 +178,7 @@ void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model) {
   cMatrixMatrixMultiplication(&g0_matsubara->M2, &g0_matsubara->M2, &g0_matsubara->M3); //M2=M1*M1
   printf("M3:\n"); print_cMatrix(&g0_matsubara->M3);
   //exit(1);
-  for(n=0; n<N_PTS; n++){
+  for(n=0; n<N_PTS_MAT; n++){
     reset_cMatrix(&g0_matsubara->matrices[n]);
     double complex z = I*(2.*n+1)*M_PI/g0_matsubara->beta;
     for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->matrices[n], i, i) = z + model->muAux; // g = diagonal(muAux)
@@ -195,11 +198,11 @@ unsigned int dMatrix_cMatrixAdditionInPlace(dMatrix * A, cMatrix const * B, comp
 
 void calculateInversFourierTransform(cMatrixFunction * g0_matsubara, dMatrixFunction * g0_tau) {
   int n1, n2;
-  for(n1=0; n1<N_PTS; n1++){
+  for(n1=0; n1<N_PTS_TAU; n1++){
     //printf("salut3\n");
     reset_dMatrix(&g0_tau->matrices[n1]);
-    double tau = g0_matsubara->beta*n1/(N_PTS - 1);
-    for(n2=N_PTS-1; n2>=0; n2--){
+    double tau = g0_matsubara->beta*n1/(N_PTS_TAU - 1);
+    for(n2=N_PTS_MAT-1; n2>=0; n2--){
       double omega_n2 = (2.*n2+1)*M_PI/g0_matsubara->beta;
       double complex expFactor = 2.*cexp(-I*omega_n2*tau)/(g0_matsubara->beta);
       //double complex expFactor2 = 1.*cexp(I*omega_n2*tau)/(g0_matsubara->beta);
@@ -214,7 +217,7 @@ void calculateInversFourierTransform(cMatrixFunction * g0_matsubara, dMatrixFunc
 
 void removeMoments_G0_matsubara(cMatrixFunction * g0_matsubara) {
   int n;
-  for(n=0; n<N_PTS; n++){
+  for(n=0; n<N_PTS_MAT; n++){
     double complex z = I*(2.*n+1)*M_PI/g0_matsubara->beta;
     //cMatrixMatrixAdditionInPlace(&g0_matsubara->matrices[n],&g0_matsubara->M0, 1.0, -1.0);  
     //printf("before:\n"); print_cMatrix(&g0_matsubara->matrices[n]);
@@ -230,8 +233,8 @@ void removeMoments_G0_matsubara(cMatrixFunction * g0_matsubara) {
 void addMoments_G0_tau(cMatrixFunction * g0_matsubara, dMatrixFunction * g0_tau) { // can be in mat(tsubara) or (imaginary time) tau, as long a moments are defined
   int n;
   double beta = g0_tau->beta;
-  for(n=0; n<N_PTS; n++){
-    double tau = g0_tau->beta*n/(N_PTS - 1);
+  for(n=0; n<N_PTS_TAU; n++){
+    double tau = g0_tau->beta*n/(N_PTS_TAU - 1);
     dMatrix_cMatrixAdditionInPlace(&g0_tau->matrices[n],&g0_matsubara->M1, 1.0, -0.5);  
     dMatrix_cMatrixAdditionInPlace(&g0_tau->matrices[n],&g0_matsubara->M2, 1.0, 0.5*(tau-0.5*beta));  
     dMatrix_cMatrixAdditionInPlace(&g0_tau->matrices[n],&g0_matsubara->M3, 1.0, 0.25*(beta-tau)*tau);  
@@ -263,7 +266,7 @@ void writeToFile_cMatrixFunction(FILE *fileOut, cMatrixFunction * cMatFun, Model
     fprintf(fileOut, "          %s_re         %s_im", nameReal, nameImag);
   }
   
-  for(n=0; n<N_PTS; n++){
+  for(n=0; n<N_PTS_MAT; n++){
     fprintf(fileOut,"\n");
     double omega_n = (2.*n+1)*M_PI/cMatFun->beta;
     fprintf(fileOut, "% 3.6e  ", omega_n);
@@ -289,9 +292,9 @@ void writeToFile_dMatrixFunction(FILE *fileOut, dMatrixFunction * dMatFun, Model
     fprintf(fileOut, "          %s_re", nameReal);
   }
   
-  for(n=0; n<N_PTS; n++){
+  for(n=0; n<N_PTS_TAU; n++){
     fprintf(fileOut,"\n");
-    double tau = dMatFun->beta*n/(N_PTS - 1);
+    double tau = dMatFun->beta*n/(N_PTS_TAU - 1);
     fprintf(fileOut, "% 3.6e  ", tau);
     for(k=0; k<model->greenSymMat.nIndep; k++) {
       int i=model->greenSymMat.iFirstIndep[k];

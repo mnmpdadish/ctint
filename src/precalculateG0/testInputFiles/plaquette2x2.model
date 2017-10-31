@@ -27,7 +27,12 @@ tp  (1,-1,0)  0.3
 tpp (2,0,0)  -0.2
 tpp (0,2,0)  -0.2
 
-parameters
 mu    0.4
 U     4.0
 beta 10.0
+delta 0.05
+
+nUpdates 10
+cleanUpdate 1
+measureUpdate 1
+
