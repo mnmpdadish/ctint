@@ -316,12 +316,15 @@ unsigned int dSchurComplement(dMatrix const*A, dMatrix *S) {
   unsigned int Nm1 = N-1;
   //S->N=Nm1;
   //assert(S->N==N-1);
-  assert(Nm1>0);
-  copySub_dMatrix(A,S,Nm1);
+  //assert(Nm1>=0);
+  if(Nm1==0) resize_dMatrix(S,0);
+  else{
+    copySub_dMatrix(A,S,Nm1);
 
-  double factor = -1./ELEM(A,Nm1,Nm1);
-  // this next line does S = S - A12 A22^(-1) A21;
-  dger_(&S->N, &S->N, &factor, &ELEM(A,0,Nm1), &inc, &ELEM(A,Nm1,0), &A->N, S->data, &S->N);
+    double factor = -1./ELEM(A,Nm1,Nm1);
+    // this next line does S = S - A12 A22^(-1) A21;
+    dger_(&S->N, &S->N, &factor, &ELEM(A,0,Nm1), &inc, &ELEM(A,Nm1,0), &A->N, S->data, &S->N);
+  }
   return 0;
 }
 
@@ -344,7 +347,6 @@ unsigned int dAddRowColToInverse(dMatrix const*A, dVector const*Rtilde, dVector 
   ELEM(Ap1,N,N)=sTilde;
   return 0;
 }
-		
 
 
 

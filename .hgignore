@@ -10,3 +10,5 @@ green*.dat
 ctINT
 findGreenTool
 tests
+*speedTest*
+*gmon.out

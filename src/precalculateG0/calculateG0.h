@@ -11,7 +11,7 @@
 #include "../util/utilities.h"
 #include "../util/arrays/array.h"
 
-#define N_PTS 2000
+#define N_PTS 500
 
 typedef struct {
   HoppingMatrix tMat;
