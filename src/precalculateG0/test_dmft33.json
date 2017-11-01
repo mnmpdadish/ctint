@@ -1,0 +1,19 @@
+{
+    "SEED": 4076011,
+    "PROBFLIP": 0.25,
+    "beta": 10.0,
+    "NMAT": 1000,
+    "NTAU": 100000,
+    "SWEEPSMEAS": 50000,
+    "THERMALIZATION": 100,
+    "TOTALNMEAS": 1000,
+    "CLEANUPDATE": 3,
+    "t": -1.0,
+    "tPrime": -0.0,
+    "tPrimePrime": -0.0,
+    "U": 3.0,
+    "mu": 1.5,
+    "delta": 0.01,
+    "n": 0.5,
+    "HybFile": "hyb_dmftarma33.dat"
+}

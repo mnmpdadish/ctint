@@ -112,6 +112,7 @@ typedef struct {
   cMatrix M2; //second moment
   cMatrix M3; //third moment
   double beta;
+  unsigned int nAssigned;
 } cMatrixFunction;
 
 typedef struct {
@@ -164,11 +165,12 @@ void free_dMatrixFunction(dMatrixFunction * dMatFun) {
 
 
 
-void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model) {
+void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model, cMatrixFunction * hyb_matsubara) {
   int i,n;
   cMatrix tLoc;
   init_cMatrix(&tLoc,model->sites.n);
   calculate_HoppingMatrixLoc(&model->tMat, &tLoc);
+  
   
   for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->M1, i, i) = 1.0; 
   printf("M1:\n"); print_cMatrix(&g0_matsubara->M1);
@@ -176,14 +178,16 @@ void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model) {
   cMatrixMatrixAdditionInPlace(&g0_matsubara->M2, &tLoc, 1.0, 1.0);
   printf("M2:\n"); print_cMatrix(&g0_matsubara->M2);
   cMatrixMatrixMultiplication(&g0_matsubara->M2, &g0_matsubara->M2, &g0_matsubara->M3); //M2=M1*M1
+  if(hyb_matsubara != NULL) 
+    cMatrixMatrixAdditionInPlace(&g0_matsubara->M3,&hyb_matsubara->M1, 1.0, -1.0);  // g = g - hyb
   printf("M3:\n"); print_cMatrix(&g0_matsubara->M3);
-  //exit(1);
   for(n=0; n<N_PTS_MAT; n++){
     reset_cMatrix(&g0_matsubara->matrices[n]);
     double complex z = I*(2.*n+1)*M_PI/g0_matsubara->beta;
     for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->matrices[n], i, i) = z + model->muAux; // g = diagonal(muAux)
     cMatrixMatrixAdditionInPlace(&g0_matsubara->matrices[n],&tLoc, 1.0, -1.0);  // g = g - tLoc
-    //cMatrixMatrixAdditionInPlace(&g0_matsubara->matrices[n],&hyb->matrices[n], 1.0, -1.0);  // g = g - hyb
+    if(hyb_matsubara != NULL) 
+      cMatrixMatrixAdditionInPlace(&g0_matsubara->matrices[n],&hyb_matsubara->matrices[n], 1.0, -1.0);  // g = g - hyb
     invert_cMatrix(&g0_matsubara->matrices[n]); // g=g^-1
   }
 }
@@ -311,21 +315,25 @@ void writeToFile_dMatrixFunction(FILE *fileOut, dMatrixFunction * dMatFun, Model
 void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * model) {
   rewind(fileIn);
   char tempbuff[2048];  //each line should not be above 2048 char long.
-  int i=0, nRead;
+  int i=0, j=0, nRead;
   float w_matsubara;
   float valR, valI;
   char *pos;
-  int n;
+  int n, n_matsubara=0;
+  double complex indep_cMatrixValue[model->greenSymMat.nIndep];
+  
         
   while(!feof(fileIn)) 
   {
     if (fgets(tempbuff,2048,fileIn)) {
-      int lenString = strlen(tempbuff);
-      if(tempbuff[lenString-1]!='\n') {
-        printf("error. buffer too short? %c %d\n",tempbuff[lenString], lenString);
+      /*int lenString = strlen(tempbuff);
+      if(tempbuff[lenString-1]!='\n' && tempbuff[lenString] != EOF) {
+        printf("error. buffer too short? \\x%02x %d\n",tempbuff[lenString-1], lenString);
         printf("%s\n",tempbuff);
+        printf("%d %d\n",tempbuff[lenString-1], 'a');
+        
         exit(1);
-      }
+      }*/
       unsigned int nElement = countElementInStr(tempbuff, " \t\n");
       if(tempbuff[0] == '#') continue;
       //else if(strBeginWithToken(tempbuff,"time")) sym->timeReversal=1;
@@ -349,46 +357,29 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
         for(i=0; i<model->greenSymMat.nIndep; i++){
           nRead  = sscanf(pos,"%e%n", &valR, &n); pos+=n;
           nRead += sscanf(pos,"%e%n", &valI, &n); pos+=n;
-
+          
           if(nRead!=2) {
             printf("Cannot read correctly the one-body line: \n%s", tempbuff); 
             exit(1);
           }
-          printf("%e ",valR);
+          indep_cMatrixValue[i] = valR + I*valI;
         }
+        for(i=0;i<model->sites.n;i++) {
+          for(j=0;j<model->sites.n;j++) {
+            unsigned int index = model->greenSymMat.indexIndep[model->sites.n*i+j];
+            ELEM_VAL(cMatFun->matrices[n_matsubara],i,j) = indep_cMatrixValue[index]; 
+          }
+        }
+        //print_cMatrix(&cMatFun->matrices[n_matsubara]);
+        n_matsubara++;
+        if(n_mastubara >= N_PTS_MAT) break;
       }
       else break;
     }
-    printf("\n");
+    //printf("\n");
   }
+  cMatFun->nAssigned=n_matsubara;
   return;
-  /*
-  int k,n;
-  
-  printf(fileOut, "# w_matsubara");
-  for(k=0; k<model->greenSymMat.nIndep; k++) {
-    int i=model->greenSymMat.iFirstIndep[k];
-    int j=model->greenSymMat.jFirstIndep[k];
-    char nameReal[2];
-    char nameImag[2];
-    nameGreenSymmetriesElement(&model->greenSymMat, i, j, nameReal);
-    nameGreenSymmetriesElement(&model->greenSymMat, i, j, nameImag);
-    fprintf(fileOut, "          %s_re         %s_im", nameReal, nameImag);
-  }
-  
-  for(n=0; n<N_PTS_MAT; n++){
-    fprintf(fileOut,"\n");
-    double omega_n = (2.*n+1)*M_PI/cMatFun->beta;
-    fprintf(fileOut, "% 3.6e  ", omega_n);
-    for(k=0; k<model->greenSymMat.nIndep; k++) {
-      int i=model->greenSymMat.iFirstIndep[k];
-      int j=model->greenSymMat.jFirstIndep[k];
-      fprintf(fileOut, "% 3.6e % 3.6e  ", creal(ELEM_VAL(cMatFun->matrices[n], i, j)), cimag(ELEM_VAL(cMatFun->matrices[n], i, j)) );
-    }
-  }
-  */
 }
 
-
-//int nSym=countLineFlag(file, "symmetry_generators");
   
