@@ -306,3 +306,89 @@ void writeToFile_dMatrixFunction(FILE *fileOut, dMatrixFunction * dMatFun, Model
 
 
 
+
+
+void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * model) {
+  rewind(fileIn);
+  char tempbuff[2048];  //each line should not be above 2048 char long.
+  int i=0, nRead;
+  float w_matsubara;
+  float valR, valI;
+  char *pos;
+  int n;
+        
+  while(!feof(fileIn)) 
+  {
+    if (fgets(tempbuff,2048,fileIn)) {
+      int lenString = strlen(tempbuff);
+      if(tempbuff[lenString-1]!='\n') {
+        printf("error. buffer too short? %c %d\n",tempbuff[lenString], lenString);
+        printf("%s\n",tempbuff);
+        exit(1);
+      }
+      unsigned int nElement = countElementInStr(tempbuff, " \t\n");
+      if(tempbuff[0] == '#') continue;
+      //else if(strBeginWithToken(tempbuff,"time")) sym->timeReversal=1;
+      else if((tempbuff[0] != '\n') && nElement > 1) {
+        pos = &tempbuff[0];
+        valI=0.; valR=0.; w_matsubara=0.;
+        nRead = sscanf(pos,"%e%n", &w_matsubara, &n);
+        pos+=n;
+        if(nRead!=1) {
+          printf("Cannot read correctly the line: \n%s", tempbuff); 
+          exit(1);
+        }
+        if(nElement > 2*model->greenSymMat.nIndep+1) {
+          printf("Error, too many elements to read for the model\n");
+          exit(1);
+        }
+        else if (nElement > 2*model->greenSymMat.nIndep+1) {
+          printf("Error, not enough elements to read for the model\n");
+          exit(1);
+        }
+        for(i=0; i<model->greenSymMat.nIndep; i++){
+          nRead  = sscanf(pos,"%e%n", &valR, &n); pos+=n;
+          nRead += sscanf(pos,"%e%n", &valI, &n); pos+=n;
+
+          if(nRead!=2) {
+            printf("Cannot read correctly the one-body line: \n%s", tempbuff); 
+            exit(1);
+          }
+          printf("%e ",valR);
+        }
+      }
+      else break;
+    }
+    printf("\n");
+  }
+  return;
+  /*
+  int k,n;
+  
+  printf(fileOut, "# w_matsubara");
+  for(k=0; k<model->greenSymMat.nIndep; k++) {
+    int i=model->greenSymMat.iFirstIndep[k];
+    int j=model->greenSymMat.jFirstIndep[k];
+    char nameReal[2];
+    char nameImag[2];
+    nameGreenSymmetriesElement(&model->greenSymMat, i, j, nameReal);
+    nameGreenSymmetriesElement(&model->greenSymMat, i, j, nameImag);
+    fprintf(fileOut, "          %s_re         %s_im", nameReal, nameImag);
+  }
+  
+  for(n=0; n<N_PTS_MAT; n++){
+    fprintf(fileOut,"\n");
+    double omega_n = (2.*n+1)*M_PI/cMatFun->beta;
+    fprintf(fileOut, "% 3.6e  ", omega_n);
+    for(k=0; k<model->greenSymMat.nIndep; k++) {
+      int i=model->greenSymMat.iFirstIndep[k];
+      int j=model->greenSymMat.jFirstIndep[k];
+      fprintf(fileOut, "% 3.6e % 3.6e  ", creal(ELEM_VAL(cMatFun->matrices[n], i, j)), cimag(ELEM_VAL(cMatFun->matrices[n], i, j)) );
+    }
+  }
+  */
+}
+
+
+//int nSym=countLineFlag(file, "symmetry_generators");
+  

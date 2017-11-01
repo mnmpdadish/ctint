@@ -27,8 +27,12 @@ int test_Plaquettes2x2(int verbose) {
   
   FILE *fileOut = fopen("green0.dat","w");
   writeToFile_dMatrixFunction(fileOut, &g0_tau, &model);
+  fclose(fileOut);  
   
-  
+  FILE *fileOut2= fopen("greenW0.dat","w");
+  writeToFile_cMatrixFunction(fileOut2, &g0_matsubara, &model);
+  fclose(fileOut2);  
+  //writeToFile_cMatrixFunction(FILE *fileOut, cMatrixFunction * cMatFun, Model * model) {
   if(!doubleEqual(g0_tau.matrices[5].data[0], -0.74174358)) Nerror+=1;
   if(!doubleEqual(g0_tau.matrices[5].data[1],  0.13809594)) Nerror+=1;
   if(!doubleEqual(g0_tau.matrices[5].data[3],  0.19526082)) Nerror+=1;
@@ -37,6 +41,10 @@ int test_Plaquettes2x2(int verbose) {
   free_dMatrixFunction(&g0_tau);
   free_cMatrixFunction(&g0_matsubara);
   free_Model(&model);
+  
+  FILE *fileIn = fopen("greenW0.dat","r");
+  readFile_cMatrixFunction(fileIn, &g0_matsubara, &model);
+  fclose(fileIn);  
   
   return Nerror;
 }

@@ -267,7 +267,7 @@ unsigned int print_cMatrix(cMatrix const * A) {
   for (i = 0; i < A->N; i++) {
     for (j = 0; j < A->N; j++) {
       val = ELEM(A, i, j);
-      printf("% 4.2f%+4.2fi ", creal(val), cimag(val));
+      printf("% 6.5f%+6.5fi ", creal(val), cimag(val));
     }
     printf("\n");
   }
@@ -283,7 +283,7 @@ unsigned int print_cVector(cVector const * X) {
   }
   unsigned int i;
   for (i = 0; i < X->N; i++) {
-    printf("% 4.2f%+4.2fi ", creal(X->data[i]), cimag(X->data[i]));
+    printf("% 6.5f%+6.5fi ", creal(X->data[i]), cimag(X->data[i]));
   }
   printf("\n");
 
@@ -346,6 +346,13 @@ void scale_cVector(cVector *X, double complex const scal){
   unsigned int inc=1;
   zscal_(&X->N, &scal, X->data, &inc);
 }
+
+void scale_cMatrix(cMatrix *A, double complex const scal){
+  unsigned int inc=1;
+  unsigned int N=A->N*A->N;
+  zscal_(&N, &scal, A->data, &inc);
+}
+
 
 
 

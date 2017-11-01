@@ -21,13 +21,12 @@ typedef struct {
 
 typedef struct {
   VerticesChain vertices;
-  cMatrixFunction g_matsubara; //interacting Green Function to sample.
   cMatrixFunction g0_matsubara; //non-intearcting Green Function.
   
   cMatrix dummy1; 
   cMatrix dummy2; 
   
-  dMatrixFunction g0_tau; //non-intearcting Green Function to interpolate (in order to evaluate fast often).
+  dMatrixFunction g0_tau; //non-intearcting Green Function in imaginary time: to interpolate (in order to evaluate fast often).
   dMatrix *M_up;   // These two matrices are THE matrices
   dMatrix *M_down; // Same notation as Gull. 
   dMatrix *Mdummy_up; // We use pointer for the M matrices because we want to 
@@ -41,6 +40,9 @@ typedef struct {
   Model model;
   double sign;
   //measurement values:
+  double accumulated_sign;
+  double accumulated_expOrder;
+  cMatrixFunction accumulated_g_matsubara; //interacting Green Function to sample.
   
 } MonteCarlo;
 
@@ -48,15 +50,18 @@ typedef struct {
 
 void init_MonteCarlo(MonteCarlo * mc, Model * model) {
   init_dMatrixFunction(&mc->g0_tau, model);
-  init_cMatrixFunction(&mc->g_matsubara, model);
+  init_cMatrixFunction(&mc->accumulated_g_matsubara, model);
+  init_cMatrixFunction(&mc->g0_matsubara, model);
+  calculate_G0_matsubara(&mc->g0_matsubara, model);
   
   init_cMatrix(&mc->dummy1, model->sites.n);
   init_cMatrix(&mc->dummy2, model->sites.n);
   
-  //cMatrixFunction g0_matsubara;
-  init_cMatrixFunction(&mc->g0_matsubara, model);
-  calculate_G0_matsubara(&mc->g0_matsubara, model);
-  calculate_G0_tau(&mc->g0_matsubara,&mc->g0_tau);
+  cMatrixFunction g0_matsubara_tmp;
+  init_cMatrixFunction(&g0_matsubara_tmp, model);
+  calculate_G0_matsubara(&g0_matsubara_tmp, model);
+  calculate_G0_tau(&g0_matsubara_tmp,&mc->g0_tau);
+  free_cMatrixFunction(&g0_matsubara_tmp);
   
   mc->M_up     = malloc(sizeof(dMatrix));
   mc->M_down    = malloc(sizeof(dMatrix));
@@ -81,13 +86,16 @@ void init_MonteCarlo(MonteCarlo * mc, Model * model) {
   mc->vertices.N=0;
   mc->model=*model;
   mc->sign=1.0;
+  mc->accumulated_sign=0;
+  mc->accumulated_expOrder=0;
+  
 }
 
 void free_MonteCarlo(MonteCarlo * mc) {
   free(mc->vertices.m_vertex);
   free_dMatrixFunction(&mc->g0_tau);
   free_cMatrixFunction(&mc->g0_matsubara);
-  free_cMatrixFunction(&mc->g_matsubara);
+  free_cMatrixFunction(&mc->accumulated_g_matsubara);
   //free_dMatrixFunction(&mc->g0_tau_down);
   free_dMatrix(mc->M_up);
   free_dMatrix(mc->M_down);
@@ -331,6 +339,27 @@ void free_IndepFunctionDouble(IndepFunctionDouble * indepFun) {
 */
 
 
+/*
+double complex expI(Vertex const * vertexI, Vertex const * vertexJ, MonteCarlo *mc) { 
+  double diff_tau = vertexI->tau - vertexJ->tau; 
+
+  double aps = 1.;
+  if (diff_tau > .0) {
+    diff_tau -= mc->model.beta;
+    aps = -1.;
+  }
+  double ntau = fabs(diff_tau) * (N_PTS_TAU -1) /mc->model.beta;
+  unsigned int ntau0= (unsigned int) ntau;
+  
+  double val_n  = ELEM_VAL(mc->g0_tau.matrices[ntau0], vertexI->site, vertexJ->site);
+  double val_n1 = ELEM_VAL(mc->g0_tau.matrices[ntau0+1], vertexI->site, vertexJ->site);
+  
+  return aps*((1. - (ntau - ntau0))*val_n + (ntau - ntau0)*val_n1);
+}
+*/
+
+
+
 int measure(MonteCarlo * mc) {
   unsigned int N = mc->vertices.N;
   double complex exp_IomegaN_tau[N];
@@ -340,9 +369,10 @@ int measure(MonteCarlo * mc) {
   
   for(p1=0;p1<N;p1++) sites[p1] = mc->vertices.m_vertex[p1].site;
   
+  //Print_MonteCarlo(mc);
   for(n=0;n<N_PTS_MAT;n++){
     double omega_n = (2.*n+1)*M_PI/mc->model.beta; 
-    reset_cMatrix(&mc->g_matsubara.matrices[n]);
+    //reset_cMatrix(&mc->accumulated_g_matsubara.matrices[n]);
     reset_cMatrix(&mc->dummy1);
     reset_cMatrix(&mc->dummy2);
     for(p1=0;p1<N;p1++) {
@@ -353,26 +383,45 @@ int measure(MonteCarlo * mc) {
     
     for(p1=0;p1<N;p1++) {
       for(p2=0;p2<N;p2++) {
-        unsigned int index = mc->model.greenSymMat.indexIndep[N*sites[p1]+sites[p2]];
-        indepM_sampled[index] += exp_IomegaN_tau[p1]*conj(exp_IomegaN_tau[p1])*( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2));
+        unsigned int index = mc->model.greenSymMat.indexIndep[mc->model.sites.n*sites[p1]+sites[p2]];
+        //printf("salut=%d %d %d  %d %d\n", index, N*sites[p1]+sites[p2], mc->model.greenSymMat.nElement, sites[p1], sites[p2] ); fflush(stdout);
+        indepM_sampled[index] += exp_IomegaN_tau[p1]*conj(exp_IomegaN_tau[p2]) * mc->sign * 0.5 * ( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2));
       }
     }
     
     for(i=0;i<mc->model.sites.n;i++) {
       for(j=0;j<mc->model.sites.n;j++) {
-        unsigned int index = mc->model.greenSymMat.indexIndep[N*i+j];
-        //unsigned int jRef = mc->model.greenSymMat->i[N*i+j];
+        unsigned int index = mc->model.greenSymMat.indexIndep[mc->model.sites.n*i+j];
         ELEM_VAL(mc->dummy1,i,j) = indepM_sampled[index] / mc->model.beta; 
       }
     }
+    
     // the three lines are: g = g0 - g0*dummy1*g0
+    
     cMatrixMatrixMultiplication(&mc->g0_matsubara.matrices[n], &mc->dummy1, &mc->dummy2); // dummy2 = g0*dummy1
     cMatrixMatrixMultiplication(&mc->dummy2, &mc->g0_matsubara.matrices[n], &mc->dummy1); // dummy1 = dummy2*g0
-    cMatrixMatrixAddition(&mc->g0_matsubara.matrices[n], &mc->dummy1, &mc->dummy2, -1.0); // dummy2 = -g0 + dummy1
-    cMatrixMatrixAdditionInPlace(&mc->g_matsubara.matrices[n], &mc->dummy2, 1.0, 1.0); // g = -dummy1 + g0
-
+    cMatrixMatrixAddition(&mc->dummy1, &mc->g0_matsubara.matrices[n], &mc->dummy2, -1.0); // dummy2 = g0 - dummy1
+    
+    /*
+    if(n<3){
+      printf("\ndummy %d\n", n);
+      print_cMatrix(&mc->dummy1);
+    }
+    */
+    
+    //printf("before:\n");
+    //print_cMatrix(&mc->accumulated_g_matsubara.matrices[n]);
+    cMatrixMatrixAdditionInPlace(&mc->accumulated_g_matsubara.matrices[n], &mc->dummy2, 1.0, 1.0); // g += dummy2
+    //printf("after:\n");
+    //print_cMatrix(&mc->accumulated_g_matsubara.matrices[n]);
+    
 
   }
+  
+  mc->accumulated_sign +=mc->sign;
+  mc->accumulated_expOrder +=N;
+  
+  
   return 1;
 }
 

@@ -74,6 +74,11 @@ void readSites(FILE * file, MultiplePositions * mPositions, char * flag){
   while(!feof(file)) 
   {
     if (fgets(tempbuff,256,file)) {
+      int lenString = strlen(tempbuff);
+      if(tempbuff[lenString-1]!='\n') {
+        printf("error. buffer too small. %c\n",tempbuff[lenString]);
+        exit(1);
+      }
       if(found==0){
         if(strBeginWithToken(tempbuff,flag)) found=1; 
       }

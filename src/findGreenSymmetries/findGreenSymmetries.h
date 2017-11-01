@@ -86,6 +86,11 @@ int readSymmetries(FILE * file, int nSites, Symmetries *sym, char *flag) {
   {
     if (fgets(tempbuff,256,file)) {
       //printf("%d seen= %s",found, tempbuff);
+      int lenString = strlen(tempbuff);
+      if(tempbuff[lenString-1]!='\n') {
+        printf("error. buffer too small. %c\n",tempbuff[lenString]);
+        exit(1);
+      }
       if(found==0){
         if(strBeginWithToken(tempbuff,flag)) found=1; 
       }

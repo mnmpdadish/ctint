@@ -37,7 +37,12 @@ void readDouble(FILE * file, char * name,  double * value) {
     while(!feof(file)) 
     {
         if (fgets(tempbuff,200,file))
-        {
+        {   
+            int lenString = strlen(tempbuff);
+            if(tempbuff[lenString-1]!='\n') {
+              printf("error. buffer too small. %c\n",tempbuff[lenString]);
+              exit(1);
+            }
             char tmpstr1[50];
             char tmpstr2[50];
             sscanf(tempbuff, "%49s %49s\n", tmpstr1, tmpstr2);
@@ -57,6 +62,11 @@ void readInt(FILE * file, char * name,  int * value) {
     {
         if (fgets(tempbuff,200,file))
         {
+            int lenString = strlen(tempbuff);
+            if(tempbuff[lenString-1]!='\n') {
+              printf("error. buffer too small. %c\n",tempbuff[lenString]);
+              exit(1);
+            }
             char tmpstr1[50];
             char tmpstr2[50];
             sscanf(tempbuff, "%49s %49s\n", tmpstr1, tmpstr2);
