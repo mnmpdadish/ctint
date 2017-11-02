@@ -112,7 +112,7 @@ typedef struct {
   cMatrix M2; //second moment
   cMatrix M3; //third moment
   double beta;
-  unsigned int nAssigned;
+  unsigned int nLoaded;
 } cMatrixFunction;
 
 typedef struct {
@@ -163,6 +163,21 @@ void free_dMatrixFunction(dMatrixFunction * dMatFun) {
   for(n=0; n<N_PTS_TAU; n++) free_dMatrix(&dMatFun->matrices[n]);
 }
 
+//A=factorA*A+factorB*B
+unsigned int dMatrix_cMatrixAdditionInPlace(dMatrix * A, cMatrix const * B, double complex factorA, double complex factorB) {
+  assert(A->N == B->N);
+  unsigned int i;
+  for(i=0; i<(A->N*A->N); i++) A->data[i]=creal(factorA*A->data[i] + factorB*B->data[i]);
+  return 0;
+}
+
+//A=factorA*A+factorB*B
+unsigned int cMatrix_dMatrixAdditionInPlace(cMatrix * A, dMatrix const * B, double complex factorA, double complex factorB) {
+  assert(A->N == B->N);
+  unsigned int i;
+  for(i=0; i<(A->N*A->N); i++) A->data[i]=factorA*A->data[i]+factorB*B->data[i];
+  return 0;
+}
 
 
 void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model, cMatrixFunction * hyb_matsubara) {
@@ -171,16 +186,16 @@ void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model, cMatr
   init_cMatrix(&tLoc,model->sites.n);
   calculate_HoppingMatrixLoc(&model->tMat, &tLoc);
   
-  
-  for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->M1, i, i) = 1.0; 
+  for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->M1, i, i) = 1.0;
   printf("M1:\n"); print_cMatrix(&g0_matsubara->M1);
   for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->M2, i, i) = -model->muAux; 
   cMatrixMatrixAdditionInPlace(&g0_matsubara->M2, &tLoc, 1.0, 1.0);
   printf("M2:\n"); print_cMatrix(&g0_matsubara->M2);
   cMatrixMatrixMultiplication(&g0_matsubara->M2, &g0_matsubara->M2, &g0_matsubara->M3); //M2=M1*M1
   if(hyb_matsubara != NULL) 
-    cMatrixMatrixAdditionInPlace(&g0_matsubara->M3,&hyb_matsubara->M1, 1.0, -1.0);  // g = g - hyb
+    cMatrix_dMatrixAdditionInPlace(&g0_matsubara->M3,&model->hybFM, 1.0, -1.0);  // g = g - hyb
   printf("M3:\n"); print_cMatrix(&g0_matsubara->M3);
+
   for(n=0; n<N_PTS_MAT; n++){
     reset_cMatrix(&g0_matsubara->matrices[n]);
     double complex z = I*(2.*n+1)*M_PI/g0_matsubara->beta;
@@ -192,13 +207,17 @@ void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model, cMatr
   }
 }
 
-//A=factorA*A+factorB*B
-unsigned int dMatrix_cMatrixAdditionInPlace(dMatrix * A, cMatrix const * B, complex factorA, double complex factorB) {
-  assert(A->N == B->N);
-  unsigned int i;
-  for(i=0; i<(A->N*A->N); i++) A->data[i]=factorA*A->data[i]+creal(factorB*B->data[i]);
-  return 0;
+
+
+void patch_HYB_matsubara(Model * model, cMatrixFunction * hyb_matsubara){
+  int n;
+  printf("hybFM:\n"); print_dMatrix(&model->hybFM);
+  for(n = hyb_matsubara->nLoaded; n<N_PTS_MAT; n++){
+    double complex z = I*(2.*n+1)*M_PI/hyb_matsubara->beta;
+    cMatrix_dMatrixAdditionInPlace(&hyb_matsubara->matrices[n],&model->hybFM, 1.0, +1.0/z);  // g = g -tLoc
+  }
 }
+
 
 void calculateInversFourierTransform(cMatrixFunction * g0_matsubara, dMatrixFunction * g0_tau) {
   int n1, n2;
@@ -341,6 +360,7 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
         pos = &tempbuff[0];
         valI=0.; valR=0.; w_matsubara=0.;
         nRead = sscanf(pos,"%e%n", &w_matsubara, &n);
+        if(n_matsubara==0) cMatFun->beta = M_PI/w_matsubara;
         pos+=n;
         if(nRead!=1) {
           printf("Cannot read correctly the line: \n%s", tempbuff); 
@@ -372,13 +392,13 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
         }
         //print_cMatrix(&cMatFun->matrices[n_matsubara]);
         n_matsubara++;
-        if(n_mastubara >= N_PTS_MAT) break;
+        if(n_matsubara >= N_PTS_MAT) break;
       }
       else break;
     }
     //printf("\n");
   }
-  cMatFun->nAssigned=n_matsubara;
+  cMatFun->nLoaded=n_matsubara;
   return;
 }
 

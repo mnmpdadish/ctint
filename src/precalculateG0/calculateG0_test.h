@@ -88,21 +88,28 @@ int test_dmft(int verbose) {
   
   cMatrixFunction g0_matsubara;
   dMatrixFunction g0_tau;
+  cMatrixFunction hyb_matsubara;
   init_cMatrixFunction(&g0_matsubara, &model);
   init_dMatrixFunction(&g0_tau, &model);
+  init_cMatrixFunction(&hyb_matsubara, &model);
   
-  FILE * fileModel = fopenSafe("","rt");
-  Model model;
-  read_Model(fileModel,&model);
+  FILE * fileHyb = fopenSafe("testInputFiles/hyb1.dat","rt");
+  readFile_cMatrixFunction(fileHyb, &hyb_matsubara, &model);
+  patch_HYB_matsubara(&model, &hyb_matsubara);
   fclose(fileModel);
   
+  FILE * fileHybOut = fopenSafe("hybOut.dat","w");
+  writeToFile_cMatrixFunction(fileHybOut, &hyb_matsubara, &model);
+  //readFile_cMatrixFunction(fileHybOut, &hyb_matsubara, &model);
+  fclose(fileHybOut);
   
-  calculate_G0_matsubara(&g0_matsubara, &model, NULL);
+  
+  calculate_G0_matsubara(&g0_matsubara, &model, &hyb_matsubara);
+  calculate_G0_tau(&g0_matsubara,&g0_tau);
   FILE * fileOut2 = fopenSafe("green_iwn.dat","w");
   writeToFile_cMatrixFunction(fileOut2, &g0_matsubara, &model);
   fclose(fileOut2);  
 
-  calculate_G0_tau(&g0_matsubara,&g0_tau);
   
   FILE * fileOut = fopenSafe("green_tau.dat","w");
   writeToFile_dMatrixFunction(fileOut, &g0_tau, &model);
