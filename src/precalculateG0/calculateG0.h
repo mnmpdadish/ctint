@@ -345,6 +345,7 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
   while(!feof(fileIn)) 
   {
     if (fgets(tempbuff,2048,fileIn)) {
+      //printf("%s",tempbuff);
       /*int lenString = strlen(tempbuff);
       if(tempbuff[lenString-1]!='\n' && tempbuff[lenString] != EOF) {
         printf("error. buffer too short? \\x%02x %d\n",tempbuff[lenString-1], lenString);
@@ -354,14 +355,14 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
         exit(1);
       }*/
       unsigned int nElement = countElementInStr(tempbuff, " \t\n");
+      //printf("nElement=%d\n",nElement);
       if(tempbuff[0] == '#') continue;
       //else if(strBeginWithToken(tempbuff,"time")) sym->timeReversal=1;
       else if((tempbuff[0] != '\n') && nElement > 1) {
         pos = &tempbuff[0];
         valI=0.; valR=0.; w_matsubara=0.;
         nRead = sscanf(pos,"%e%n", &w_matsubara, &n);
-        if(n_matsubara==0) cMatFun->beta = M_PI/w_matsubara;
-        pos+=n;
+        //printf("nRead=%d\n",nRead);
         if(nRead!=1) {
           printf("Cannot read correctly the line: \n%s", tempbuff); 
           exit(1);
@@ -374,6 +375,9 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
           printf("Error, not enough elements to read for the model\n");
           exit(1);
         }
+        if(n_matsubara==0) cMatFun->beta = M_PI/w_matsubara;
+        pos+=n;
+        //printf("beta=%f\n", cMatFun->beta);
         for(i=0; i<model->greenSymMat.nIndep; i++){
           nRead  = sscanf(pos,"%e%n", &valR, &n); pos+=n;
           nRead += sscanf(pos,"%e%n", &valI, &n); pos+=n;
@@ -382,8 +386,14 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
             printf("Cannot read correctly the one-body line: \n%s", tempbuff); 
             exit(1);
           }
+          //printf("i=%d of %d\n",i, model->greenSymMat.nIndep);
           indep_cMatrixValue[i] = valR + I*valI;
+          //printf("indep_cMatrixValue[i]=%f + %fi\n",creal(indep_cMatrixValue[i]),cimag(indep_cMatrixValue[i]));
         }
+        //printf("salut\n");
+        //print_cMatrix(&cMatFun->matrices[n_matsubara]);
+        //printf("salut\n");
+        
         for(i=0;i<model->sites.n;i++) {
           for(j=0;j<model->sites.n;j++) {
             unsigned int index = model->greenSymMat.indexIndep[model->sites.n*i+j];

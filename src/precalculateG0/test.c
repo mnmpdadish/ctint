@@ -10,7 +10,7 @@ int main() {
   //printf("%f %f\n", creal(1.0/(1.+I*2.)),cimag(1.0/(1.+I*2.)));
   printf("\n--------------------\ntesting precalculate Green function \n--------------------\n\n");
   Nfail+= passOrFail("test_dmft",          test_dmft(verbose));
-  //Nfail+= passOrFail("test_Plaquettes2x2", test_Plaquettes2x2(verbose));
+  Nfail+= passOrFail("test_Plaquettes2x2", test_Plaquettes2x2(verbose));
   
   verdict(Nfail);
   

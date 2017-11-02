@@ -1,0 +1,23 @@
+{
+    "ATOMIC" : "Atomic.json",
+    "OBS" : "Obs.json",
+    "LINK" : "Link.json",
+    "UPD" : "Updates.json",
+    "STORE_EVERY_SAMPLE" : 100,
+    "SAMPLE_EVERY_SWEEP" : 50,
+    "CLEAN_EVERY_SWEEP" : 5000,
+    "THERMALIZATION_TIME" : 1.,
+    "MEASUREMENT_TIME" : 5.,
+    "EGreen" : 15,
+    "EHyb" : 15,
+    "EObs" : 15,
+    "PROB" : 0.5,
+    "S" : 1,
+    "SEED" : 41085,
+    "U" : 3.0,
+    "beta" : 10.0,
+    "weightR" : 0.2,
+    "weightI" : 0.2,
+    "mu" : 1.5
+}
+

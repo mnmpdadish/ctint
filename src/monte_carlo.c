@@ -4,7 +4,7 @@
 
 int main() {
 
-  char fileName[]="testInputFiles/plaquette2x2.model";
+  char fileName[]="testInputFiles/dmft.model";
   FILE * file = fopen(fileName, "rt");
   if(file == NULL) {printf("file %s not found\n", fileName); exit(1);}
   printf("\nreading model from %s:\n", fileName);
@@ -17,7 +17,7 @@ int main() {
   unsigned int seed = 1000000;
   srand(seed);
   
-  int update_i, N=5000, measure_i=500, cleanUpdate_i=2001;
+  int update_i, N=500000, measure_i=500, cleanUpdate_i=2001;
   int nSamples=0;
   for(update_i=1; update_i<N;  update_i++) {
     if(urng()<0.5) InsertVertex(&mc);

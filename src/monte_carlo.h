@@ -22,6 +22,7 @@ typedef struct {
 typedef struct {
   VerticesChain vertices;
   cMatrixFunction g0_matsubara; //non-intearcting Green Function.
+  cMatrixFunction hyb_matsubara; //hybridisation
   
   cMatrix dummy1; 
   cMatrix dummy2; 
@@ -52,14 +53,22 @@ void init_MonteCarlo(MonteCarlo * mc, Model * model) {
   init_dMatrixFunction(&mc->g0_tau, model);
   init_cMatrixFunction(&mc->accumulated_g_matsubara, model);
   init_cMatrixFunction(&mc->g0_matsubara, model);
-  calculate_G0_matsubara(&mc->g0_matsubara, model);
+  init_cMatrixFunction(&mc->hyb_matsubara, model);
+
+  //printf("salut"); fflush(stdout);
+  FILE * fileHyb = fopenSafe("testInputFiles/hyb1.dat","rt");
+  readFile_cMatrixFunction(fileHyb, &mc->hyb_matsubara, model);
+  patch_HYB_matsubara(model, &mc->hyb_matsubara);
+  fclose(fileHyb);
+  
+  calculate_G0_matsubara(&mc->g0_matsubara, model, &mc->hyb_matsubara);
   
   init_cMatrix(&mc->dummy1, model->sites.n);
   init_cMatrix(&mc->dummy2, model->sites.n);
   
   cMatrixFunction g0_matsubara_tmp;
   init_cMatrixFunction(&g0_matsubara_tmp, model);
-  calculate_G0_matsubara(&g0_matsubara_tmp, model);
+  calculate_G0_matsubara(&g0_matsubara_tmp, model, &mc->hyb_matsubara);
   calculate_G0_tau(&g0_matsubara_tmp,&mc->g0_tau);
   free_cMatrixFunction(&g0_matsubara_tmp);
   

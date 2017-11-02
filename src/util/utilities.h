@@ -102,4 +102,16 @@ int countLineFlag(FILE * file, char *flag) {
 }
 
 
+FILE * fopenSafe(char fileName[], char mode[]){
+  FILE * file = fopen(fileName, mode);
+  if(file == NULL) {
+    printf("error: file %s not found.\nterminated.\n", fileName); 
+    exit(1);
+  }
+  else {
+    printf("\nopening file %s\n", fileName);
+  }
+  return file;
+}
+
 
