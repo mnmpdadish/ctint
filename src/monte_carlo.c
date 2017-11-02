@@ -14,10 +14,10 @@ int main() {
   MonteCarlo mc;
   init_MonteCarlo(&mc, &model);
   
-  unsigned int seed = 1000000;
+  unsigned int seed = 1000001;
   srand(seed);
   
-  int update_i, N=500000, measure_i=500, cleanUpdate_i=2001;
+  int update_i, N=10000000, measure_i=10000, cleanUpdate_i=501;
   int nSamples=0;
   for(update_i=1; update_i<N;  update_i++) {
     if(urng()<0.5) InsertVertex(&mc);
@@ -26,17 +26,21 @@ int main() {
       printf("%d",update_i); fflush(stdout);
       measure(&mc);
       nSamples++;
-      printf(".\n"); fflush(stdout);
+      printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
     }
     if(update_i % cleanUpdate_i ==0){
       if(mc.vertices.N !=0) CleanUpdate(&mc);
     }
+    /*
+    printf("\n\n\nnormal:\n");
+    Print_MonteCarlo(&mc);
+    if(mc.vertices.N !=0) CleanUpdate(&mc);
+    printf("clean:\n");
+    Print_MonteCarlo(&mc);
+    printf("sign=% 2.0f   order=%d   \n\n", mc.sign, mc.vertices.N); fflush(stdout);
+    //*/
   }
-  //printf("\n\n\nnormal:\n");
-  //Print_MonteCarlo(&mc);
-  //CleanUpdate(&mc);
-  //printf("clean:\n");
-  //Print_MonteCarlo(&mc);
+  
   int n;
   for(n=0; n<N_PTS_MAT; n++) scale_cMatrix(&mc.accumulated_g_matsubara.matrices[n],1.0/nSamples);
   

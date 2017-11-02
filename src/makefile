@@ -6,7 +6,7 @@ LIBS         = -llapack -lblas
 all: build
 
 build: 
-	gcc -ffast-math -Wall -O2 monte_carlo.c -lm  $(LIBS) -lgfortran -pg
+	gcc -ffast-math  -Wall -O2 monte_carlo.c -lm  $(LIBS) -lgfortran -pg
 	
 	
 	

@@ -131,24 +131,24 @@ void Print_MonteCarlo(MonteCarlo * mc){
   printf("\n");
 }
 
-double auxUp(Vertex const * vertex, MonteCarlo *mc)   { return vertex->auxSpin ? mc->model.delta : -1. - mc->model.delta;}
-double auxDown(Vertex const * vertex, MonteCarlo *mc) { return vertex->auxSpin ? -1. - mc->model.delta : mc->model.delta;}
+double auxUp(Vertex const * vertex, MonteCarlo *mc)   { return vertex->auxSpin ? -mc->model.delta : 1. + mc->model.delta;}
+double auxDown(Vertex const * vertex, MonteCarlo *mc) { return vertex->auxSpin ? 1. + mc->model.delta : -mc->model.delta;}
 double urng() {return (double)rand()/(double)(RAND_MAX);}
 unsigned int irng(unsigned int N) {return rand()%N;}
 
 
 double green0(Vertex const * vertexI, Vertex const * vertexJ, MonteCarlo *mc) { 
-  double diff_tau = vertexI->tau - vertexJ->tau; 
+  double diff_tau = vertexI->tau - vertexJ->tau ;//+1e-13; 
 
   double aps = 1.;
-  if (diff_tau > .0) {
-    diff_tau -= mc->model.beta;
+  if (diff_tau <= .0) {
+    diff_tau += mc->model.beta;
     aps = -1.;
   }
   double ntau = fabs(diff_tau) * (N_PTS_TAU -1) /mc->model.beta;
   unsigned int ntau0= (unsigned int) ntau;
   
-  double val_n  = ELEM_VAL(mc->g0_tau.matrices[ntau0], vertexI->site, vertexJ->site);
+  double val_n  = ELEM_VAL(mc->g0_tau.matrices[ntau0],   vertexI->site, vertexJ->site);
   double val_n1 = ELEM_VAL(mc->g0_tau.matrices[ntau0+1], vertexI->site, vertexJ->site);
   
   return aps*((1. - (ntau - ntau0))*val_n + (ntau - ntau0)*val_n1);
@@ -164,8 +164,8 @@ int InsertVertex(MonteCarlo * mc) {
   newVertex.site= irng(mc->nSites);
   newVertex.auxSpin = irng(2);
   
-  mc->S_up = green0(&newVertex, &newVertex, mc) + auxUp(&newVertex, mc);
-  mc->S_down = green0(&newVertex, &newVertex, mc) + auxDown(&newVertex, mc);
+  mc->S_up =   green0(&newVertex, &newVertex, mc) - auxUp(&newVertex, mc);
+  mc->S_down = green0(&newVertex, &newVertex, mc) - auxDown(&newVertex, mc);
   //printf("S_up=%f\n",mc->S_up);
   //printf("S_down=%f\n",mc->S_down);
   
@@ -194,7 +194,8 @@ int InsertVertex(MonteCarlo * mc) {
     double pAcc = -2.*mc->model.sites.n*mc->model.beta*mc->model.auxU/ ( ((double)mc->vertices.N)*mc->Stilde_up*mc->Stilde_down );
     //printf("pAcc=%f\n",pAcc);
     if(urng() < fabs(pAcc)) {
-			
+			if(pAcc < .0) mc->sign *= -1;
+      
       dVectorMatrixProduct(&mc->R, mc->M_up, -mc->Stilde_up, &mc->Rtilde_up);
       dVectorMatrixProduct(&mc->R, mc->M_down, -mc->Stilde_down, &mc->Rtilde_down);
       
@@ -300,8 +301,8 @@ void CleanUpdate(MonteCarlo * mc) {
       ELEM(mc->M_up,i,j) = green0(&vertexI, &vertexJ, mc);
       ELEM(mc->M_down,i,j) = green0(&vertexI, &vertexJ, mc);
     }
-    ELEM(mc->M_up,i,i) += auxUp(&vertexI, mc);
-    ELEM(mc->M_down,i,i) += auxDown(&vertexI, mc);
+    ELEM(mc->M_up,i,i) -= auxUp(&vertexI, mc);
+    ELEM(mc->M_down,i,i) -= auxDown(&vertexI, mc);
   }
   invert_dMatrix(mc->M_up);
   invert_dMatrix(mc->M_down);
@@ -386,7 +387,7 @@ int measure(MonteCarlo * mc) {
     reset_cMatrix(&mc->dummy2);
     for(p1=0;p1<N;p1++) {
       double tau = mc->vertices.m_vertex[p1].tau;
-      exp_IomegaN_tau[p1] = cexp(-I*omega_n*tau)/(mc->model.beta); //precalculate every green function
+      exp_IomegaN_tau[p1] = cexp(-I*omega_n*tau); //precalculate every green function
     }
     for(k=0;k<mc->model.greenSymMat.nIndep; k++) indepM_sampled[k]=0.0;
     
@@ -409,14 +410,15 @@ int measure(MonteCarlo * mc) {
     
     cMatrixMatrixMultiplication(&mc->g0_matsubara.matrices[n], &mc->dummy1, &mc->dummy2); // dummy2 = g0*dummy1
     cMatrixMatrixMultiplication(&mc->dummy2, &mc->g0_matsubara.matrices[n], &mc->dummy1); // dummy1 = dummy2*g0
-    cMatrixMatrixAddition(&mc->dummy1, &mc->g0_matsubara.matrices[n], &mc->dummy2, -1.0); // dummy2 = g0 - dummy1
+    cMatrixMatrixAddition(&mc->dummy1, &mc->g0_matsubara.matrices[n], &mc->dummy2, 1.0); // dummy2 = g0 - dummy1
     
-    /*
+    
     if(n<3){
-      printf("\ndummy %d\n", n);
+      printf("dummy %d ", n);
       print_cMatrix(&mc->dummy1);
     }
-    */
+    else if(n==4) printf("\n");
+    //*/
     
     //printf("before:\n");
     //print_cMatrix(&mc->accumulated_g_matsubara.matrices[n]);
