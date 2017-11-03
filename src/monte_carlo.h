@@ -138,11 +138,11 @@ unsigned int irng(unsigned int N) {return rand()%N;}
 
 
 double green0(Vertex const * vertexI, Vertex const * vertexJ, MonteCarlo *mc) { 
-  double diff_tau = vertexI->tau - vertexJ->tau ;//+1e-13; 
+  double diff_tau = vertexI->tau - vertexJ->tau +1e-13; 
 
   double aps = 1.;
-  if (diff_tau <= .0) {
-    diff_tau += mc->model.beta;
+  if (diff_tau > .0) {
+    diff_tau -= mc->model.beta;
     aps = -1.;
   }
   double ntau = fabs(diff_tau) * (N_PTS_TAU -1) /mc->model.beta;
@@ -410,12 +410,12 @@ int measure(MonteCarlo * mc) {
     
     cMatrixMatrixMultiplication(&mc->g0_matsubara.matrices[n], &mc->dummy1, &mc->dummy2); // dummy2 = g0*dummy1
     cMatrixMatrixMultiplication(&mc->dummy2, &mc->g0_matsubara.matrices[n], &mc->dummy1); // dummy1 = dummy2*g0
-    cMatrixMatrixAddition(&mc->dummy1, &mc->g0_matsubara.matrices[n], &mc->dummy2, 1.0); // dummy2 = g0 - dummy1
+    cMatrixMatrixAddition(&mc->dummy1, &mc->g0_matsubara.matrices[n], &mc->dummy2, -1.0); // dummy2 = g0 - dummy1
     
     
     if(n<3){
       printf("dummy %d ", n);
-      print_cMatrix(&mc->dummy1);
+      print_cMatrix(&mc->dummy2);
     }
     else if(n==4) printf("\n");
     //*/
