@@ -7,6 +7,8 @@ conductivities*.dat
 */a.out
 green*.dat
 
+src/testInputFiles/n0.4175_U5.00_beta10.2/*
+
 ctINT
 findGreenTool
 tests

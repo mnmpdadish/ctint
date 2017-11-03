@@ -56,7 +56,7 @@ void init_MonteCarlo(MonteCarlo * mc, Model * model) {
   init_cMatrixFunction(&mc->hyb_matsubara, model);
 
   //printf("salut"); fflush(stdout);
-  FILE * fileHyb = fopenSafe("testInputFiles/hyb1.dat","rt");
+  FILE * fileHyb = fopenSafe("testInputFiles/hyb99.dat","rt");
   readFile_cMatrixFunction(fileHyb, &mc->hyb_matsubara, model);
   patch_HYB_matsubara(model, &mc->hyb_matsubara);
   fclose(fileHyb);
@@ -412,7 +412,7 @@ int measure(MonteCarlo * mc) {
     cMatrixMatrixMultiplication(&mc->dummy2, &mc->g0_matsubara.matrices[n], &mc->dummy1); // dummy1 = dummy2*g0
     cMatrixMatrixAddition(&mc->dummy1, &mc->g0_matsubara.matrices[n], &mc->dummy2, -1.0); // dummy2 = g0 - dummy1
     
-    
+    /*
     if(n<3){
       printf("dummy %d ", n);
       print_cMatrix(&mc->dummy2);

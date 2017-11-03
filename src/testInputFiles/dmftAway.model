@@ -1,0 +1,25 @@
+#you can most of the time use comment with #
+sites
+(0,0,0)
+
+symmetry_generators
+
+superlattice   
+(1,0,0)
+(0,1,0)
+(0,0,1)
+
+one-body
+#mu  (0,0,0)  -0.4
+t   (1,0,0)  -1.0
+t   (0,1,0)  -1.0
+
+mu    1.376977727581713
+U     5.0
+beta 10.2
+delta 0.05
+
+nUpdates 10
+cleanUpdate 1
+measureUpdate 1
+

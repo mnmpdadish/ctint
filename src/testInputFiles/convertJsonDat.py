@@ -24,7 +24,7 @@ def writeDataFile(realVectorX, complexVectorYList,fileName):
    
 
 def main1():
-   hyb = ReadJson('Hyb8.json')
+   hyb = ReadJson('Hyb99.json')
    #################################################
    #WRITE YOUR CODE HERE
 
@@ -37,6 +37,6 @@ def main1():
    print omega_n
    print complexVectorYList
    #################################################
-   writeDataFile(omega_n, complexVectorYList,'hyb8.dat')
+   writeDataFile(omega_n, complexVectorYList,'hyb99.dat')
    
 main1()

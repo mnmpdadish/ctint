@@ -4,7 +4,7 @@
 
 int main() {
 
-  char fileName[]="testInputFiles/dmft.model";
+  char fileName[]="testInputFiles/dmftAway.model";
   FILE * file = fopen(fileName, "rt");
   if(file == NULL) {printf("file %s not found\n", fileName); exit(1);}
   printf("\nreading model from %s:\n", fileName);
@@ -17,9 +17,17 @@ int main() {
   unsigned int seed = 1000001;
   srand(seed);
   
-  int update_i, N=10000000, measure_i=10000, cleanUpdate_i=501;
+  int update_i, N_updates=10000000, termalization_i = 10000, measure_i=10000, cleanUpdate_i=501;
   int nSamples=0;
-  for(update_i=1; update_i<N;  update_i++) {
+  for(update_i=1; update_i<termalization_i;  update_i++) {
+    if(urng()<0.5) InsertVertex(&mc);
+    else RemoveVertex(&mc);
+    if(update_i % cleanUpdate_i ==0){
+      if(mc.vertices.N !=0) CleanUpdate(&mc);
+    }
+  }
+  
+  for(update_i=1; update_i<N_updates+1;  update_i++) {
     if(urng()<0.5) InsertVertex(&mc);
     else RemoveVertex(&mc);
     if(update_i % measure_i==0) {
