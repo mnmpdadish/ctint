@@ -5,8 +5,6 @@
 // ---------------------------- testing routines -------------------------------
 
 
-
-
 int test_cCopy(int verbose) {
   //if(verbose) printf("\n-------------\ntest_cCopy():");
   cMatrix A, B, C;
@@ -225,32 +223,6 @@ int test_cInvert(int verbose) {
 }
 
 
-/*
-int test_cScalarProduct(int verbose) {
-  //if(verbose) printf("\n-------------\ntest_cCopy():");
-
-  cVector X,Y;
-  init_cVector(&X,3);
-  init_cVector(&Y,3);
-  double complex * p = X.data;
-  *p++ = 1.0; *p++ = 3.3; *p++ = 5.0;
-  p = Y.data;
-  *p++ = 2.0; *p++ = 1.3; *p++ = 0.3;
-  
-  if(verbose){
-    printf("\nX=\n"); print_cVector(&X);
-    printf("\nY=\n"); print_cVector(&Y);
-  }
-  
-  double complex a=cScalarProduct(&X,&Y);
-  if(verbose) printf("\nscalar product\na=X.Y=% 4.4f\n", a);
-    
-  int Nerror = !complexEqual(a,7.79);
-  free_cVector(&X);
-  free_cVector(&Y);
-  return Nerror;
-}
-*/
 
 int test_cAddition(int verbose) {
   //if(verbose) printf("\n-------------\ntest_cMultiply():\n");
@@ -279,7 +251,7 @@ int test_cAddition(int verbose) {
     printf("\nB=\n"); print_cMatrix(&B);
   }
 
-  cMatrixMatrixAddition(&A,&B,&A, 1.0);  // to addition in place, do: cMatrixMatrixAddition(&A,&B,&B, 1.0)
+  cMatrixMatrixAddition(&A,&B,&C, 1.0);  // to addition in place, do: cMatrixMatrixAddition(&A,&B,&B, 1.0)
   if(verbose) {
     printf("\nC=A+B=\n"); 
     print_cMatrix(&C);

@@ -6,7 +6,7 @@ int main() {
   int verbose=1;
   int Nfail=0;
   printf("\n--------------------\ntesting one body matrix \n--------------------\n\n");
-  Nfail+= passOrFail("test_oneBodyMatrix",       test_oneBodyMatrix(verbose));
+  Nfail+= passOrFail("test_oneBodyMatrix",       test_oneBodyMatrix(verbose,"testInputFiles/plaquette2x2.in"));
   
   verdict(Nfail);
   

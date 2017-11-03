@@ -7,13 +7,12 @@
 
 #include "oneBodyMatrix.h"
 
-int test_oneBodyMatrix(int verbose) {
+int test_oneBodyMatrix(int verbose, char fileName[]) {
   int Nerror=0;
-  
-  char fileName[]="testInputFiles/plaquette2x2.in";
-  FILE * file = fopen(fileName, "rt");
-  if(file == NULL) {printf("file %s not found\n", fileName); exit(1);}
-  printf("\nreading one-body operators from %s:\n", fileName);
+  //char fileName[]="testInputFiles/plaquette2x2.in";
+  FILE * file = fopenSafe(fileName, "rt",verbose);
+  //if(file == NULL) {printf("file %s not found\n", fileName); exit(1);}
+  //if(verbose) printf("\nreading one-body operators from %s:\n", fileName);
 
   HoppingMatrix tMat;
   init_HoppingMatrix(&tMat);
@@ -23,25 +22,25 @@ int test_oneBodyMatrix(int verbose) {
   MultiplePositions sites;
   init_MultiplePositions(&sites);
   readSites(file, &sites, "sites");
-  print_MultiplePositions(&sites,"sites");
+  if(verbose) print_MultiplePositions(&sites,"sites");
   
   MultiplePositions superlattice;
   init_MultiplePositions(&superlattice);
   readSites(file, &superlattice, "superlattice");
-  print_MultiplePositions(&superlattice,"superlattice");
+  if(verbose) print_MultiplePositions(&superlattice,"superlattice");
   assert(superlattice.n == 3);
   
   IntPosition a;
   a.x=-11; a.y=-21; a.z=0;
   Folding folding = Fold(a, sites, superlattice);
-  printf("foldingR = (%d,%d,%d)\n", folding.R.x, folding.R.y, folding.R.z);
-  printf("site = (%d,%d,%d)\n",     folding.r.x, folding.r.y, folding.r.z);
+  if(verbose) printf("foldingR = (%d,%d,%d)\n", folding.R.x, folding.R.y, folding.R.z);
+  if(verbose) printf("site = (%d,%d,%d)\n",     folding.r.x, folding.r.y, folding.r.z);
   if(folding.R.x !=-12 || folding.R.y !=-22 || folding.R.z != 0) Nerror++;
   if(folding.r.x !=1   || folding.r.y !=1   || folding.r.z != 0) Nerror++;
   
   
   defineSparse_HoppingMatrix(&tMat, &sites, &superlattice);
-  print_HoppingMatrix(&tMat);
+  if(verbose) print_HoppingMatrix(&tMat);
   
   cMatrix tMatrixK, Sol1;
   init_cMatrix(&tMatrixK,sites.n);
@@ -50,10 +49,10 @@ int test_oneBodyMatrix(int verbose) {
   //printf("\ntMatrixK=\n"); print_cMatrix(&tMatrixK);
   
   double complex * p = Sol1.data;
-  *p++=-0.8+0.0*I; *p++=-2.0+0.0*I;  *p++=-1.0-1.0*I; *p++= 0.6+0.6*I; 
-  *p++=-2.0+0.0*I; *p++=-0.8+0.0*I;  *p++= 0.6+0.6*I; *p++=-1.0-1.0*I; 
-  *p++=-1.0+1.0*I; *p++= 0.6-0.6*I;  *p++=-0.8+0.0*I; *p++=-2.0+0.0*I; 
-  *p++= 0.6-0.6*I; *p++=-1.0+1.0*I;  *p++=-2.0+0.0*I; *p++=-0.8+0.0*I; 
+  *p++=-0.4+0.0*I; *p++=-2.0+0.0*I;  *p++=-1.0-1.0*I; *p++= 0.6+0.6*I; 
+  *p++=-2.0+0.0*I; *p++=-0.4+0.0*I;  *p++= 0.6+0.6*I; *p++=-1.0-1.0*I; 
+  *p++=-1.0+1.0*I; *p++= 0.6-0.6*I;  *p++=-0.4+0.0*I; *p++=-2.0+0.0*I; 
+  *p++= 0.6-0.6*I; *p++=-1.0+1.0*I;  *p++=-2.0+0.0*I; *p++=-0.4+0.0*I; 
   transpose_cMatrix(&Sol1); // with this meth of input, we need to transpose
 
   if(verbose){

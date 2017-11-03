@@ -7,20 +7,17 @@
 
 #include "findGreenSymmetries.h"
 
-int test_readSymmetriesPlaquettes2x2(int verbose) {
+int test_readSymmetriesPlaquettes2x2(int verbose, char fileName[]) {
   int nSites=4;
-  char fileName[]="testInputFiles/plaquette2x2.in";
-  FILE * file = fopen(fileName, "rt");
-  if(file == NULL) {printf("file %s not found\n", fileName); exit(1);}
-  printf("\nreading symmetries from %s:\n", fileName);
-
-  //Symmetries symmetries
-  int nSym=countLineFlag(file, "symmetries");
-  printf("nsym=%d\n", nSym);
+  //char fileName[]="testInputFiles/plaquette2x2.in";
+  FILE * file = fopenSafe(fileName, "rt", verbose);
+  
+  int nSym=countLineFlag(file, "symmetry_generators");
+  if(verbose) printf("nsym=%d\n", nSym);
   
   Symmetries sym; initSymmetries(&sym, nSym, nSites); //kind of a constructor.
-  readSymmetries(file, nSites, &sym, "symmetries");
-  printSymmetries(&sym);
+  readSymmetries(file, nSites, &sym, "symmetry_generators");
+  if(verbose) printSymmetries(&sym);
   
   GreenSymmetriesMatrix greenSymMat;
   initGreenSymmetriesMatrix(&greenSymMat,nSites,&sym);
@@ -28,10 +25,11 @@ int test_readSymmetriesPlaquettes2x2(int verbose) {
   if(verbose){
     printf("\nsymmetrized matrix:\n");
     printGreenSymmetriesMatrix(&greenSymMat);
+    printf("\n");
   }
   
   int solution_i[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-  int solution_j[] = {0,1,2,3,1,0,3,2,2,3,0,1,3,2,1,0};
+  int solution_j[] = {0,1,1,3,1,0,3,1,1,3,0,1,3,1,1,0};
   int Nerror=0,i,j,N=greenSymMat.nSites;
   for(i=0;i<N;i++){
     for(j=0;j<N;j++){
@@ -40,7 +38,6 @@ int test_readSymmetriesPlaquettes2x2(int verbose) {
   } 
   
   
-  printf("\n");
   
   freeGreenSymmetriesMatrix(&greenSymMat);
   freeSymmetries(&sym);
@@ -48,20 +45,20 @@ int test_readSymmetriesPlaquettes2x2(int verbose) {
   return Nerror;
 }
 
-int test_readSymmetriesPlaquettes4x4(int verbose) {
+int test_readSymmetriesPlaquettes4x4(int verbose, char fileName[]) {
   int nSites=16;
-  char fileName[]="testInputFiles/plaquette4x4.in";
-  FILE * file = fopen(fileName, "rt");
+  //char fileName[]="testInputFiles/plaquette4x4.in";
+  FILE * file = fopenSafe(fileName, "rt", verbose);
   if(file == NULL) {printf("file %s not found\n", fileName); exit(1);}
-  printf("\nreading symmetries from %s:\n", fileName);
+  if(verbose) printf("\nreading symmetries from %s:\n", fileName);
 
   //Symmetries symmetries
-  int nSym=countLineFlag(file, "symmetries");
-  printf("nsym=%d\n", nSym);
+  int nSym=countLineFlag(file, "symmetry_generators");
+  if(verbose) printf("nsym=%d\n", nSym);
   
   Symmetries sym; initSymmetries(&sym, nSym, nSites); //kind of a constructor.
-  readSymmetries(file, nSites, &sym, "symmetries");
-  printSymmetries(&sym);
+  readSymmetries(file, nSites, &sym, "symmetry_generators");
+  if(verbose) printSymmetries(&sym);
   
   GreenSymmetriesMatrix greenSymMat;
   initGreenSymmetriesMatrix(&greenSymMat,nSites,&sym);
@@ -100,9 +97,10 @@ int test_readSymmetriesPlaquettes4x4(int verbose) {
     }
   } 
   
-  if(verbose) printf("nIndep=%d\n",greenSymMat.nIndep);
-  
-  printf("\n");
+  if(verbose) {
+    printf("nIndep=%d\n",greenSymMat.nIndep);
+    printf("\n");
+  }
   
   freeGreenSymmetriesMatrix(&greenSymMat);
   freeSymmetries(&sym);

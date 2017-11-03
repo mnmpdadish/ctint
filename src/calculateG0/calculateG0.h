@@ -5,105 +5,13 @@
 #include <string.h>
 #include <assert.h>
 
-#include "../findGreenSymmetries/findGreenSymmetries.h"
-#include "../oneBodyMatrix/oneBodyMatrix.h"
-#include "../util/stringUtil.h"
-#include "../util/utilities.h"
-#include "../util/arrays/array.h"
+#include "model.h"
 
 #define N_PTS_MAT 200
 #define N_PTS_TAU 1000
 
 
-typedef struct {
-  HoppingMatrix tMat;
-  MultiplePositions sites;
-  MultiplePositions superlattice;
-  dMatrix hybFM;
-  Symmetries sym; 
-  GreenSymmetriesMatrix greenSymMat;
-  double beta;
-  double mu;
-  double muAux;
-  double U;
-  double auxU;
-  double delta;
-  int nUpdates;
-  int cleanUpdate;
-  int measureUpdate;
-} Model;
-
-
-void read_Model(FILE * file, Model * model) {
-
-  init_HoppingMatrix(&model->tMat);
-  init_MultiplePositions(&model->sites);
-  init_MultiplePositions(&model->superlattice);
-     
-  readOperators_HoppingMatrix(file, &model->tMat);
-  readSites(file, &model->sites, "sites");
-  print_MultiplePositions(&model->sites,"sites");
-  
-  readSites(file, &model->superlattice, "superlattice");
-  print_MultiplePositions(&model->superlattice,"superlattice");
-  assert(model->superlattice.n == 3);
-  
-  defineSparse_HoppingMatrix(&model->tMat, &model->sites, &model->superlattice);
-  print_HoppingMatrix(&model->tMat);
-  
-  init_dMatrix(&model->hybFM,model->sites.n);
-  calculate_hybFirstMoments(&model->tMat, &model->hybFM);
-  
-  
-  int nSym=countLineFlag(file, "symmetry_generators");
-  printf("nsym=%d\n", nSym);
-  initSymmetries(&model->sym, nSym, model->sites.n);
-  readSymmetries(file, model->sites.n, &model->sym, "symmetry_generators");
-  printSymmetries(&model->sym);
-  
-  initGreenSymmetriesMatrix(&model->greenSymMat,model->sites.n,&model->sym);
-  printf("\nsymmetrized matrix:\n");
-  printGreenSymmetriesMatrix(&model->greenSymMat);
-  
-  printf("\n");
-  
-  readDouble(file, "U",     &model->U);
-  readDouble(file, "mu",    &model->mu);
-  readDouble(file, "beta",  &model->beta);  
-  readDouble(file, "delta",  &model->delta);  
-  
-  readInt(file, "nUpdates",  &model->nUpdates);  
-  readInt(file, "cleanUpdate",  &model->cleanUpdate);  
-  readInt(file, "measureUpdate",  &model->measureUpdate);  
-  
-  model->muAux = model->mu - model->U/2.0;
-  model->auxU = model->U/2.0;
-
-  
-}
-
-
-void free_Model(Model * model) {
-  freeGreenSymmetriesMatrix(&model->greenSymMat);
-  freeSymmetries(&model->sym);
-  
-  free_dMatrix(&model->hybFM);
-  free_HoppingMatrix(&model->tMat);
-  free_MultiplePositions(&model->sites);
-  free_MultiplePositions(&model->superlattice);
-}
-
-
-
-
 // -------------------------------------------------------------------------
-
-/*
-typedef struct {
-  double complex data[N_PTS];
-  char name[2];
-} functionComplex;
-*/
 
 typedef struct {
   cMatrix matrices[N_PTS_MAT];
@@ -119,7 +27,6 @@ typedef struct {
   dMatrix matrices[N_PTS_TAU];
   double beta;
 } dMatrixFunction;
-
 
 void init_cMatrixFunction(cMatrixFunction * cMatFun, Model * model) {
   
@@ -180,26 +87,28 @@ unsigned int cMatrix_dMatrixAdditionInPlace(cMatrix * A, dMatrix const * B, doub
 }
 
 
-void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model, cMatrixFunction * hyb_matsubara) {
+void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model, cMatrixFunction * hyb_matsubara, double mu, int verbose) {
   int i,n;
   cMatrix tLoc;
   init_cMatrix(&tLoc,model->sites.n);
   calculate_HoppingMatrixLoc(&model->tMat, &tLoc);
   
   for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->M1, i, i) = 1.0;
-  printf("M1:\n"); print_cMatrix(&g0_matsubara->M1);
-  for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->M2, i, i) = -model->muAux; 
-  cMatrixMatrixAdditionInPlace(&g0_matsubara->M2, &tLoc, 1.0, 1.0);
-  printf("M2:\n"); print_cMatrix(&g0_matsubara->M2);
+  if(verbose) printf("M1:\n"); print_cMatrix(&g0_matsubara->M1);
+  
+  for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->M2, i, i) = -mu;
+  cMatrixMatrixAdditionInPlace(&g0_matsubara->M2, &tLoc, 1.0, 1.0); 
+  if(verbose) printf("M2:\n"); print_cMatrix(&g0_matsubara->M2);
+  
   cMatrixMatrixMultiplication(&g0_matsubara->M2, &g0_matsubara->M2, &g0_matsubara->M3); //M2=M1*M1
   if(hyb_matsubara != NULL) 
     cMatrix_dMatrixAdditionInPlace(&g0_matsubara->M3,&model->hybFM, 1.0, -1.0);  // g = g - hyb
-  printf("M3:\n"); print_cMatrix(&g0_matsubara->M3);
+  if(verbose) printf("M3:\n"); print_cMatrix(&g0_matsubara->M3);
 
   for(n=0; n<N_PTS_MAT; n++){
     reset_cMatrix(&g0_matsubara->matrices[n]);
     double complex z = I*(2.*n+1)*M_PI/g0_matsubara->beta;
-    for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->matrices[n], i, i) = z + model->muAux; // g = diagonal(muAux)
+    for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->matrices[n], i, i) = z + mu; // g = diagonal()
     cMatrixMatrixAdditionInPlace(&g0_matsubara->matrices[n],&tLoc, 1.0, -1.0);  // g = g - tLoc
     if(hyb_matsubara != NULL) 
       cMatrixMatrixAdditionInPlace(&g0_matsubara->matrices[n],&hyb_matsubara->matrices[n], 1.0, -1.0);  // g = g - hyb

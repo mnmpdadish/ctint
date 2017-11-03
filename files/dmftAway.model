@@ -14,12 +14,13 @@ one-body
 t   (1,0,0)  -1.0
 t   (0,1,0)  -1.0
 
-mu    1.5
-U     3.0
-beta 10.0
+mu    1.376977727581713
+U     5.0
+beta 10.2
 delta 0.05
 
-nUpdates 10
-cleanUpdate 1
-measureUpdate 1
+nUpdates   10000000
+cleanUpdate_i   501
+measure_i     10000
+nThermUpdates 10000
 

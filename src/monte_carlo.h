@@ -3,9 +3,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "precalculateG0/calculateG0.h"
+#include "calculateG0/calculateG0.h"
 
 #define VERTICES_BASIC_CAPACITY 256
+#define N_EXP 2000
+
 
 typedef struct {
   double tau;
@@ -44,9 +46,8 @@ typedef struct {
   double accumulated_sign;
   double accumulated_expOrder;
   cMatrixFunction accumulated_g_matsubara; //interacting Green Function to sample.
-  
+  double complex expI[N_EXP];
 } MonteCarlo;
-
 
 
 void init_MonteCarlo(MonteCarlo * mc, Model * model) {
@@ -56,19 +57,19 @@ void init_MonteCarlo(MonteCarlo * mc, Model * model) {
   init_cMatrixFunction(&mc->hyb_matsubara, model);
 
   //printf("salut"); fflush(stdout);
-  FILE * fileHyb = fopenSafe("testInputFiles/hyb99.dat","rt");
+  FILE * fileHyb = fopenSafe("files/hyb99.dat","rt", 1);
   readFile_cMatrixFunction(fileHyb, &mc->hyb_matsubara, model);
   patch_HYB_matsubara(model, &mc->hyb_matsubara);
   fclose(fileHyb);
   
-  calculate_G0_matsubara(&mc->g0_matsubara, model, &mc->hyb_matsubara);
+  calculate_G0_matsubara(&mc->g0_matsubara, model, &mc->hyb_matsubara, model->muAux, 1);
   
   init_cMatrix(&mc->dummy1, model->sites.n);
   init_cMatrix(&mc->dummy2, model->sites.n);
   
   cMatrixFunction g0_matsubara_tmp;
   init_cMatrixFunction(&g0_matsubara_tmp, model);
-  calculate_G0_matsubara(&g0_matsubara_tmp, model, &mc->hyb_matsubara);
+  calculate_G0_matsubara(&g0_matsubara_tmp, model, &mc->hyb_matsubara, model->muAux, 0);
   calculate_G0_tau(&g0_matsubara_tmp,&mc->g0_tau);
   free_cMatrixFunction(&g0_matsubara_tmp);
   
@@ -97,7 +98,11 @@ void init_MonteCarlo(MonteCarlo * mc, Model * model) {
   mc->sign=1.0;
   mc->accumulated_sign=0;
   mc->accumulated_expOrder=0;
-  
+ 
+  unsigned int i;
+  for(i=0;i<N_EXP;i++) mc->expI[i] = cexp(-I*2*M_PI*((double)i)/((double) N_EXP)); //precalculate every green function
+
+  //forcexp(-I*omega_n*tau);  
 }
 
 void free_MonteCarlo(MonteCarlo * mc) {
@@ -350,15 +355,12 @@ void free_IndepFunctionDouble(IndepFunctionDouble * indepFun) {
 
 
 /*
-double complex expI(Vertex const * vertexI, Vertex const * vertexJ, MonteCarlo *mc) { 
-  double diff_tau = vertexI->tau - vertexJ->tau; 
+double complex expI(double value, MonteCarlo * mc) { 
+  //double diff_tau = vertexI->tau - vertexJ->tau; 
 
-  double aps = 1.;
-  if (diff_tau > .0) {
-    diff_tau -= mc->model.beta;
-    aps = -1.;
-  }
-  double ntau = fabs(diff_tau) * (N_PTS_TAU -1) /mc->model.beta;
+  //double aps = 1.;
+  //if (value < .0) 
+  double       nValue = fabs(diff_tau) * (N_EXP -1) /mc->model.beta;
   unsigned int ntau0= (unsigned int) ntau;
   
   double val_n  = ELEM_VAL(mc->g0_tau.matrices[ntau0], vertexI->site, vertexJ->site);
@@ -366,7 +368,7 @@ double complex expI(Vertex const * vertexI, Vertex const * vertexJ, MonteCarlo *
   
   return aps*((1. - (ntau - ntau0))*val_n + (ntau - ntau0)*val_n1);
 }
-*/
+//*/
 
 
 
@@ -425,14 +427,29 @@ int measure(MonteCarlo * mc) {
     cMatrixMatrixAdditionInPlace(&mc->accumulated_g_matsubara.matrices[n], &mc->dummy2, 1.0, 1.0); // g += dummy2
     //printf("after:\n");
     //print_cMatrix(&mc->accumulated_g_matsubara.matrices[n]);
-    
-
   }
   
   mc->accumulated_sign +=mc->sign;
   mc->accumulated_expOrder +=N;
+  return 1;
+}
+
+
+int outputMeasure(MonteCarlo * mc, unsigned int nSamples) {
+  int n;
+  for(n=0; n<N_PTS_MAT; n++) scale_cMatrix(&mc->accumulated_g_matsubara.matrices[n],1.0/nSamples);
   
+  FILE *fileOut1 = fopenSafe("green0.dat", "w", 1);
+  writeToFile_cMatrixFunction(fileOut1, &mc->g0_matsubara, &mc->model);
+  FILE *fileOut2 = fopenSafe("greenI.dat", "w", 1);
+  
+  writeToFile_cMatrixFunction(fileOut2, &mc->accumulated_g_matsubara, &mc->model);
+  printf("nSamples = %d, sign= %f, expOrder= %f\n",nSamples,mc->accumulated_sign/nSamples, mc->accumulated_expOrder/nSamples);
+  //writeToFile_cMatrixFunction(FILE *fileOut, cMatrixFunction * cMatFun, Model * model) {
+  
+
   
   return 1;
 }
+
 

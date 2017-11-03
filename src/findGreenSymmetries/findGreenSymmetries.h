@@ -259,31 +259,4 @@ int freeGreenSymmetriesMatrix(GreenSymmetriesMatrix * greenSymMat) {
 }
 
 
-/*
-int main() {
-  int nSites=16;
-  char fileName[]="plaquette4x4.in";
-  FILE * file = fopen(fileName, "rt");
-  if(file == NULL) {printf("file %s not found", fileName); exit(1);}
-  printf("reading symmetries from %s:\n", fileName);
-
-  //Symmetries symmetries
-  int nSym=countLineFlag(file, "symmetries");
-  printf("nsym=%d\n", nSym);
-  
-  Symmetries sym; buildSymmetries(&sym, nSym, nSites); //kind of a constructor.
-  readSymmetries(file, nSites, &sym);
-  printSymmetries(&sym);
-  
-  GreenSymmetriesMatrix greenSymMat;
-  buildGreenSymmetriesMatrix(&greenSymMat,nSites,&sym);
-  
-  // do stuff with green.
-  
-  freeGreenSymmetriesMatrix(&greenSymMat);
-  freeSymmetries(&sym);
-
-  return 0;
-}
-*/
 
