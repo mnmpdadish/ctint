@@ -11,6 +11,7 @@ typedef struct {
 } Basic;
 
 
+// this is juste a basic test
 int main() {
   int i;
   Basic basic;

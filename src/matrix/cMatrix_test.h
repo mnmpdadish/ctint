@@ -1,6 +1,6 @@
 #pragma once
 
-#include "matrixComplex.h"
+#include "cMatrix.h"
 
 // ---------------------------- testing routines -------------------------------
 

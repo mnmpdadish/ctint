@@ -20,23 +20,12 @@ int main(int argc, char *argv[]) {
   sprintf(hybFileName, "hyb%lu.dat", itNumber); // puts string into buffer
   sprintf(paramsFileName, "params%lu", itNumber); // puts string into buffer
   
-  //printf("%s\n", hybFileName); // outputs so you can see it
-  //printf("%s\n", paramsFileName); // outputs so you can see it
-  //exit(1);
-  
-  
-  //char fileName[]="testInputFiles/dmftAway.model";
-  /*FILE * fileModel  = fopenSafe("files/dmftAway.model", "rt",1);
-  FILE * fileHyb    = fopenSafe("files/hyb99.dat", "rt",1);
-  FILE * fileParams = fopenSafe("files/params99", "rt",1);*/
   FILE * fileHyb    = fopenSafe(hybFileName,  "rt",1);
   FILE * fileModel  = fopenSafe(modelFileName, "rt",1);
   FILE * fileParams = fopenSafe(paramsFileName, "rt",1);
-  //if(file == NULL) {printf("file %s not found\n", fileName); exit(1);}
-  //printf("\nreading model from %s:\n", fileName);
   
   Model model;
-  read_Model(fileModel, fileParams,&model);
+  read_Model(fileModel, fileParams, &model);
   MonteCarlo mc;
   init_MonteCarlo(fileHyb, &mc, &model);
   
@@ -67,14 +56,6 @@ int main(int argc, char *argv[]) {
       printf("%d",update_i); fflush(stdout);
       printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
     }
-    /*
-    printf("\n\n\nnormal:\n");
-    Print_MonteCarlo(&mc);
-    if(mc.vertices.N !=0) CleanUpdate(&mc);
-    printf("clean:\n");
-    Print_MonteCarlo(&mc);
-    printf("sign=% 2.0f   order=%d   \n\n", mc.sign, mc.vertices.N); fflush(stdout);
-    //*/
   }
   
   outputMeasure(&mc, nSamples);

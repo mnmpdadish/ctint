@@ -1,6 +1,6 @@
 #pragma once
 
-#include "matrixDouble.h"
+#include "dMatrix.h"
 
 // ---------------------------- testing routines -------------------------------
 

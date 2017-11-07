@@ -7,8 +7,8 @@
 
 #include "../util/stringUtil.h"
 #include "../util/arrays/array.h"
-#include "../matrixDouble.h"
-#include "../matrixComplex.h"
+#include "../matrix/dMatrix.h"
+#include "../matrix/cMatrix.h"
 
 
 typedef struct {
