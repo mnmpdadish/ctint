@@ -46,7 +46,10 @@ typedef struct {
   double accumulated_sign;
   double accumulated_expOrder;
   cMatrixFunction accumulated_g_matsubara; //interacting Green Function to sample.
+  dMatrix accumulated_g_tau; //interacting Green Function to sample.
   double complex expI[N_EXP];
+  double KDirac; // same notation as Patrick, not sure about the math yet
+  double density;
 } MonteCarlo;
 
 
@@ -66,6 +69,7 @@ void init_MonteCarlo(MonteCarlo * mc, Model * model) {
   
   init_cMatrix(&mc->dummy1, model->sites.n);
   init_cMatrix(&mc->dummy2, model->sites.n);
+  init_dMatrix(&mc->accumulated_g_tau, model->sites.n);
   
   cMatrixFunction g0_matsubara_tmp;
   init_cMatrixFunction(&g0_matsubara_tmp, model);
@@ -110,6 +114,7 @@ void free_MonteCarlo(MonteCarlo * mc) {
   free_dMatrixFunction(&mc->g0_tau);
   free_cMatrixFunction(&mc->g0_matsubara);
   free_cMatrixFunction(&mc->accumulated_g_matsubara);
+  free_dMatrix(&mc->accumulated_g_tau);
   //free_dMatrixFunction(&mc->g0_tau_down);
   free_dMatrix(mc->M_up);
   free_dMatrix(mc->M_down);
@@ -374,10 +379,59 @@ double complex expI(double value, MonteCarlo * mc) {
 
 int measure(MonteCarlo * mc) {
   unsigned int N = mc->vertices.N;
+  //double green0_tau1[N];
+  //double green0_tau2[N];
   double complex exp_IomegaN_tau[N];
   double complex indepM_sampled[mc->model.greenSymMat.nIndep];
+  double indepG_tau_sampled[mc->model.greenSymMat.nIndep];
   unsigned int sites[N];
   int n,p1,p2,k,i,j;
+  
+  
+  for(k=0;k<mc->model.greenSymMat.nIndep;k++){
+    i = mc->model.greenSymMat.iFirstIndep[k];
+    j = mc->model.greenSymMat.jFirstIndep[k];
+    
+    Vertex vertex0_I;
+    vertex0_I.tau = 1e-13;
+    vertex0_I.site= i;
+    vertex0_I.auxSpin = 0;
+    
+    Vertex vertex0_J;
+    vertex0_J.tau = 0;
+    vertex0_J.site= j;
+    vertex0_J.auxSpin = 0;
+    
+    indepG_tau_sampled[k] = mc->sign * green0(&vertex0_I, &vertex0_J, mc);
+    for(p1=0;p1<N;p1++) {
+      for(p2=0;p2<N;p2++) {
+        //unsigned int index = mc->model.greenSymMat.indexIndep[mc->model.sites.n*sites[p1]+sites[p2]];
+        //printf("salut=%d %d %d  %d %d\n", index, N*sites[p1]+sites[p2], mc->model.greenSymMat.nElement, sites[p1], sites[p2] ); fflush(stdout);
+        indepG_tau_sampled[k] -= mc->sign * 0.5 * ( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2)) * green0(&vertex0_I,&mc->vertices.m_vertex[p1], mc) * green0(&mc->vertices.m_vertex[p2],&vertex0_J, mc);
+        if(p1==p2) mc->KDirac += mc->sign * 0.5 * ( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2));
+
+      }
+    }
+    if(i==j) mc->density += indepG_tau_sampled[k]*mc->model.greenSymMat.numberOfSiteAssociated[k] / mc->model.sites.n;
+  }
+  //*/
+  
+  for(i=0;i<mc->model.sites.n;i++) {
+    for(j=0;j<mc->model.sites.n;j++) {
+      unsigned int index = mc->model.greenSymMat.indexIndep[mc->model.sites.n*i+j];
+      ELEM_VAL(mc->accumulated_g_tau,i,j) += indepG_tau_sampled[index];
+    }
+  }
+    
+  
+  //printf(" n= % 5.3f", indepG_tau_sampled[0]);
+  /*for(p1=0;p1<N;p1++) {
+    green0_tau1[p1] = green0(mc->vertices.m_vertex[p1]);
+    exp_IomegaN_tau[p1] = cexp(-I*omega_n*tau); //precalculate every green function
+  }//*/
+    
+  
+  //double g_at_tau0;
   
   for(p1=0;p1<N;p1++) sites[p1] = mc->vertices.m_vertex[p1].site;
   
@@ -435,6 +489,7 @@ int measure(MonteCarlo * mc) {
 }
 
 
+
 int outputMeasure(MonteCarlo * mc, unsigned int nSamples) {
   int n;
   for(n=0; n<N_PTS_MAT; n++) scale_cMatrix(&mc->accumulated_g_matsubara.matrices[n],1.0/nSamples);
@@ -444,8 +499,21 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples) {
   FILE *fileOut2 = fopenSafe("greenI.dat", "w", 1);
   
   writeToFile_cMatrixFunction(fileOut2, &mc->accumulated_g_matsubara, &mc->model);
-  printf("nSamples = %d, sign= %f, expOrder= %f\n",nSamples,mc->accumulated_sign/nSamples, mc->accumulated_expOrder/nSamples);
   //writeToFile_cMatrixFunction(FILE *fileOut, cMatrixFunction * cMatFun, Model * model) {
+
+
+  dMatrixFunction g_tau;
+  init_dMatrixFunction(&g_tau, &mc->model);
+  calculate_G0_tau(&mc->accumulated_g_matsubara,&g_tau); // warning, this function alter mc->accumulated_g_matsubara
+
+  FILE *fileOut3 = fopenSafe("greenI_tau.dat", "w", 1);
+  writeToFile_dMatrixFunction(fileOut3, &g_tau, &mc->model);
+
+
+  double occupation =  -(mc->KDirac/(mc->model.beta*nSamples*mc->model.sites.n) + (mc->model.muAux - mc->model.mu) )/mc->model.U;  
+  printf("nSamples = %d, sign= %f, expOrder= %f, n=%f, KDirac=%f, occupation=%f\n",nSamples,mc->accumulated_sign/nSamples, mc->accumulated_expOrder/nSamples, ELEM_VAL(mc->accumulated_g_tau,0,0)/nSamples, occupation, mc->density/nSamples);
+  
+  free_dMatrixFunction(&g_tau);
   
 
   

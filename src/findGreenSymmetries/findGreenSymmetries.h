@@ -129,6 +129,7 @@ typedef struct {
   unsigned int nIndep;
   unsigned int *iFirstIndep;
   unsigned int *jFirstIndep;
+  unsigned int *numberOfSiteAssociated;
 } GreenSymmetriesMatrix;
 
 
@@ -166,6 +167,7 @@ void indexIndependantGreen(GreenSymmetriesMatrix * greenSymMat) {
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
       if(greenSymMat->i[N*i+j]==i && greenSymMat->j[N*i+j]==j) {
+        greenSymMat->numberOfSiteAssociated[nIndep]++;
         greenSymMat->iFirstIndep[nIndep]= i;
         greenSymMat->jFirstIndep[nIndep]= j;
         greenSymMat->indexIndep[N*i+j] = nIndep++; //increment after the equality
@@ -223,11 +225,14 @@ int initGreenSymmetriesMatrix(GreenSymmetriesMatrix * greenSymMat, int nSites, S
   greenSymMat->j = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
   greenSymMat->iFirstIndep = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int)); //allocate more than needed here, why not
   greenSymMat->jFirstIndep = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int)); //allocate more than needed here, why not
+  greenSymMat->numberOfSiteAssociated = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int)); //allocate more than needed here, why not
   greenSymMat->indexIndep = (unsigned int *) malloc(nSites*nSites * sizeof (unsigned int));
   greenSymMat->nElement = nSites*nSites;
   greenSymMat->nSites = nSites;
   
   int i,j;
+  for(i=0;i<nSites*nSites;i++) greenSymMat->numberOfSiteAssociated[i]=0;
+  
   for(i=0;i<nSites;i++){
     for(j=0;j<nSites;j++){
       greenSymMat->i[i*nSites+j]=(i<j)? i:j;
@@ -254,6 +259,7 @@ int freeGreenSymmetriesMatrix(GreenSymmetriesMatrix * greenSymMat) {
   free(greenSymMat->j);
   free(greenSymMat->iFirstIndep);
   free(greenSymMat->jFirstIndep);
+  free(greenSymMat->numberOfSiteAssociated);
   free(greenSymMat->indexIndep);
   return 0;
 }

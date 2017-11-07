@@ -14,7 +14,7 @@ int main() {
   MonteCarlo mc;
   init_MonteCarlo(&mc, &model);
   
-  unsigned int seed = 1000001;
+  unsigned int seed = 100000;
   srand(seed);
   
   int update_i; //, termalization_i = 10000, measure_i=10000, cleanUpdate_i=501;
@@ -31,13 +31,15 @@ int main() {
     if(urng()<0.5) InsertVertex(&mc);
     else RemoveVertex(&mc);
     if(update_i % mc.model.measure_i==0) {
-      printf("%d",update_i); fflush(stdout);
+      //printf("%d",update_i); fflush(stdout);
       measure(&mc);
       nSamples++;
-      printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
+      //printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
     }
     if(update_i % mc.model.cleanUpdate_i ==0){
       if(mc.vertices.N !=0) CleanUpdate(&mc);
+      printf("%d",update_i); fflush(stdout);
+      printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
     }
     /*
     printf("\n\n\nnormal:\n");
