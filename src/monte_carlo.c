@@ -2,19 +2,45 @@
 #include <unistd.h>
 #include "monte_carlo.h"
 
-int main() {
+int main(int argc, char *argv[]) {
 
+  if(argc!=3) {
+    printf("program usage example:\n$ mc dmft.model 9\n\n");
+    printf("This specific example requires the dmft.model file must be found in the current path.\n");
+    printf("The 9 specify the iteration number. The hyb9.dat and params9 files must be found in the current path.\n");
+    exit(1);
+  }
+  
+  unsigned long int itNumber = atol(argv[2]);
+  char * modelFileName = argv[1];
+  
+  char hybFileName[256];
+  char paramsFileName[256];
+  
+  sprintf(hybFileName, "hyb%lu.dat", itNumber); // puts string into buffer
+  sprintf(paramsFileName, "params%lu", itNumber); // puts string into buffer
+  
+  //printf("%s\n", hybFileName); // outputs so you can see it
+  //printf("%s\n", paramsFileName); // outputs so you can see it
+  //exit(1);
+  
+  
   //char fileName[]="testInputFiles/dmftAway.model";
-  FILE * file = fopenSafe("files/dmftAway.model", "rt",1);
+  /*FILE * fileModel  = fopenSafe("files/dmftAway.model", "rt",1);
+  FILE * fileHyb    = fopenSafe("files/hyb99.dat", "rt",1);
+  FILE * fileParams = fopenSafe("files/params99", "rt",1);*/
+  FILE * fileHyb    = fopenSafe(hybFileName,  "rt",1);
+  FILE * fileModel  = fopenSafe(modelFileName, "rt",1);
+  FILE * fileParams = fopenSafe(paramsFileName, "rt",1);
   //if(file == NULL) {printf("file %s not found\n", fileName); exit(1);}
   //printf("\nreading model from %s:\n", fileName);
   
   Model model;
-  read_Model(file,&model);
+  read_Model(fileModel, fileParams,&model);
   MonteCarlo mc;
-  init_MonteCarlo(&mc, &model);
+  init_MonteCarlo(fileHyb, &mc, &model);
   
-  unsigned int seed = 100000;
+  unsigned int seed = 10000061;
   srand(seed);
   
   int update_i; //, termalization_i = 10000, measure_i=10000, cleanUpdate_i=501;

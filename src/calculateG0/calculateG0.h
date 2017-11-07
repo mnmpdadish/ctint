@@ -30,17 +30,17 @@ typedef struct {
 
 void init_cMatrixFunction(cMatrixFunction * cMatFun, Model * model) {
   
-  init_cMatrix(&cMatFun->M0,model->sites.n);
-  init_cMatrix(&cMatFun->M1,model->sites.n);
-  init_cMatrix(&cMatFun->M2,model->sites.n);
-  init_cMatrix(&cMatFun->M3,model->sites.n);
+  init_cMatrix(&cMatFun->M0,model->nSites);
+  init_cMatrix(&cMatFun->M1,model->nSites);
+  init_cMatrix(&cMatFun->M2,model->nSites);
+  init_cMatrix(&cMatFun->M3,model->nSites);
   reset_cMatrix(&cMatFun->M0);
   reset_cMatrix(&cMatFun->M1);
   reset_cMatrix(&cMatFun->M2);
   reset_cMatrix(&cMatFun->M3);
   int n;
   for(n=0; n<N_PTS_MAT; n++){
-    init_cMatrix(&cMatFun->matrices[n],model->sites.n);
+    init_cMatrix(&cMatFun->matrices[n],model->nSites);
     reset_cMatrix(&cMatFun->matrices[n]);
   }
   cMatFun->beta = model->beta;
@@ -59,7 +59,7 @@ void free_cMatrixFunction(cMatrixFunction * cMatFun) {
 void init_dMatrixFunction(dMatrixFunction * dMatFun, Model * model) {
   int n;
   for(n=0; n<N_PTS_TAU; n++){
-    init_dMatrix(&dMatFun->matrices[n],model->sites.n);
+    init_dMatrix(&dMatFun->matrices[n],model->nSites);
     reset_dMatrix(&dMatFun->matrices[n]);
   }
   dMatFun->beta = model->beta;
@@ -90,25 +90,25 @@ unsigned int cMatrix_dMatrixAdditionInPlace(cMatrix * A, dMatrix const * B, doub
 void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model, cMatrixFunction * hyb_matsubara, double mu, int verbose) {
   int i,n;
   cMatrix tLoc;
-  init_cMatrix(&tLoc,model->sites.n);
+  init_cMatrix(&tLoc,model->nSites);
   calculate_HoppingMatrixLoc(&model->tMat, &tLoc);
   
-  for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->M1, i, i) = 1.0;
-  if(verbose) printf("M1:\n"); print_cMatrix(&g0_matsubara->M1);
+  for(i=0; i<model->nSites; i++) ELEM_VAL(g0_matsubara->M1, i, i) = 1.0;
+  if(verbose) {printf("M1:\n"); print_cMatrix(&g0_matsubara->M1);}
   
-  for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->M2, i, i) = -mu;
+  for(i=0; i<model->nSites; i++) ELEM_VAL(g0_matsubara->M2, i, i) = -mu;
   cMatrixMatrixAdditionInPlace(&g0_matsubara->M2, &tLoc, 1.0, 1.0); 
-  if(verbose) printf("M2:\n"); print_cMatrix(&g0_matsubara->M2);
+  if(verbose) {printf("M2:\n"); print_cMatrix(&g0_matsubara->M2);}
   
   cMatrixMatrixMultiplication(&g0_matsubara->M2, &g0_matsubara->M2, &g0_matsubara->M3); //M2=M1*M1
   if(hyb_matsubara != NULL) 
     cMatrix_dMatrixAdditionInPlace(&g0_matsubara->M3,&model->hybFM, 1.0, -1.0);  // g = g - hyb
-  if(verbose) printf("M3:\n"); print_cMatrix(&g0_matsubara->M3);
+  if(verbose) {printf("M3:\n"); print_cMatrix(&g0_matsubara->M3);}
 
   for(n=0; n<N_PTS_MAT; n++){
     reset_cMatrix(&g0_matsubara->matrices[n]);
     double complex z = I*(2.*n+1)*M_PI/g0_matsubara->beta;
-    for(i=0; i<model->sites.n; i++) ELEM_VAL(g0_matsubara->matrices[n], i, i) = z + mu; // g = diagonal()
+    for(i=0; i<model->nSites; i++) ELEM_VAL(g0_matsubara->matrices[n], i, i) = z + mu; // g = diagonal()
     cMatrixMatrixAdditionInPlace(&g0_matsubara->matrices[n],&tLoc, 1.0, -1.0);  // g = g - tLoc
     if(hyb_matsubara != NULL) 
       cMatrixMatrixAdditionInPlace(&g0_matsubara->matrices[n],&hyb_matsubara->matrices[n], 1.0, -1.0);  // g = g - hyb
@@ -303,9 +303,9 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
         //print_cMatrix(&cMatFun->matrices[n_matsubara]);
         //printf("salut\n");
         
-        for(i=0;i<model->sites.n;i++) {
-          for(j=0;j<model->sites.n;j++) {
-            unsigned int index = model->greenSymMat.indexIndep[model->sites.n*i+j];
+        for(i=0;i<model->nSites;i++) {
+          for(j=0;j<model->nSites;j++) {
+            unsigned int index = model->greenSymMat.indexIndep[model->nSites*i+j];
             ELEM_VAL(cMatFun->matrices[n_matsubara],i,j) = indep_cMatrixValue[index]; 
           }
         }

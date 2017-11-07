@@ -20,6 +20,7 @@ typedef struct {
   dMatrix hybFM;
   Symmetries sym; 
   GreenSymmetriesMatrix greenSymMat;
+  unsigned int nSites;
   double beta;
   double mu;
   double muAux;
@@ -33,48 +34,50 @@ typedef struct {
 } Model;
 
 
-void read_Model(FILE * file, Model * model) {
+void read_Model(FILE * fileModel, FILE * fileParams, Model * model) {
 
   init_HoppingMatrix(&model->tMat);
   init_MultiplePositions(&model->sites);
   init_MultiplePositions(&model->superlattice);
      
-  readOperators_HoppingMatrix(file, &model->tMat);
-  readSites(file, &model->sites, "sites");
+  readOperators_HoppingMatrix(fileModel, &model->tMat);
+  readSites(fileModel, &model->sites, "sites");
   print_MultiplePositions(&model->sites,"sites");
+  model->nSites = model->sites.n;
   
-  readSites(file, &model->superlattice, "superlattice");
+  readSites(fileModel, &model->superlattice, "superlattice");
   print_MultiplePositions(&model->superlattice,"superlattice");
   assert(model->superlattice.n == 3);
   
   defineSparse_HoppingMatrix(&model->tMat, &model->sites, &model->superlattice);
   print_HoppingMatrix(&model->tMat);
   
-  init_dMatrix(&model->hybFM,model->sites.n);
+  init_dMatrix(&model->hybFM,model->nSites);
   calculate_hybFirstMoments(&model->tMat, &model->hybFM);
   
   
-  int nSym=countLineFlag(file, "symmetry_generators");
+  int nSym=countLineFlag(fileModel, "symmetry_generators");
   printf("nsym=%d\n", nSym);
-  initSymmetries(&model->sym, nSym, model->sites.n);
-  readSymmetries(file, model->sites.n, &model->sym, "symmetry_generators");
+  initSymmetries(&model->sym, nSym, model->nSites);
+  readSymmetries(fileModel, model->nSites, &model->sym, "symmetry_generators");
   printSymmetries(&model->sym);
   
-  initGreenSymmetriesMatrix(&model->greenSymMat,model->sites.n,&model->sym);
+  initGreenSymmetriesMatrix(&model->greenSymMat,model->nSites,&model->sym);
   printf("\nsymmetrized matrix:\n");
   printGreenSymmetriesMatrix(&model->greenSymMat);
+
   
   printf("\n");
   
-  readDouble(file, "U",     &model->U);
-  readDouble(file, "mu",    &model->mu);
-  readDouble(file, "beta",  &model->beta);  
-  readDouble(file, "delta", &model->delta);  
+  readDouble(fileParams, "U",     &model->U);
+  readDouble(fileParams, "mu",    &model->mu);
+  readDouble(fileParams, "beta",  &model->beta);  
+  readDouble(fileParams, "delta", &model->delta);  
   
-  readInt(file, "nUpdates",      &model->nUpdates);  
-  readInt(file, "nThermUpdates", &model->nThermUpdates);  
-  readInt(file, "cleanUpdate_i", &model->cleanUpdate_i);  
-  readInt(file, "measure_i",     &model->measure_i);  
+  readInt(fileParams, "nUpdates",      &model->nUpdates);  
+  readInt(fileParams, "nThermUpdates", &model->nThermUpdates);  
+  readInt(fileParams, "cleanUpdate_i", &model->cleanUpdate_i);  
+  readInt(fileParams, "measure_i",     &model->measure_i);  
   
   model->muAux = model->mu - model->U/2.0;
   model->auxU = model->U/2.0;

@@ -53,14 +53,14 @@ typedef struct {
 } MonteCarlo;
 
 
-void init_MonteCarlo(MonteCarlo * mc, Model * model) {
+void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
   init_dMatrixFunction(&mc->g0_tau, model);
   init_cMatrixFunction(&mc->accumulated_g_matsubara, model);
   init_cMatrixFunction(&mc->g0_matsubara, model);
   init_cMatrixFunction(&mc->hyb_matsubara, model);
 
   //printf("salut"); fflush(stdout);
-  FILE * fileHyb = fopenSafe("files/hyb99.dat","rt", 1);
+  //FILE * fileHyb = fopenSafe("files/hyb99.dat","rt", 1);
   readFile_cMatrixFunction(fileHyb, &mc->hyb_matsubara, model);
   patch_HYB_matsubara(model, &mc->hyb_matsubara);
   fclose(fileHyb);
@@ -373,9 +373,34 @@ double complex expI(double value, MonteCarlo * mc) {
   
   return aps*((1. - (ntau - ntau0))*val_n + (ntau - ntau0)*val_n1);
 }
+//
+
+
+void build_dMatrix_from_indep(Model * model, dMatrix * matrix, double arrayIndep[]) {
+  assert(matrix->N==model->sites.n);
+  assert(matrix->N == sizeof(arrayIndep)/sizeof(arrayIndep[0]));
+  unsigned int i,j, N=matrix->N;
+  for(i=0;i<N;i++) {
+    for(j=0;j<N;j++) {
+      unsigned int index = model->greenSymMat.indexIndep[N*i+j];
+      ELEM(matrix,i,j) += arrayIndep[index];
+    }
+  }
+}
+
+void build_cMatrix_from_indep(Model * model, cMatrix * matrix, double arrayIndep[]) {
+  assert(matrix->N==model->sites.n);
+  assert(matrix->N == sizeof(arrayIndep)/sizeof(arrayIndep[0]));
+  unsigned int i,j, N=matrix->N;
+  for(i=0;i<N;i++) {
+    for(j=0;j<N;j++) {
+      unsigned int index = model->greenSymMat.indexIndep[N*i+j];
+      ELEM(matrix,i,j) += arrayIndep[index];
+    }
+  }
+}
+
 //*/
-
-
 
 int measure(MonteCarlo * mc) {
   unsigned int N = mc->vertices.N;
@@ -407,9 +432,14 @@ int measure(MonteCarlo * mc) {
       for(p2=0;p2<N;p2++) {
         //unsigned int index = mc->model.greenSymMat.indexIndep[mc->model.sites.n*sites[p1]+sites[p2]];
         //printf("salut=%d %d %d  %d %d\n", index, N*sites[p1]+sites[p2], mc->model.greenSymMat.nElement, sites[p1], sites[p2] ); fflush(stdout);
-        indepG_tau_sampled[k] -= mc->sign * 0.5 * ( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2)) * green0(&vertex0_I,&mc->vertices.m_vertex[p1], mc) * green0(&mc->vertices.m_vertex[p2],&vertex0_J, mc);
-        if(p1==p2) mc->KDirac += mc->sign * 0.5 * ( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2));
-
+        indepG_tau_sampled[k] -= mc->sign * 0.5 * ( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2)) * 
+                                 green0(&vertex0_I,&mc->vertices.m_vertex[p1], mc) * 
+                                 green0(&mc->vertices.m_vertex[p2],&vertex0_J, mc);
+        
+        if(p1==p2) {
+          mc->KDirac += mc->sign * 0.5 * ( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2));
+          //printf("%f %f\n",green0(&vertex0_I,&mc->vertices.m_vertex[p1], mc),green0(&mc->vertices.m_vertex[p1],&vertex0_I, mc));
+        }
       }
     }
     if(i==j) mc->density += indepG_tau_sampled[k]*mc->model.greenSymMat.numberOfSiteAssociated[k] / mc->model.sites.n;
@@ -511,7 +541,8 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples) {
 
 
   double occupation =  -(mc->KDirac/(mc->model.beta*nSamples*mc->model.sites.n) + (mc->model.muAux - mc->model.mu) )/mc->model.U;  
-  printf("nSamples = %d, sign= %f, expOrder= %f, n=%f, KDirac=%f, occupation=%f\n",nSamples,mc->accumulated_sign/nSamples, mc->accumulated_expOrder/nSamples, ELEM_VAL(mc->accumulated_g_tau,0,0)/nSamples, occupation, mc->density/nSamples);
+  printf("nSamples = %d, sign= %f, expOrder= %f, n=%f, KDirac=%f, occupation=%f\n",
+         nSamples,mc->accumulated_sign/nSamples, mc->accumulated_expOrder/nSamples, ELEM_VAL(mc->accumulated_g_tau,0,0)/nSamples, occupation, mc->density/nSamples);
   
   free_dMatrixFunction(&g_tau);
   

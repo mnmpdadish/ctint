@@ -11,9 +11,12 @@
 int test_Plaquettes2x2(int verbose) {
   int Nerror=0;
   
-  FILE * file = fopenSafe("testInputFiles/plaquette2x2.model","rt",verbose);
+  FILE * fileModel = fopenSafe("testInputFiles/plaquette2x2.model","rt",verbose);
+  FILE * fileParams = fopenSafe("testInputFiles/params2x2","rt",verbose);
   Model model;
-  read_Model(file,&model);
+  read_Model(fileModel, fileParams, &model);
+  fclose(fileModel);
+  fclose(fileParams);
   
   cMatrixFunction g0_matsubara;
   cMatrixFunction g0_matsubara_Read;
@@ -62,10 +65,13 @@ int test_Plaquettes2x2(int verbose) {
 
 int test_dmft(int verbose) {
   int Nerror=0;
+  
   FILE * fileModel = fopenSafe("testInputFiles/dmft.model","rt",verbose);
+  FILE * fileParams = fopenSafe("testInputFiles/paramsDmft","rt",verbose);
   Model model;
-  read_Model(fileModel,&model);
+  read_Model(fileModel, fileParams, &model);
   fclose(fileModel);
+  fclose(fileParams);
   
   cMatrixFunction g0_matsubara;
   dMatrixFunction g0_tau;
