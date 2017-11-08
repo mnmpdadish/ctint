@@ -11,14 +11,14 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
   
-  unsigned long int itNumber = atol(argv[2]);
+  unsigned long int iteration = atol(argv[2]);
   char * modelFileName = argv[1];
   
   char hybFileName[256];
   char paramsFileName[256];
   
-  sprintf(hybFileName, "hyb%lu.dat", itNumber); // puts string into buffer
-  sprintf(paramsFileName, "params%lu", itNumber); // puts string into buffer
+  sprintf(hybFileName, "hyb%lu.dat", iteration); // puts string into buffer
+  sprintf(paramsFileName, "params%lu", iteration); // puts string into buffer
   
   FILE * fileHyb    = fopenSafe(hybFileName,  "rt",1);
   FILE * fileModel  = fopenSafe(modelFileName, "rt",1);
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     }
   }
   
-  outputMeasure(&mc, nSamples);
+  outputMeasure(&mc, nSamples, iteration);
   free_MonteCarlo(&mc);//vertices.N=0;
   return 0;
 }
