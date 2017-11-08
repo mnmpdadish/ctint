@@ -638,7 +638,6 @@ void integrate_green_lattice(MonteCarlo *mc, cMatrixFunction *green, cMatrixFunc
 
 int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iteration) {
   unsigned int n, i, j;
-  
   //for(n=0; n<N_PTS_MAT; n++) scale_cMatrix(&mc->accumulated_g_matsubara.matrices[n],1.0/nSamples);
   
   cMatrixFunction green_matsubara;
@@ -688,7 +687,7 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
   else if(iteration==0){ // for iteration 0, start from an empty self.
     for(n=0;n<N_PTS_MAT;n++) copy_cMatrix(&mc->g0_matsubara.matrices[n], &green_matsubara.matrices[n]);  // g = g0
     for(n=0;n<N_PTS_MAT;n++) reset_cMatrix(&self_matsubara.matrices[n]);  // g = g0    
-  }  
+  }
   
   // integrate new green:
   cMatrixFunction new_green;
@@ -697,11 +696,12 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
   integrate_green_lattice(mc, &new_green, &self_matsubara);
   //------------------------------------------------
   
+  
   // extract new hyb:
   cMatrixFunction new_hyb_matsubara;
   init_cMatrixFunction(&new_hyb_matsubara, &mc->model);
   //------------------------------------------------
-  extract_self_or_hyb_from_green(mc, &new_hyb_matsubara, &self_matsubara, &green_matsubara);
+  extract_self_or_hyb_from_green(mc, &new_hyb_matsubara, &self_matsubara, &new_green);
   //------------------------------------------------
   char hybFileName[256];
   sprintf(hybFileName, "hyb%lu.dat", iteration+1); // puts string into buffer

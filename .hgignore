@@ -16,6 +16,11 @@ tests
 *speedTest*
 *gmon.out
 *hybOut.dat
+*/hyb*.dat
+*/green*.dat
+*/self*.dat
+*/param*
+
 
 mc
 sc
