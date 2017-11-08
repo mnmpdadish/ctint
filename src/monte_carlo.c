@@ -7,7 +7,7 @@ int main(int argc, char *argv[]) {
   if(argc!=3) {
     printf("program usage example:\n$ mc dmft.model 9\n\n");
     printf("This specific example requires the dmft.model file must be found in the current path.\n");
-    printf("The 9 specify the iteration number. The hyb9.dat and params9 files must be found in the current path.\n");
+    printf("The 9 specify the iteration number. The hyb9.dat and params9 files must be found in the current path.\n\n");
     printf("If the iteration number is 0, there is no need for an hyb0.dat file.\n");
     printf("Only the self-consistency will be processed (with self=0) and hyb1.dat will be written.\n");
     exit(1);
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
   if(iteration>0) fileHyb = fopenSafe(hybFileName,  "rt",1);
   else if (iteration==0) fileHyb = NULL;
   else {
-    printf("iteration number must be positive or 0:\n");
+    printf("iteration number must be positive or 0\n");
     exit(1);
   }
   

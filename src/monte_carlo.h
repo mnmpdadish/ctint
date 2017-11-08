@@ -649,7 +649,7 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
   double mu_new = mc->model.mu;
   
   if(iteration >0){
-  
+
     for(i=0;i<mc->model.nSites;i++) {
       for(j=0;j<mc->model.nSites;j++) {
         unsigned int index = mc->model.greenSymMat.indexIndep[mc->model.nSites*i+j];
@@ -687,8 +687,7 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
   }
   else if(iteration==0){ // for iteration 0, start from an empty self.
     for(n=0;n<N_PTS_MAT;n++) copy_cMatrix(&mc->g0_matsubara.matrices[n], &green_matsubara.matrices[n]);  // g = g0
-    for(n=0;n<N_PTS_MAT;n++) reset_cMatrix(&self_matsubara.matrices[n]);  // g = g0
-    
+    for(n=0;n<N_PTS_MAT;n++) reset_cMatrix(&self_matsubara.matrices[n]);  // g = g0    
   }  
   
   // integrate new green:
