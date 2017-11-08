@@ -658,44 +658,6 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
   fclose(fileGreen);
   
   
-/*  
-  const double Dtime = beta_/static_cast<double>(NItO_);
-		for(std::size_t nMAT = 0; nMAT < NMat_; ++nMAT) {
-			const double omega = M_PI*static_cast<double>(2*nMAT + 1)/beta_;
-			const complex iomega(.0, omega); 
-			const complex fact(std::exp(iomega*Dtime));
-			const double lambda = 2.*std::sin(omega*Dtime/2.) / ( (Dtime*omega*(1. - omega*omega*Dtime*Dtime/24.)) *static_cast<double>(NAlpsMeas_*_SiteVector::VEC_DIM)); 
-			
-			_SiteVector temp; 
-			for(_Site i = 0; i < _SiteVector::VEC_DIM; ++i) {
-				complex tempMAT(.0);
-				complex exp(std::exp(iomega*Dtime/2.)); 
-				
-				double* itK = K_[i].data();
-				for(unsigned int nTime = 0; nTime < NItO_; ++nTime) {
-					complex coeff = lambda*exp;
-					tempMAT += coeff**itK; ++itK;
-					
-					coeff = iomega*coeff;
-					tempMAT += coeff**itK; ++itK;
-					
-					coeff = iomega*coeff/2.;
-					tempMAT += coeff**itK; ++itK;
-					
-					coeff = iomega*coeff/3.;
-					tempMAT += coeff**itK; ++itK;
-					
-					exp *= fact;
-				}
-				
-				temp(i) = complex(tempMAT.real(), tempMAT.imag());
-			}
-			
-			model_.transform(temp);
-*/
-
-
-  
   //FILE *fileOut1 = fopenSafe("green0.dat", "w", 1);
   //writeToFile_cMatrixFunction(fileOut1, &mc->g0_matsubara, &mc->model);
   //FILE *fileOut2 = fopenSafe("greenI.dat", "w", 1);
@@ -712,9 +674,6 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
   init_cMatrix(&tLoc,mc->model.nSites);
   init_cMatrix(&inverted_green,mc->model.nSites);
   calculate_HoppingMatrixLoc(&mc->model.tMat, &tLoc);
-  
-  
-  
   
   for(n=0;n<N_PTS_MAT;n++){
     double complex z = I*(2.*n+1)*M_PI/mc->model.beta; 
@@ -759,7 +718,6 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
       }
     }
   }
-
   
   cMatrixFunction new_hyb_matsubara;
   init_cMatrixFunction(&new_hyb_matsubara, &mc->model);
