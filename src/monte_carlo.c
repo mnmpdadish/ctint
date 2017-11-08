@@ -39,8 +39,8 @@ int main(int argc, char *argv[]) {
   MonteCarlo mc;
   init_MonteCarlo(fileHyb, &mc, &model);
   
-  unsigned int seed = 10000061;
-  srand(seed);
+  //unsigned int seed = 10000061;
+  srand(mc.model.seed);
   
   int update_i; //, termalization_i = 10000, measure_i=10000, cleanUpdate_i=501;
   int nSamples=0;

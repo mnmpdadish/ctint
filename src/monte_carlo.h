@@ -87,9 +87,9 @@ void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
   init_cMatrixFunction(&mc->g0_matsubara, model);
   init_cMatrixFunction(&mc->hyb_matsubara, model);
 
-  //if(fileHyb!=NULL){  
+  if(fileHyb!=NULL){  
     readFile_cMatrixFunction(fileHyb, &mc->hyb_matsubara, model);
-  //}
+  }
   patch_HYB_matsubara(model, &mc->hyb_matsubara); //if nothing loaded, will patch with moments.
   //fclose(fileHyb);
   
@@ -640,8 +640,7 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
   unsigned int n, i, j;
   //for(n=0; n<N_PTS_MAT; n++) scale_cMatrix(&mc->accumulated_g_matsubara.matrices[n],1.0/nSamples);
   
-  cMatrixFunction green_matsubara;
-  init_cMatrixFunction(&green_matsubara, &mc->model);
+  
   cMatrixFunction self_matsubara;
   init_cMatrixFunction(&self_matsubara, &mc->model);
   
@@ -664,6 +663,9 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
     //double measured_density = 2.0*mc->density/nSamples;
     
     // extract Green:
+    cMatrixFunction green_matsubara;
+    init_cMatrixFunction(&green_matsubara, &mc->model);
+  
     //------------------------------------------------
     calculate_G_matsubara_from_G_tau_accumulator(mc, &green_matsubara, nSamples);
     //------------------------------------------------
@@ -685,13 +687,13 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
     fclose(fileSelf);
   }
   else if(iteration==0){ // for iteration 0, start from an empty self.
-    for(n=0;n<N_PTS_MAT;n++) copy_cMatrix(&mc->g0_matsubara.matrices[n], &green_matsubara.matrices[n]);  // g = g0
-    for(n=0;n<N_PTS_MAT;n++) reset_cMatrix(&self_matsubara.matrices[n]);  // g = g0    
+    for(n=0;n<N_PTS_MAT;n++) reset_cMatrix(&self_matsubara.matrices[n]);  // self = 0    
   }
   
   // integrate new green:
   cMatrixFunction new_green;
   init_cMatrixFunction(&new_green, &mc->model);
+  
   //------------------------------------------------
   integrate_green_lattice(mc, &new_green, &self_matsubara);
   //------------------------------------------------
