@@ -12,7 +12,7 @@ fi
 while [ $ITER -le $ITERMAX ]
 do
   echo begin iteration $ITER at: `date` >> logfile 
-  $mc_DIR/mc dmft.model ${ITER}
+  $mc_DIR/mc plaquette2x2.model ${ITER}
   
   ITER=$[$ITER+1]
 done
