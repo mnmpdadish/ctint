@@ -33,7 +33,7 @@ typedef struct {
 } iFunction;
 
 typedef struct {
-  dFunction * indep_G_tau_sampled; //[mc->model.greenSymMat.nIndep]
+  double * indep_G_tau_sampled; //[mc->model.greenSymMat.nIndep]
   dFunction * indep_M_tau0_sampled;
   dFunction * indep_M_tau1_sampled;
   dFunction * indep_M_tau2_sampled;
@@ -68,39 +68,48 @@ typedef struct {
   double accumulated_sign;
   double accumulated_expOrder;
   cMatrixFunction accumulated_g_matsubara; //interacting Green Function to sample.
-  dMatrix accumulated_g_tau; //interacting Green Function to sample.
+  dMatrix g_tau_0; //interacting Green Function at tau=0.
   double complex expI[N_EXP];
   double KDirac; // same notation as Patrick, not sure about the math yet
   double density;
   GreenAccumulator g_tau_accumulator;
+  
+  unsigned long int nInsert;
+  unsigned long int nRemove;
 } MonteCarlo;
 
 
 
 void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
+  
   init_dMatrixFunction(&mc->g0_tau, model);
   init_cMatrixFunction(&mc->accumulated_g_matsubara, model);
   init_cMatrixFunction(&mc->g0_matsubara, model);
   init_cMatrixFunction(&mc->hyb_matsubara, model);
 
-  //printf("salut"); fflush(stdout);
-  //FILE * fileHyb = fopenSafe("files/hyb99.dat","rt", 1);
-  readFile_cMatrixFunction(fileHyb, &mc->hyb_matsubara, model);
-  patch_HYB_matsubara(model, &mc->hyb_matsubara);
-  fclose(fileHyb);
+  //if(fileHyb!=NULL){  
+    readFile_cMatrixFunction(fileHyb, &mc->hyb_matsubara, model);
+  //}
+  patch_HYB_matsubara(model, &mc->hyb_matsubara); //if nothing loaded, will patch with moments.
+  //fclose(fileHyb);
   
   calculate_G0_matsubara(&mc->g0_matsubara, model, &mc->hyb_matsubara, model->muAux, 1);
-  
-  init_cMatrix(&mc->dummy1, model->nSites);
-  init_cMatrix(&mc->dummy2, model->nSites);
-  init_dMatrix(&mc->accumulated_g_tau, model->nSites);
   
   cMatrixFunction g0_matsubara_tmp;
   init_cMatrixFunction(&g0_matsubara_tmp, model);
   calculate_G0_matsubara(&g0_matsubara_tmp, model, &mc->hyb_matsubara, model->muAux, 0);
   calculate_G0_tau(&g0_matsubara_tmp,&mc->g0_tau);
   free_cMatrixFunction(&g0_matsubara_tmp);
+  //else{
+  //  calculate_G0_matsubara(&mc->g0_matsubara, model, NULL, model->muAux, 1);
+  //}
   
+  init_cMatrix(&mc->dummy1, model->nSites);
+  init_cMatrix(&mc->dummy2, model->nSites);
+  init_dMatrix(&mc->g_tau_0, model->nSites);
+  //init_dMatrix(&mc->accumulated_g_tau, model->nSites);
+  
+
   mc->M_up     = malloc(sizeof(dMatrix));
   mc->M_down    = malloc(sizeof(dMatrix));
   mc->Mdummy_up  = malloc(sizeof(dMatrix));
@@ -124,7 +133,7 @@ void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
   mc->g_tau_accumulator.indep_M_tau1_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
   mc->g_tau_accumulator.indep_M_tau2_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
   mc->g_tau_accumulator.indep_M_tau3_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
-  mc->g_tau_accumulator.indep_G_tau_sampled  = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
+  mc->g_tau_accumulator.indep_G_tau_sampled  = malloc(model->greenSymMat.nIndep * sizeof(double));
   mc->g_tau_accumulator.nSamples             = malloc(model->greenSymMat.nIndep * sizeof(iFunction));
   
   unsigned int k, n;
@@ -149,6 +158,8 @@ void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
   unsigned int i;
   for(i=0;i<N_EXP;i++) mc->expI[i] = cexp(-I*2*M_PI*((double)i)/((double) N_EXP)); //precalculate every green function
 
+  mc->nRemove=0;
+  mc->nInsert=0;
   //forcexp(-I*omega_n*tau);  
 }
 
@@ -157,7 +168,7 @@ void free_MonteCarlo(MonteCarlo * mc) {
   free_dMatrixFunction(&mc->g0_tau);
   free_cMatrixFunction(&mc->g0_matsubara);
   free_cMatrixFunction(&mc->accumulated_g_matsubara);
-  free_dMatrix(&mc->accumulated_g_tau);
+  //free_dMatrix(&mc->accumulated_g_tau);
   //free_dMatrixFunction(&mc->g0_tau_down);
   free_dMatrix(mc->M_up);
   free_dMatrix(mc->M_down);
@@ -253,6 +264,7 @@ int InsertVertex(MonteCarlo * mc) {
     double pAcc = -2.*mc->model.nSites*mc->model.beta*mc->model.auxU/ ( ((double)mc->vertices.N)*mc->Stilde_up*mc->Stilde_down );
     //printf("pAcc=%f\n",pAcc);
     if(urng() < fabs(pAcc)) {
+      mc->nInsert++;
 			if(pAcc < .0) mc->sign *= -1;
       
       dVectorMatrixProduct(&mc->R, mc->M_up, -mc->Stilde_up, &mc->Rtilde_up);
@@ -285,7 +297,8 @@ int InsertVertex(MonteCarlo * mc) {
     double pAcc = -2.*mc->model.nSites*mc->model.beta*mc->model.auxU*mc->S_up*mc->S_down;
     //printf("%f\n",pAcc);
     if(urng() < fabs(pAcc)) {
-      if(pAcc < .0) mc->sign *= -1;
+      mc->nInsert++;
+			if(pAcc < .0) mc->sign *= -1;
       resize_dMatrix(mc->M_up,1);
       resize_dMatrix(mc->M_down,1);
       
@@ -324,7 +337,8 @@ void RemoveVertex(MonteCarlo * mc) {
     double pAcc = (mc->vertices.N*ELEM(mc->M_up,p,p)*ELEM(mc->M_down,p,p) ) / (-2.0*mc->model.nSites * mc->model.beta * mc->model.auxU);
     
     if(urng() < fabs(pAcc)) {
-      if(pAcc < .0) mc->sign *= -1;
+      mc->nRemove++;
+			if(pAcc < .0) mc->sign *= -1;
       //printf("%d ==? %d\n",mc->M_up->N, mc->vertices.N);
       
       mc->vertices.N--;  // the vertex is not deleted, it is just forgotten
@@ -373,105 +387,17 @@ void CleanUpdate(MonteCarlo * mc) {
 
 
 
-
-
-
-
-
-//#define N_PTS_OUT 200
-// -------------------------------------------------------------------------
-
-/*
-typedef struct {
-  double data[N_PTS_TAU];
-} functionDouble;
-
-typedef struct {
-  unsigned int n;
-  functionDouble * func;
-} IndepFunctionDouble;
-
-void init_IndepFunctionDouble(IndepFunctionDouble * indepFun, Model * model) {
-  indepFun->n    = model->greenSymMat.nIndep;
-  indepFun->func = (functionDouble *) malloc(indepFun->n * sizeof (functionDouble));
-
-  int k;
-  for(k=0; k<indepFun->n; k++){
-    int i=model->greenSymMat.iFirstIndep[k];
-    int j=model->greenSymMat.jFirstIndep[k];
-  }
-}
-
-void free_IndepFunctionDouble(IndepFunctionDouble * indepFun) {
-  free(indepFun->func);
-}
-*/
-
-
-/*
-double complex expI(double value, MonteCarlo * mc) { 
-  //double diff_tau = vertexI->tau - vertexJ->tau; 
-
-  //double aps = 1.;
-  //if (value < .0) 
-  double       nValue = fabs(diff_tau) * (N_EXP -1) /mc->model.beta;
-  unsigned int ntau0= (unsigned int) ntau;
-  
-  double val_n  = ELEM_VAL(mc->g0_tau.matrices[ntau0], vertexI->site, vertexJ->site);
-  double val_n1 = ELEM_VAL(mc->g0_tau.matrices[ntau0+1], vertexI->site, vertexJ->site);
-  
-  return aps*((1. - (ntau - ntau0))*val_n + (ntau - ntau0)*val_n1);
-}
-//
-
-
-void build_dMatrix_from_indep(Model * model, dMatrix * matrix, double arrayIndep[]) {
-  assert(matrix->N==model->nSites);
-  assert(matrix->N == sizeof(arrayIndep)/sizeof(arrayIndep[0]));
-  unsigned int i,j, N=matrix->N;
-  for(i=0;i<N;i++) {
-    for(j=0;j<N;j++) {
-      unsigned int index = model->greenSymMat.indexIndep[N*i+j];
-      ELEM(matrix,i,j) += arrayIndep[index];
-    }
-  }
-}
-
-void build_cMatrix_from_indep(Model * model, cMatrix * matrix, double arrayIndep[]) {
-  assert(matrix->N==model->nSites);
-  assert(matrix->N == sizeof(arrayIndep)/sizeof(arrayIndep[0]));
-  unsigned int i,j, N=matrix->N;
-  for(i=0;i<N;i++) {
-    for(j=0;j<N;j++) {
-      unsigned int index = model->greenSymMat.indexIndep[N*i+j];
-      ELEM(matrix,i,j) += arrayIndep[index];
-    }
-  }
-}
-
-//*/
-
 int measure(MonteCarlo * mc) {
   unsigned int N = mc->vertices.N;
-  //double green0_tau1[N];
-  //double green0_tau2[N];
-  double complex exp_IomegaN_tau[N];
-  double complex indepM_sampled[mc->model.greenSymMat.nIndep];
+  //double complex exp_IomegaN_tau[N];
+  //double complex indepM_sampled[mc->model.greenSymMat.nIndep];
   double indepG_tau_sampled[mc->model.greenSymMat.nIndep];
   unsigned int sites[N];
-  int n,p1,p2,k,i,j;
+  int p1,p2,k,i,j;
 
   for(p1=0;p1<N;p1++) sites[p1] = mc->vertices.m_vertex[p1].site;
 
 
-/*
-  mc->g_tau_accumulator.indep_M_tau0_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
-  mc->g_tau_accumulator.indep_M_tau1_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
-  mc->g_tau_accumulator.indep_M_tau2_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
-  mc->g_tau_accumulator.indep_M_tau3_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
-  mc->g_tau_accumulator.indep_G_tau_sampled  = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
-  mc->g_tau_accumulator.nSamples             = malloc(model->greenSymMat.nIndep * sizeof(iFunction));
-*/
   const double DeltaInv = N_BIN_TAU/mc->model.beta;
 
   for(p1=0;p1<N;p1++) {
@@ -531,16 +457,17 @@ int measure(MonteCarlo * mc) {
       }
     }
     if(i==j) mc->density += indepG_tau_sampled[k]*mc->model.greenSymMat.numberOfSiteAssociated[k] / mc->model.nSites;
+    mc->g_tau_accumulator.indep_G_tau_sampled[k] += indepG_tau_sampled[k];
   }
-  //*/
   
+  /*
   for(i=0;i<mc->model.nSites;i++) {
     for(j=0;j<mc->model.nSites;j++) {
       unsigned int index = mc->model.greenSymMat.indexIndep[mc->model.nSites*i+j];
       ELEM_VAL(mc->accumulated_g_tau,i,j) += indepG_tau_sampled[index];
     }
   }
-    
+  */
   
   //printf(" n= % 5.3f", indepG_tau_sampled[0]);
   /*for(p1=0;p1<N;p1++) {
@@ -585,7 +512,7 @@ int measure(MonteCarlo * mc) {
     cMatrixMatrixMultiplication(&mc->dummy2, &mc->g0_matsubara.matrices[n], &mc->dummy1); // dummy1 = dummy2*g0
     cMatrixMatrixAddition(&mc->dummy1, &mc->g0_matsubara.matrices[n], &mc->dummy2, -1.0); // dummy2 = g0 - dummy1
     
-    /*
+    
     if(n<3){
       printf("dummy %d ", n);
       print_cMatrix(&mc->dummy2);
@@ -608,12 +535,10 @@ int measure(MonteCarlo * mc) {
 
 
 
-int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iteration) {
-  unsigned int n, i, j, k;
-  //for(n=0; n<N_PTS_MAT; n++) scale_cMatrix(&mc->accumulated_g_matsubara.matrices[n],1.0/nSamples);
 
-  cMatrixFunction green_matsubara;
-  init_cMatrixFunction(&green_matsubara, &mc->model);
+
+void calculate_G_matsubara_from_G_tau_accumulator(MonteCarlo *mc, cMatrixFunction *green_matsubara, unsigned int nSamples) {
+  unsigned int n, i, j, k;
   double complex indep_M_matsubara_sampled[mc->model.greenSymMat.nIndep];
   const double dTau = mc->model.beta/N_BIN_TAU;
   for(n=0; n<N_PTS_MAT; n++) {
@@ -648,27 +573,15 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
     
     cMatrixMatrixMultiplication(&mc->g0_matsubara.matrices[n], &mc->dummy1, &mc->dummy2); // dummy2 = g0*dummy1
     cMatrixMatrixMultiplication(&mc->dummy2, &mc->g0_matsubara.matrices[n], &mc->dummy1); // dummy1 = dummy2*g0
-    cMatrixMatrixAddition(&mc->dummy1, &mc->g0_matsubara.matrices[n], &green_matsubara.matrices[n], -1.0); // g = g0 - dummy1
+    cMatrixMatrixAddition(&mc->dummy1, &mc->g0_matsubara.matrices[n], &green_matsubara->matrices[n], -1.0); // g = g0 - dummy1
   }
-  
-  char greenFileName[256];
-  sprintf(greenFileName, "green%lu.dat", iteration); // puts string into buffer
-  FILE *fileGreen = fopenSafe(greenFileName,  "w",1);
-  writeToFile_cMatrixFunction(fileGreen, &green_matsubara, &mc->model);
-  fclose(fileGreen);
-  
-  
-  //FILE *fileOut1 = fopenSafe("green0.dat", "w", 1);
-  //writeToFile_cMatrixFunction(fileOut1, &mc->g0_matsubara, &mc->model);
-  //FILE *fileOut2 = fopenSafe("greenI.dat", "w", 1);
-  //writeToFile_cMatrixFunction(fileOut2, &mc->accumulated_g_matsubara, &mc->model);
-  //fclose(fileOut2);
-  //writeToFile_cMatrixFunction(FILE *fileOut, cMatrixFunction * cMatFun, Model * model) {
+}
 
 
-  cMatrixFunction self_matsubara;
-  init_cMatrixFunction(&self_matsubara, &mc->model);
-  
+
+//self_or_hyb = diag(z+mu) - tLoc - green^-1 - hyb_or_self    (note that this equation is symmetric for self or hyb).
+void extract_self_or_hyb_from_green(MonteCarlo *mc, cMatrixFunction *self_or_hyb, cMatrixFunction const *hyb_or_self, cMatrixFunction const *green) {
+  unsigned int n, i;
   cMatrix tLoc;
   cMatrix inverted_green;
   init_cMatrix(&tLoc,mc->model.nSites);
@@ -677,30 +590,29 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
   
   for(n=0;n<N_PTS_MAT;n++){
     double complex z = I*(2.*n+1)*M_PI/mc->model.beta; 
-    reset_cMatrix(&self_matsubara.matrices[n]);
+    reset_cMatrix(&self_or_hyb->matrices[n]);
     
-    copy_cMatrix(&green_matsubara.matrices[n],&inverted_green);
+    //copy_cMatrix(&green_matsubara.matrices[n],&inverted_green);
+    copy_cMatrix(&green->matrices[n],&inverted_green);
     invert_cMatrix(&inverted_green);
     
-    for(i=0; i<mc->model.nSites; i++) ELEM_VAL(self_matsubara.matrices[n], i, i) = z + mc->model.mu;      // self = diag(z + mu) 
-    cMatrixMatrixAdditionInPlace(&self_matsubara.matrices[n], &tLoc, 1.0, -1.0);                          // self -= tLoc 
-    cMatrixMatrixAdditionInPlace(&self_matsubara.matrices[n], &inverted_green, 1.0, -1.0);                // self -= g^-1 
-    cMatrixMatrixAdditionInPlace(&self_matsubara.matrices[n], &mc->hyb_matsubara.matrices[n], 1.0, -1.0); // self -= hyb 
+    for(i=0; i<mc->model.nSites; i++) ELEM_VAL(self_or_hyb->matrices[n], i, i) = z + mc->model.mu;      // self = diag(z + mu) 
+    cMatrixMatrixAdditionInPlace(&self_or_hyb->matrices[n], &tLoc, 1.0, -1.0);                          // self -= tLoc 
+    cMatrixMatrixAdditionInPlace(&self_or_hyb->matrices[n], &inverted_green, 1.0, -1.0);                // self -= g^-1 
+    //cMatrixMatrixAdditionInPlace(&self_matsubara.matrices[n], &mc->hyb_matsubara.matrices[n], 1.0, -1.0); // self -= hyb 
+    cMatrixMatrixAdditionInPlace(&self_or_hyb->matrices[n], &hyb_or_self->matrices[n], 1.0, -1.0); // self -= hyb 
   }
-  
-  char selfFileName[256];
-  sprintf(selfFileName, "self%lu.dat", iteration); // puts string into buffer
-  FILE *fileSelf = fopenSafe(selfFileName,  "w",1);
-  writeToFile_cMatrixFunction(fileSelf, &self_matsubara, &mc->model);
-  fclose(fileSelf);
-  //free_cMatrixFunction(&self_matsubara);
-  
-  cMatrixFunction new_green;
-  init_cMatrixFunction(&new_green, &mc->model);
+  free_cMatrix(&tLoc);
+  free_cMatrix(&inverted_green);
+}
 
+//g_lattice = sum_k  (1./(diag(z+mu) - t(k) - self)   
+void integrate_green_lattice(MonteCarlo *mc, cMatrixFunction *green, cMatrixFunction const *self) {
+  unsigned int n,i,j,k;
   cMatrix tK;
+  cMatrix matrix_to_invert;
   init_cMatrix(&tK,mc->model.nSites);
-  //calculate_HoppingMatrixLoc(&mc->model.tMat, &tLoc);
+  init_cMatrix(&matrix_to_invert,mc->model.nSites);
   
   for(i=0;i<N_PTS_K;i++){
     double kx = i*2*M_PI/N_PTS_K;
@@ -710,46 +622,105 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
       for(n=0;n<N_PTS_MAT;n++){
         double complex z = I*(2.*n+1)*M_PI/mc->model.beta; 
         
-        for(k=0; k<mc->model.nSites; k++) ELEM_VAL(inverted_green, k, k) = z + mc->model.mu;      // g_i  = diag(z + mu) 
-        cMatrixMatrixAdditionInPlace(&inverted_green, &tK, 1.0, -1.0);                            // g_i -= t(k) 
-        cMatrixMatrixAdditionInPlace(&inverted_green, &self_matsubara.matrices[n], 1.0, -1.0);    // g_i -= self 
-        invert_cMatrix(&inverted_green);                                                          // g_i  = g^-1 
-        cMatrixMatrixAdditionInPlace(&new_green.matrices[n], &inverted_green, 1.0, 1.0/(N_PTS_K*N_PTS_K) );    // g += g_i / N_k^2
+        for(k=0; k<mc->model.nSites; k++) ELEM_VAL(matrix_to_invert, k, k) = z + mc->model.mu;      // g_i  = diag(z + mu) 
+        cMatrixMatrixAdditionInPlace(&matrix_to_invert, &tK, 1.0, -1.0);                            // g_i -= t(k) 
+        cMatrixMatrixAdditionInPlace(&matrix_to_invert, &self->matrices[n], 1.0, -1.0);    // g_i -= self 
+        invert_cMatrix(&matrix_to_invert);                                                          // g_i  = g_i^-1 
+        cMatrixMatrixAdditionInPlace(&green->matrices[n], &matrix_to_invert, 1.0, 1.0/(N_PTS_K*N_PTS_K) );    // g += g_i / N_k^2
       }
     }
   }
+  free_cMatrix(&tK);
+  free_cMatrix(&matrix_to_invert);
+}
+
+
+
+int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iteration) {
+  unsigned int n, i, j;
   
+  //for(n=0; n<N_PTS_MAT; n++) scale_cMatrix(&mc->accumulated_g_matsubara.matrices[n],1.0/nSamples);
+  
+  cMatrixFunction green_matsubara;
+  init_cMatrixFunction(&green_matsubara, &mc->model);
+  cMatrixFunction self_matsubara;
+  init_cMatrixFunction(&self_matsubara, &mc->model);
+  
+  double mu_new = mc->model.mu;
+  
+  if(iteration >0){
+  
+    for(i=0;i<mc->model.nSites;i++) {
+      for(j=0;j<mc->model.nSites;j++) {
+        unsigned int index = mc->model.greenSymMat.indexIndep[mc->model.nSites*i+j];
+        ELEM_VAL(mc->g_tau_0,i,j) += mc->g_tau_accumulator.indep_G_tau_sampled[index]/nSamples;
+      }
+    }
+    
+    double occupation =  -(mc->KDirac/(mc->model.beta*nSamples*mc->model.nSites) + (mc->model.muAux - mc->model.mu) )/mc->model.U;  
+    printf("\nnSamples = %d\nsign = %f\nexpOrder =% f\nn =% f\nKDirac_n =% f\nnInsert = %lu\nnRemove = %lu\n",
+           nSamples,mc->accumulated_sign/nSamples, mc->accumulated_expOrder/nSamples, 2.0*mc->density/nSamples, 2.0*occupation,
+           mc->nInsert, mc->nRemove);
+    
+    //double measured_density = 2.0*mc->density/nSamples;
+    
+    // extract Green:
+    //------------------------------------------------
+    calculate_G_matsubara_from_G_tau_accumulator(mc, &green_matsubara, nSamples);
+    //------------------------------------------------
+    char greenFileName[256];
+    sprintf(greenFileName, "green%lu.dat", iteration); // puts string into buffer
+    FILE *fileGreen = fopenSafe(greenFileName,  "w",1);
+    writeToFile_cMatrixFunction(fileGreen, &green_matsubara, &mc->model);
+    fclose(fileGreen);
+    
+    
+    // extract self:
+    //------------------------------------------------
+    extract_self_or_hyb_from_green(mc, &self_matsubara, &mc->hyb_matsubara, &green_matsubara);
+    //------------------------------------------------
+    char selfFileName[256];
+    sprintf(selfFileName, "self%lu.dat", iteration); // puts string into buffer
+    FILE *fileSelf = fopenSafe(selfFileName,  "w",1);
+    writeToFile_cMatrixFunction(fileSelf, &self_matsubara, &mc->model);
+    fclose(fileSelf);
+  }
+  else if(iteration==0){ // for iteration 0, start from an empty self.
+    for(n=0;n<N_PTS_MAT;n++) copy_cMatrix(&mc->g0_matsubara.matrices[n], &green_matsubara.matrices[n]);  // g = g0
+    for(n=0;n<N_PTS_MAT;n++) reset_cMatrix(&self_matsubara.matrices[n]);  // g = g0
+    
+  }  
+  
+  // integrate new green:
+  cMatrixFunction new_green;
+  init_cMatrixFunction(&new_green, &mc->model);
+  //------------------------------------------------
+  integrate_green_lattice(mc, &new_green, &self_matsubara);
+  //------------------------------------------------
+  
+  // extract new hyb:
   cMatrixFunction new_hyb_matsubara;
   init_cMatrixFunction(&new_hyb_matsubara, &mc->model);
-  
-  for(n=0;n<N_PTS_MAT;n++){
-    double complex z = I*(2.*n+1)*M_PI/mc->model.beta; 
-    reset_cMatrix(&new_hyb_matsubara.matrices[n]);
-    
-    copy_cMatrix(&new_green.matrices[n],&inverted_green);
-    invert_cMatrix(&inverted_green);
-    
-    for(i=0; i<mc->model.nSites; i++) ELEM_VAL(new_hyb_matsubara.matrices[n], i, i) = z + mc->model.mu;   // hyb = diag(z + mu) 
-    cMatrixMatrixAdditionInPlace(&new_hyb_matsubara.matrices[n], &tLoc, 1.0, -1.0);                       // hyb -= tLoc 
-    cMatrixMatrixAdditionInPlace(&new_hyb_matsubara.matrices[n], &inverted_green, 1.0, -1.0);             // hyb -= g^-1 
-    cMatrixMatrixAdditionInPlace(&new_hyb_matsubara.matrices[n], &self_matsubara.matrices[n], 1.0, -1.0); // hyb -= self 
-  }
-
-
+  //------------------------------------------------
+  extract_self_or_hyb_from_green(mc, &new_hyb_matsubara, &self_matsubara, &green_matsubara);
+  //------------------------------------------------
   char hybFileName[256];
   sprintf(hybFileName, "hyb%lu.dat", iteration+1); // puts string into buffer
   FILE *fileHyb = fopenSafe(hybFileName,  "w",1);
   writeToFile_cMatrixFunction(fileHyb, &new_hyb_matsubara, &mc->model);
   fclose(fileHyb);
-      
-    
-
-  double occupation =  -(mc->KDirac/(mc->model.beta*nSamples*mc->model.nSites) + (mc->model.muAux - mc->model.mu) )/mc->model.U;  
-  printf("nSamples = %d, sign= %f, expOrder= %f, n=%f, KDirac=%f, occupation=%f\n",
-         nSamples,mc->accumulated_sign/nSamples, mc->accumulated_expOrder/nSamples, ELEM_VAL(mc->accumulated_g_tau,0,0)/nSamples, occupation, mc->density/nSamples);
   
   
-
+  char paramsN[256];
+  char paramsNp1[256];
+  char newMu[256];
+  sprintf(paramsN,   "params%lu", iteration); // puts string into buffer
+  sprintf(paramsNp1, "params%lu", iteration+1); // puts string into buffer
+  sprintf(newMu, "%12.10f", mu_new); // puts string into buffer
+  
+  const char* paramName[] = { "mu" };
+  const char* replacementValue[] = { newMu };
+  copyFile(paramsN, paramsNp1, paramName, replacementValue, 1); 
   
   return 1;
 }

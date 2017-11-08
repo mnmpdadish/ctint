@@ -44,6 +44,7 @@ void init_cMatrixFunction(cMatrixFunction * cMatFun, Model * model) {
     reset_cMatrix(&cMatFun->matrices[n]);
   }
   cMatFun->beta = model->beta;
+  cMatFun->nLoaded = 0;
 }
 
 void free_cMatrixFunction(cMatrixFunction * cMatFun) {
@@ -250,7 +251,6 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
   int n, n_matsubara=0;
   double complex indep_cMatrixValue[model->greenSymMat.nIndep];
   
-        
   while(!feof(fileIn)) 
   {
     if (fgets(tempbuff,2048,fileIn)) {

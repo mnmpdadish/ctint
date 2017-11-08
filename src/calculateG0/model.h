@@ -31,6 +31,7 @@ typedef struct {
   int nThermUpdates; // Therm for thermalization
   int cleanUpdate_i;
   int measure_i;
+  int seed;
 } Model;
 
 
@@ -78,6 +79,9 @@ void read_Model(FILE * fileModel, FILE * fileParams, Model * model) {
   readInt(fileParams, "nThermUpdates", &model->nThermUpdates);  
   readInt(fileParams, "cleanUpdate_i", &model->cleanUpdate_i);  
   readInt(fileParams, "measure_i",     &model->measure_i);  
+  
+  readInt(fileParams, "seed",     &model->seed);  
+  
   
   model->muAux = model->mu - model->U/2.0;
   model->auxU = model->U/2.0;
