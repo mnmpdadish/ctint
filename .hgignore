@@ -22,6 +22,11 @@ tests
 */param*
 */logfile*
 
+*/k.dat
+*/n.dat
+*/sign.dat
+*/mu.dat
+
 
 mc
 sc

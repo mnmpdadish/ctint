@@ -168,3 +168,22 @@ void copyFile(char fileNameIn[], char fileNameOut[], const char * paramName[], c
   fclose(fileOut);
 }
 
+
+void fappend(char fileName[], char header[], int iteration, double value, int verbose){
+  short exist=0; 
+  if( access( fileName, F_OK ) != -1 ) exist =1; 
+  
+  FILE * file = fopen(fileName, "a");
+  if(file == NULL) {
+    printf("error: cannot opent file %s.\nterminated.\n", fileName); 
+    exit(1);
+  }
+  else {
+    if(verbose) printf("opening file %s\n", fileName);
+  }
+  if(!exist) fprintf(file, "%s\n",header);
+  fprintf(file, "%2d % 7.6f\n",iteration,value);
+  fclose(file);
+}
+
+

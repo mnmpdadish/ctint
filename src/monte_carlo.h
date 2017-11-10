@@ -655,10 +655,22 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
       }
     }
     
+           
+    double meas_sign = mc->accumulated_sign/nSamples;
+    double meas_k = (mc->accumulated_expOrder/nSamples)/meas_sign;
+    double meas_n = (2.0*mc->density/nSamples)/meas_sign;
+    
+
+    fappend("mu.dat",   "#iteration  mu",   iteration, mc->model.mu, 1);
+    fappend("n.dat",    "#iteration  n",    iteration, meas_n, 1);
+    fappend("sign.dat", "#iteration  sign", iteration, meas_sign, 1);
+    fappend("k.dat",    "#iteration  k",    iteration, meas_k, 1);
+    
     double occupation =  -(mc->KDirac/(mc->model.beta*nSamples*mc->model.nSites) + (mc->model.muAux - mc->model.mu) )/mc->model.U;  
     printf("\nnSamples = %d\nsign = %f\nexpOrder =% f\nn =% f\nKDirac_n =% f\nnInsert = %lu\nnRemove = %lu\n",
-           nSamples,mc->accumulated_sign/nSamples, mc->accumulated_expOrder/nSamples, 2.0*mc->density/nSamples, 2.0*occupation,
+           nSamples, meas_sign, meas_k, 2.0*mc->density/nSamples, 2.0*occupation,
            mc->nInsert, mc->nRemove);
+    
     
     //double measured_density = 2.0*mc->density/nSamples;
     
