@@ -1,0 +1,55 @@
+#you can most of the time use comment with #
+#model definition:
+#
+#12 13 14 15
+# 8  9 10 11
+# 4  5  6  7 
+# 0  1  2  3 
+
+sites
+(0,0,0)
+(1,0,0)
+(2,0,0)
+(3,0,0)
+(0,1,0)
+(1,1,0)
+(2,1,0)
+(3,1,0)
+(0,2,0)
+(1,2,0)
+(2,2,0)
+(3,2,0)
+(0,3,0)
+(1,3,0)
+(2,3,0)
+(3,3,0)
+
+symmetry_generators  #put as many geometric symmetries (abelian or not)
+12 13 14 15  8  9 10 11  4  5  6  7  0  1  2  3  #reflection
+12  8  4  0 13  9  5  1 14 10  6  2 15 11  7  3  #rotation
+#15 14 13 12 11 10  9  8  7  6  5  4  3  2  1  0  #inversion
+
+superlattice   
+(4,0,0)
+(0,4,0)
+(0,0,1)
+
+one-body
+t   (1,0,0)  -1.0
+t   (0,1,0)  -1.0
+tp  (1,1,0)   0.3
+tp  (1,-1,0)  0.3
+tpp (2,0,0)  -0.2
+tpp (0,2,0)  -0.2
+
+mu    0.4
+U     10.01
+beta 10.0
+delta 0.05
+
+nUpdates   10000000
+cleanUpdate_i 10000
+measure_i       501
+nThermUpdates 10000
+
+

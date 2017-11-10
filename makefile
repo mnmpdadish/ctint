@@ -8,7 +8,7 @@ arrays=src/util/arrays
 
 all: build 
 build: 
-	gcc $(OPTIONS) -o mc src/monte_carlo.c -lm $(LIBS) -lgfortran -pg
+	gcc $(OPTIONS) -o mc src/monte_carlo.c -lm $(LIBS) -lgfortran 
 
 test:
 	gcc $(OPTIONS) -o tests src/test.c -lm $(LIBS) -lgfortran

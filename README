@@ -5,11 +5,27 @@ README
 Programmer: Maxime Charlebois
 
 
-ctINT
-
+ctint
 
 COMPILING:
 
 to compile, simply do:
 $ make
+
+note that you need lapack and blas. Edit the makefile to link with correct library (now it is designed to compile with mkl on my computer).
+
+EXAMPLES:
+
+3 examples files can be found in the example directory. For now, only the directory dmft have been tested correctly. 
+Go in one of these directories and type ./scrip.sh to run an example from iteration 0.
+
+TEST: 
+
+you can compile test (to do: documentation)
+
+CHARLES DAVID: 
+
+si tu veux voir comment la fonction findGreenSymmetries, va dans le directory "ctINT/src/findGreenSymmetries" pis fait make. 
+Ca devrait compiler le test.c local. Pis tu vas avoir une idée simple de comment le compiler.
+
 
