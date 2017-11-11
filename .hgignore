@@ -19,8 +19,16 @@ tests
 */hyb*.dat
 */green*.dat
 */self*.dat
-*/param*
 */logfile*
+*/params1*
+*/params2*
+*/params3*
+*/params4*
+*/params5*
+*/params6*
+*/params7*
+*/params8*
+*/params9*
 
 */k.dat
 */n.dat
@@ -28,6 +36,7 @@ tests
 */mu.dat
 
 
+*/cthyb-Stats-n090-U5.00-b12
 mc
 sc
 
