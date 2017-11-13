@@ -95,16 +95,16 @@ void calculate_G0_matsubara(cMatrixFunction * g0_matsubara, Model * model, cMatr
   calculate_HoppingMatrixLoc(&model->tMat, &tLoc);
   
   for(i=0; i<model->nSites; i++) ELEM_VAL(g0_matsubara->M1, i, i) = 1.0;
-  if(verbose) {printf("M1:\n"); print_cMatrix(&g0_matsubara->M1);}
+  if(verbose) {printf("M1:\n"); print_cMatrix_real(&g0_matsubara->M1);}
   
   for(i=0; i<model->nSites; i++) ELEM_VAL(g0_matsubara->M2, i, i) = -mu;
   cMatrixMatrixAdditionInPlace(&g0_matsubara->M2, &tLoc, 1.0, 1.0); 
-  if(verbose) {printf("M2:\n"); print_cMatrix(&g0_matsubara->M2);}
+  if(verbose) {printf("M2:\n"); print_cMatrix_real(&g0_matsubara->M2);}
   
   cMatrixMatrixMultiplication(&g0_matsubara->M2, &g0_matsubara->M2, &g0_matsubara->M3); //M2=M1*M1
   if(hyb_matsubara != NULL) 
     cMatrix_dMatrixAdditionInPlace(&g0_matsubara->M3,&model->hybFM, 1.0, -1.0);  // g = g - hyb
-  if(verbose) {printf("M3:\n"); print_cMatrix(&g0_matsubara->M3);}
+  if(verbose) {printf("M3:\n"); print_cMatrix_real(&g0_matsubara->M3);}
 
   for(n=0; n<N_PTS_MAT; n++){
     reset_cMatrix(&g0_matsubara->matrices[n]);

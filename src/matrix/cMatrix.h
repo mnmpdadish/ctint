@@ -256,6 +256,26 @@ unsigned int dag_cMatrix(cMatrix * A) {
 
 
 
+unsigned int print_cMatrix_real(cMatrix const * A) {
+  if (!A){ 
+    printf("oups.\n");
+    return -1;
+  }
+  
+  unsigned int i,j;
+  double complex val;//, tol=0.00001;
+  for (i = 0; i < A->N; i++) {
+    for (j = 0; j < A->N; j++) {
+      val = ELEM(A, i, j);
+      printf("% 4.3f ", creal(val));
+    }
+    printf("\n");
+  }
+  fflush(stdout);
+  return 0;
+}
+
+
 unsigned int print_cMatrix(cMatrix const * A) {
   if (!A){ 
     printf("oups.\n");
