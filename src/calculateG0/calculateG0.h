@@ -8,7 +8,7 @@
 #include "model.h"
 
 #define N_PTS_MAT 200
-#define N_PTS_TAU 1000
+#define N_PTS_TAU 10000
 
 
 // -------------------------------------------------------------------------
