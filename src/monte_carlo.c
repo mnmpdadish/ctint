@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
       if(update_i % mc.model.measure_i==0) {
         //printf("%d",update_i); fflush(stdout);
         measure(&mc);
-        measureGreenOld(&mc);
-        Print_MonteCarlo(&mc);
+        //measureGreenOld(&mc);
+        //Print_MonteCarlo(&mc);
         nSamples++;
         //printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
       }

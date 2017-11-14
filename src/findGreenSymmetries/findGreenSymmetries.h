@@ -172,8 +172,13 @@ void indexIndependantGreen(GreenSymmetriesMatrix * greenSymMat) {
         greenSymMat->jFirstIndep[nIndep]= j;
         greenSymMat->indexIndep[N*i+j] = nIndep++; //increment after the equality
       }
-      else greenSymMat->indexIndep[N*i+j] = greenSymMat->indexIndep[N*greenSymMat->i[N*i+j]+greenSymMat->j[N*i+j]];
+      else{
+        int index = greenSymMat->indexIndep[N*greenSymMat->i[N*i+j]+greenSymMat->j[N*i+j]];
+        greenSymMat->indexIndep[N*i+j] = index;
+        greenSymMat->numberOfSiteAssociated[index]++;
+      }
   greenSymMat->nIndep = nIndep;
+  for(i=0;i<nIndep;i++) printf("iIndep=%d, numberOfSiteAssociated=%u\n", i,greenSymMat->numberOfSiteAssociated[i]);
   //return nIndep;
 }
 

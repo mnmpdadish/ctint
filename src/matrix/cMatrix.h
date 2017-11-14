@@ -324,7 +324,9 @@ void invert_cMatrix(cMatrix * A) {
   zgetrf_(&A->N, &A->N, &A->data[0], &A->N, &IPIV[0], &INFO1);
   zgetri_(&A->N, A->data, &A->N, &IPIV[0], &WORK[0], &nEntry, &INFO2);
   if( !(INFO1 == 0) || !(INFO2 == 0) ) {
-    printf( "The algorithm failed to invert the cMatrix. %d %d\n", INFO1, INFO2);
+    printf( "The algorithm failed to invert the cMatrix.\n");
+    print_cMatrix(A);
+    printf( "\nInfo1=%d Info2=%d\n", INFO1, INFO2);
     exit( 1 );
   }
 }

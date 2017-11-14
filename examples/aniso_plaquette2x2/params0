@@ -1,7 +1,7 @@
 #you can most of the time use comment with #
-mu    2.407503357792176
+mu    2.091
 U     5.0
-beta  10.2
+beta  12.0
 delta 0.05
 
 nUpdates    1000000
