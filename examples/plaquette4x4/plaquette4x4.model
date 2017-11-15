@@ -42,14 +42,4 @@ tp  (1,-1,0)  0.3
 tpp (2,0,0)  -0.2
 tpp (0,2,0)  -0.2
 
-mu    0.4
-U     7.0
-beta 100.0
-delta 0.05
-
-nUpdates    3000000
-cleanUpdate_i 10000
-measure_i       300
-nThermUpdates 10000
-
 
