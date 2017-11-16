@@ -40,7 +40,10 @@ unsigned int resize_dVector(dVector * x, unsigned int N) {
 }
 
 unsigned int resize_dMatrix(dMatrix * A, unsigned int N) {
-  while(N*N > A->capacity) A->data = realloc(A->data, (A->capacity *= 2) * sizeof(double));
+  while(N*N > A->capacity) {
+    A->data = realloc(A->data, (A->capacity *= 2) * sizeof(double));
+    printf("new matrix size = %d \n",A->capacity); fflush(stdout);
+  }
   A->N=N;
   return 0;
 }
@@ -243,15 +246,22 @@ unsigned int print_dVectorFactor(dVector const * X, double f) {
 void invert_dMatrix(dMatrix * A) {
   unsigned int INFO1=0;
   unsigned int INFO2=0;
-  unsigned int IPIV[A->N];
+  //unsigned int IPIV[A->N];
   unsigned int nEntry=A->N*A->N;
-  double WORK[nEntry]; 
+  //double WORK[nEntry]; // WARNING, FOR TOO BIG MATRICES, this stack declaration causes segmentation fault (happenned above 1200*1200 matrices for my computer).
+  unsigned int * IPIV;
+  double * WORK;
+  WORK = (double *) malloc(nEntry*sizeof(double));
+  IPIV = (unsigned int *) malloc(A->N*sizeof(unsigned int));
+  
   dgetrf_(&A->N, &A->N, &A->data[0], &A->N, &IPIV[0], &INFO1);
   dgetri_(&A->N, A->data, &A->N, &IPIV[0], &WORK[0], &nEntry, &INFO2);
   if( !(INFO1 == 0) || !(INFO2 == 0) ) {
     printf( "The algorithm failed to invert the dMatrix. %d %d\n", INFO1, INFO2);
     exit( 1 );
   }
+  free(WORK);
+  free(IPIV);
 }
 
 // Y=A*X
@@ -311,6 +321,7 @@ void scale_dVector(dVector *X, double const scal){
 // dim(A11)=(N-1)x(N-1), dim(A12)=1x(N-1), dim(A21)=(N-1)xN, dim(A22)=1x1
 // Same for Dij and dim(S)=(N-1)x(N-1).
 unsigned int dSchurComplement(dMatrix const*A, dMatrix *S) {
+  //printf("before dSchur\n"); fflush(stdout);
   unsigned int inc = 1;
   unsigned int N = A->N;
   unsigned int Nm1 = N-1;
@@ -325,12 +336,14 @@ unsigned int dSchurComplement(dMatrix const*A, dMatrix *S) {
     // this next line does S = S - A12 A22^(-1) A21;
     dger_(&S->N, &S->N, &factor, &ELEM(A,0,Nm1), &inc, &ELEM(A,Nm1,0), &A->N, S->data, &S->N);
   }
+  //printf("after dSchur\n"); fflush(stdout);
   return 0;
 }
 
 
 
 unsigned int dAddRowColToInverse(dMatrix const*A, dVector const*Rtilde, dVector const*Qtilde, double const sTilde, dMatrix *Ap1) {
+  //printf("before dAddRow\n"); fflush(stdout);
   unsigned int inc = 1;
   unsigned int N = A->N;
   assert(N==Rtilde->N);
@@ -345,6 +358,7 @@ unsigned int dAddRowColToInverse(dMatrix const*A, dVector const*Rtilde, dVector 
   dcopy_(&N, Rtilde->data, &inc, &ELEM(Ap1,N,0), &Np1);
   dcopy_(&N, Qtilde->data, &inc, &ELEM(Ap1,0,N), &inc);
   ELEM(Ap1,N,N)=sTilde;
+  //printf("after dAddRow\n"); fflush(stdout);
   return 0;
 }
 

@@ -35,6 +35,8 @@ int main() {
   Nfail+= passOrFail("test_cMatrixVectorProduct", test_cMatrixVectorProduct(verbose));
   Nfail+= passOrFail("test_cAddition",            test_cAddition(verbose));
 
+  Nfail+= passOrFail("test_huge_dMatrix",            test_huge_dMatrix(verbose));
+
   verdict(Nfail);
   
   return 0;

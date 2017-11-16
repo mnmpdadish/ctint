@@ -1,0 +1,12 @@
+#you can most of the time use comment with #
+mu    3.8
+U     8.0
+beta  25.0
+delta 0.05
+
+nUpdates    1000000
+cleanUpdate_i 30000
+measure_i       100
+nThermUpdates 30000
+seed          55453
+
