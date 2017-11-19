@@ -7,6 +7,7 @@ conductivities*.dat
 */a.out
 green*.dat
 self*.dat
+*.swp
 
 *n0.4175_U5.00_beta10.2*
 

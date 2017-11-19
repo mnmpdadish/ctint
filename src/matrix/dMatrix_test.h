@@ -387,6 +387,26 @@ int test_dScalarProduct(int verbose) {
 
 
 
+/*
+int test_huge_dMatrix(int verbose) {
+  //if(verbose) printf("\n-------------\ntest_dCopy():");
+  dMatrix A;
+  init_dMatrix(&A,12018);
+  //init_dMatrix(&B,0);
+  free_dMatrix(&A);
+  //free_dMatrix(&B);
+  return 0;
+}
+*/
+
+
+
+
+
+
+
+
+
 
 
 

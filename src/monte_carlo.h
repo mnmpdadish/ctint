@@ -8,7 +8,7 @@
 #define VERTICES_BASIC_CAPACITY 256
 #define N_EXP 2000
 #define N_BIN_TAU 300 //must be bigger than N_PTS_MAT
-#define N_PTS_K 128
+#define N_PTS_K 64
 
 
 typedef struct {
@@ -231,7 +231,7 @@ double green0(Vertex const * vertexI, Vertex const * vertexJ, MonteCarlo *mc) {
 
 // add vertex at the end of the verticies:
 int InsertVertex(MonteCarlo * mc) { 
-  
+  //printf("before insert\n"); fflush(stdout);
   Vertex newVertex;
   newVertex.tau = mc->model.beta*urng();
   newVertex.site= irng(mc->nSites);
@@ -267,7 +267,9 @@ int InsertVertex(MonteCarlo * mc) {
     double pAcc = -2.*mc->model.nSites*mc->model.beta*mc->model.auxU/ ( ((double)mc->vertices.N)*mc->Stilde_up*mc->Stilde_down );
     //printf("pAcc=%f\n",pAcc);
     if(urng() < fabs(pAcc)) {
+      //printf("before insert\n"); fflush(stdout);
       mc->nInsert++;
+      //printf("% 9.5f ",pAcc); fflush(stdout);
 			if(pAcc < .0) mc->sign *= -1;
       
       dVectorMatrixProduct(&mc->R, mc->M_up, -mc->Stilde_up, &mc->Rtilde_up);
@@ -280,6 +282,7 @@ int InsertVertex(MonteCarlo * mc) {
       dAddRowColToInverse(mc->M_down, &mc->Rtilde_down, &mc->Qtilde_down, mc->Stilde_down, mc->Mdummy_down);
       
       // swapping M with Mdummy:
+      
       dMatrix *tmp = mc->M_up;
       mc->M_up = mc->Mdummy_up;
       mc->Mdummy_up = tmp;
@@ -292,6 +295,7 @@ int InsertVertex(MonteCarlo * mc) {
       //copy_dMatrix(mc->Mdummy_up,mc->M_up);
       //copy_dMatrix(mc->Mdummy_down,mc->M_down);
 
+      //printf("after insert\n"); fflush(stdout);
       
     }
     else return 0; //skip newVertex addition
@@ -313,6 +317,7 @@ int InsertVertex(MonteCarlo * mc) {
   
   if(mc->vertices.N == mc->vertices.capacity) {
     mc->vertices.m_vertex = realloc(mc->vertices.m_vertex, (mc->vertices.capacity *= 2) * sizeof(Vertex));
+    printf("new size = %d \n",mc->vertices.capacity); fflush(stdout);
   }
   
   int N=mc->vertices.N;
@@ -321,7 +326,7 @@ int InsertVertex(MonteCarlo * mc) {
   mc->vertices.m_vertex[N].auxSpin = newVertex.auxSpin;
   
   mc->vertices.N++;
-  
+  //printf("after insert\n"); fflush(stdout);
   return 1;
 }
 
@@ -340,6 +345,7 @@ void RemoveVertex(MonteCarlo * mc) {
     double pAcc = (mc->vertices.N*ELEM(mc->M_up,p,p)*ELEM(mc->M_down,p,p) ) / (-2.0*mc->model.nSites * mc->model.beta * mc->model.auxU);
     
     if(urng() < fabs(pAcc)) {
+      //printf("before remove\n"); fflush(stdout);
       mc->nRemove++;
 			if(pAcc < .0) mc->sign *= -1;
       //printf("%d ==? %d\n",mc->M_up->N, mc->vertices.N);
@@ -370,6 +376,8 @@ void RemoveVertex(MonteCarlo * mc) {
       mc->vertices.m_vertex[p].tau     = mc->vertices.m_vertex[N].tau;
       mc->vertices.m_vertex[p].site    = mc->vertices.m_vertex[N].site;
       mc->vertices.m_vertex[p].auxSpin = mc->vertices.m_vertex[N].auxSpin;
+      //printf("after remove\n"); fflush(stdout);
+      
     }
   }
 }
@@ -377,8 +385,10 @@ void RemoveVertex(MonteCarlo * mc) {
 
 
 void CleanUpdate(MonteCarlo * mc) { 
+  printf("salut1\n"); fflush(stdout);
   assert(mc->M_up->N == mc->vertices.N);
   assert(mc->M_down->N == mc->vertices.N);
+  printf("salut2\n"); fflush(stdout);
   unsigned int i,j;
   for(i = 0; i < mc->vertices.N; i++) {
     Vertex vertexI = mc->vertices.m_vertex[i];
@@ -390,8 +400,10 @@ void CleanUpdate(MonteCarlo * mc) {
     ELEM(mc->M_up,i,i) -= auxUp(&vertexI, mc);
     ELEM(mc->M_down,i,i) -= auxDown(&vertexI, mc);
   }
+  printf("salut3\n"); fflush(stdout);
   invert_dMatrix(mc->M_up);
   invert_dMatrix(mc->M_down);
+  printf("salut4\n"); fflush(stdout);
 }
 
 
@@ -466,18 +478,23 @@ int measureGreenOld(MonteCarlo * mc) {
 
 
 int measure(MonteCarlo * mc) {
+  printf("salut1\n"); fflush(stdout);
   unsigned int N = mc->vertices.N;
   //double complex exp_IomegaN_tau[N];
   //double complex indepM_sampled[mc->model.greenSymMat.nIndep];
   double indepG_tau_sampled[mc->model.greenSymMat.nIndep];
-  unsigned int sites[N];
+  //unsigned int sites[N];
+  unsigned int * sites;
+  sites = malloc(N*sizeof(unsigned int));
+    
   int p1,p2,k,i,j;
 
   for(p1=0;p1<N;p1++) sites[p1] = mc->vertices.m_vertex[p1].site;
 
 
   const double DeltaInv = N_BIN_TAU/mc->model.beta;
-
+  
+  printf("salut2\n");
   for(p1=0;p1<N;p1++) {
     for(p2=0;p2<N;p2++) {
       k = mc->model.greenSymMat.indexIndep[mc->model.nSites*sites[p1]+sites[p2]];
@@ -503,8 +520,9 @@ int measure(MonteCarlo * mc) {
       //mc->g_tau_accumulator.nSamples[k].bin[index]++;
     }
   }
+  printf("salut3\n"); fflush(stdout);
   
-  
+  /*
   for(k=0;k<mc->model.greenSymMat.nIndep;k++){
     i = mc->model.greenSymMat.iFirstIndep[k];
     j = mc->model.greenSymMat.jFirstIndep[k];
@@ -537,9 +555,14 @@ int measure(MonteCarlo * mc) {
     if(i==j) mc->density += indepG_tau_sampled[k]/mc->model.greenSymMat.numberOfSiteAssociated[k];
     mc->g_tau_accumulator.indep_G_tau_sampled[k] += indepG_tau_sampled[k];
   }
-    
+  */
+  printf("salut4\n"); fflush(stdout);
+  
   mc->accumulated_sign +=mc->sign;
   mc->accumulated_expOrder +=N;
+  free(sites);
+  printf("salut5\n"); fflush(stdout);
+  
   return 1;
 }
 
@@ -625,6 +648,7 @@ void integrate_green_lattice(MonteCarlo *mc, cMatrixFunction *green, cMatrixFunc
   double factor = 1.0 / ( ((double)N_PTS_K)*((double)N_PTS_K) ); 
   printf("factor=%f\n",factor);
   for(i=0;i<N_PTS_K;i++){
+    //printf("%d\n",i);
     double kx = i*2*M_PI/N_PTS_K;
     for(j=0;j<N_PTS_K;j++){
       double ky = j*2*M_PI/N_PTS_K;
