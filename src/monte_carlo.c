@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
         if(mc.vertices.N !=0) CleanUpdate(&mc);
       }
     }
-    
+    printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
     for(update_i=1; update_i < mc.model.nUpdates+1;  update_i++) {
       if(urng()<0.5) InsertVertex(&mc);
       else RemoveVertex(&mc);

@@ -115,6 +115,7 @@ unsigned int copy_dMatrix(dMatrix const * A, dMatrix * B) {
 
 
 #define ELEM(mtx, i, j) (mtx->data[j * mtx->N + i])
+#define ELEM_VAL(mtx, i, j) (mtx.data[j * mtx.N + i])
 //B=A
 //where dim(B)=NxN and dim(A)=(A->N)x(A->N)
 unsigned int copySub_dMatrix(dMatrix const * A, dMatrix * B, unsigned int N) {
@@ -347,6 +348,37 @@ unsigned int dAddRowColToInverse(dMatrix const*A, dVector const*Rtilde, dVector 
   ELEM(Ap1,N,N)=sTilde;
   return 0;
 }
+
+
+
+unsigned int dCopyRowIntoVector(dMatrix const*A, dVector *Row, unsigned int index) {
+  unsigned int N = A->N;
+  resize_dVector(Row,N);
+  //assert(N==Row->N);
+  memcpy(Row->data, &ELEM(A,0,index), sizeof(double)*N);
+  return 0;
+}
+
+unsigned int dCopyColIntoVector(dMatrix const*A, dVector *Col, unsigned int index) {
+  unsigned int inc = 1;
+  unsigned int N = A->N;
+  resize_dVector(Col,N);
+  //assert(N==Col->N);
+  dcopy_(&N, &ELEM(A,index,0), &N, Col->data, &inc);
+  return 0;
+}
+
+
+unsigned int dAddOneElementToInverse(dMatrix *A, dVector const*Row, dVector const*Col, double const value) {
+  unsigned int inc = 1;
+  unsigned int N = A->N;
+//  assert(N==Row->N);
+//  assert(N==Col->N);
+  dger_(&N, &N, &value, Row->data, &inc, Col->data, &inc, A->data, &N);
+  
+  return 0;
+}
+
 
 
 

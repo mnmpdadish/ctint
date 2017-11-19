@@ -12,19 +12,21 @@
 #include "../util/arrays/array.h"
 
 int main() {
-  int verbose=0;
+  int verbose=1;
   int Nfail=0;
   
   printf("\n\n--------------------\ntesting matrix double operations:\n--------------------\n");
-  Nfail+= passOrFail("test_dCopy",                test_dCopy(verbose));
-  Nfail+= passOrFail("test_dMultiply",            test_dMultiply(verbose));
-  Nfail+= passOrFail("test_dSwaps",               test_dSwaps(verbose));
-  Nfail+= passOrFail("test_dTranspose",           test_dTranspose(verbose));
-  Nfail+= passOrFail("test_dInvert",              test_dInvert(verbose));
-  Nfail+= passOrFail("test_dMatrixVectorProduct", test_dMatrixVectorProduct(verbose));
-  Nfail+= passOrFail("test_dScalarProduct",       test_dScalarProduct(verbose));
-  Nfail+= passOrFail("test_dSchurComplement",     test_dSchurComplement(verbose));
-  Nfail+= passOrFail("test_dAddRowColToInverse",  test_dAddRowColToInverse(verbose));
+  Nfail+= passOrFail("test_dCopy",                  test_dCopy(verbose));
+  Nfail+= passOrFail("test_dMultiply",              test_dMultiply(verbose));
+  Nfail+= passOrFail("test_dSwaps",                 test_dSwaps(verbose));
+  Nfail+= passOrFail("test_dTranspose",             test_dTranspose(verbose));
+  Nfail+= passOrFail("test_dInvert",                test_dInvert(verbose));
+  Nfail+= passOrFail("test_dMatrixVectorProduct",   test_dMatrixVectorProduct(verbose));
+  Nfail+= passOrFail("test_dScalarProduct",         test_dScalarProduct(verbose));
+  Nfail+= passOrFail("test_dSchurComplement",       test_dSchurComplement(verbose));        // used for remove vertex
+  Nfail+= passOrFail("test_dAddRowColToInverse",    test_dAddRowColToInverse(verbose));     // used for insert vertex
+  Nfail+= passOrFail("test_dAddOneElementToInvers", test_dAddOneElementToInvers(verbose));  // used for spin-flip
+
 
   
   printf("\n\n--------------------\ntesting matrix complex operations:\n--------------------\n");

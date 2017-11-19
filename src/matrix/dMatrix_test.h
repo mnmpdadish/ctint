@@ -386,3 +386,66 @@ int test_dScalarProduct(int verbose) {
 
 
 
+
+
+
+
+// adding the Vector U and V to the matrix A plus the corner should, in principle
+// give the same matrix as if you invert, apply "shermanMorrison" and invert again.
+int test_dAddOneElementToInvers(int verbose) {
+  dMatrix A,B;
+  init_dMatrix(&A,3);
+  init_dMatrix(&B,3);
+  double * p = A.data;
+  *p++ = 1.0; *p++ = 5.0; *p++ = 2.0;
+  *p++ = 4.0; *p++ = 1.0; *p++ = 2.0;
+  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
+  transpose_dMatrix(&A);
+  
+  /*p = Sol.data;
+  *p++ = 1.0; *p++ = 5.0; *p++ = 2.0; *p++ = 5.0;
+  *p++ = 4.0; *p++ = 1.0; *p++ = 2.0; *p++ = 2.0;
+  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0; *p++ = 1.0;
+  *p++ = 1.0; *p++ = 3.0; *p++ = 5.0; *p++ = 6.0;
+  transpose_dMatrix(&Sol);
+  */
+  
+  if(verbose) {
+    printf("\nA=\n"); print_dMatrix(&A); 
+    //printf("\nSol=\n"); print_dMatrix(&Sol);
+  }
+  
+  copy_dMatrix(&A,&B);
+  invert_dMatrix(&B);
+  if(verbose) {
+    printf("\ninverting\nB=\n"); 
+    print_dMatrix(&B);
+  }
+  
+  dVector Row, Col;
+  init_dVector(&Row,0);
+  init_dVector(&Col,0);
+  dCopyRowIntoVector(&A, &Row, 1);
+  dCopyColIntoVector(&A, &Col, 1);
+  
+  double value=50.0;
+  double factor=value/(1+ELEM_VAL(A,1,1));
+  
+  dAddOneElementToInverse(&A, &Row, &Col, factor);
+  
+  
+  
+  invert_dMatrix(&A);
+  if(verbose) {printf("\ninverting\nA=\n"); print_dMatrix(&A);}
+  if(verbose) {
+    printf("\nRow=\n"); print_dVector(&Row); 
+    printf("\nCol=\n"); print_dVector(&Col);
+  }
+  
+  int Nerror = 1;//!areEqual_dMatrix(&Sol,&B);
+  free_dMatrix(&A);
+  free_dVector(&Row);
+  free_dVector(&Col);
+  return Nerror;
+}
+
