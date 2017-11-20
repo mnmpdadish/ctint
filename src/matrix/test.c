@@ -26,7 +26,7 @@ int main() {
   Nfail+= passOrFail("test_dSchurComplement",       test_dSchurComplement(verbose));        // used for remove vertex
   Nfail+= passOrFail("test_dAddRowColToInverse",    test_dAddRowColToInverse(verbose));     // used for insert vertex
   Nfail+= passOrFail("test_dAddOneElementToInvers", test_dAddOneElementToInvers(verbose));  // used for spin-flip
-
+  
 
   
   printf("\n\n--------------------\ntesting matrix complex operations:\n--------------------\n");
@@ -37,7 +37,7 @@ int main() {
   Nfail+= passOrFail("test_cMatrixVectorProduct", test_cMatrixVectorProduct(verbose));
   Nfail+= passOrFail("test_cAddition",            test_cAddition(verbose));
 
-  Nfail+= passOrFail("test_huge_dMatrix",            test_huge_dMatrix(verbose));
+  //Nfail+= passOrFail("test_huge_dMatrix",            test_huge_dMatrix(verbose));
 
   verdict(Nfail);
   
