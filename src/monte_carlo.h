@@ -76,6 +76,7 @@ typedef struct {
   
   unsigned long int nInsert;
   unsigned long int nRemove;
+  unsigned long int nFlip;
 } MonteCarlo;
 
 
@@ -384,11 +385,51 @@ void RemoveVertex(MonteCarlo * mc) {
 
 
 
-void CleanUpdate(MonteCarlo * mc) { 
-  printf("salut1\n"); fflush(stdout);
+
+
+// spin-flip a vertex:
+void FlipVertex(MonteCarlo * mc) { 
   assert(mc->M_up->N == mc->vertices.N);
   assert(mc->M_down->N == mc->vertices.N);
-  printf("salut2\n"); fflush(stdout);
+  if(mc->vertices.N > 0){
+    unsigned int p = irng(mc->vertices.N);
+    
+    Vertex vertexToFlip = mc->vertices.m_vertex[p];
+    double flipAuxUp = auxDown(&vertexToFlip, mc) - auxUp(&vertexToFlip, mc);
+    double flipAuxDown = auxUp(&vertexToFlip, mc) - auxDown(&vertexToFlip, mc);
+    
+    double factUp =   (1. + flipAuxUp*ELEM(mc->M_up,p,p));
+    double factDown = (1. + flipAuxDown*ELEM(mc->M_down,p,p));
+    
+    double pAcc = factUp*factDown;
+    
+    if(urng() < fabs(pAcc)) {
+      mc->nFlip++;
+			if(pAcc < .0) mc->sign *= -1;
+      
+      double factorUp=-flipAuxUp/factUp;				
+      dCopyRowIntoVector(mc->M_up, &mc->R, p); //automatic resizing
+      dCopyColIntoVector(mc->M_up, &mc->Q, p); //automatic resizing
+      dAddOneElementToInverse(mc->M_up, &mc->R, &mc->Q, factorUp);
+      
+      double factorDown=-flipAuxDown/factDown;				
+      dCopyRowIntoVector(mc->M_down, &mc->R, p); //automatic resizing
+      dCopyColIntoVector(mc->M_down, &mc->Q, p); //automatic resizing
+      dAddOneElementToInverse(mc->M_down, &mc->R, &mc->Q, factorDown);
+      
+      mc->vertices.m_vertex[p].auxSpin = 1 - mc->vertices.m_vertex[p].auxSpin;  //if 0 become 1, if 1 become 0: flipped.
+    }
+  }
+}
+
+
+
+
+void CleanUpdate(MonteCarlo * mc) { 
+  //printf("salut1\n"); fflush(stdout);
+  assert(mc->M_up->N == mc->vertices.N);
+  assert(mc->M_down->N == mc->vertices.N);
+  //printf("salut2\n"); fflush(stdout);
   unsigned int i,j;
   for(i = 0; i < mc->vertices.N; i++) {
     Vertex vertexI = mc->vertices.m_vertex[i];
@@ -400,10 +441,10 @@ void CleanUpdate(MonteCarlo * mc) {
     ELEM(mc->M_up,i,i) -= auxUp(&vertexI, mc);
     ELEM(mc->M_down,i,i) -= auxDown(&vertexI, mc);
   }
-  printf("salut3\n"); fflush(stdout);
+  //printf("salut3\n"); fflush(stdout);
   invert_dMatrix(mc->M_up);
   invert_dMatrix(mc->M_down);
-  printf("salut4\n"); fflush(stdout);
+  //printf("salut4\n"); fflush(stdout);
 }
 
 
@@ -478,23 +519,23 @@ int measureGreenOld(MonteCarlo * mc) {
 
 
 int measure(MonteCarlo * mc) {
-  printf("salut1\n"); fflush(stdout);
+  //printf("salut1\n"); fflush(stdout);
   unsigned int N = mc->vertices.N;
   //double complex exp_IomegaN_tau[N];
   //double complex indepM_sampled[mc->model.greenSymMat.nIndep];
-  double indepG_tau_sampled[mc->model.greenSymMat.nIndep];
+  //double indepG_tau_sampled[mc->model.greenSymMat.nIndep];
   //unsigned int sites[N];
   unsigned int * sites;
   sites = malloc(N*sizeof(unsigned int));
     
-  int p1,p2,k,i,j;
+  int p1,p2,k;//,i,j;
 
   for(p1=0;p1<N;p1++) sites[p1] = mc->vertices.m_vertex[p1].site;
 
 
   const double DeltaInv = N_BIN_TAU/mc->model.beta;
   
-  printf("salut2\n");
+  //printf("salut2\n");
   for(p1=0;p1<N;p1++) {
     for(p2=0;p2<N;p2++) {
       k = mc->model.greenSymMat.indexIndep[mc->model.nSites*sites[p1]+sites[p2]];
@@ -520,7 +561,7 @@ int measure(MonteCarlo * mc) {
       //mc->g_tau_accumulator.nSamples[k].bin[index]++;
     }
   }
-  printf("salut3\n"); fflush(stdout);
+  //printf("salut3\n"); fflush(stdout);
   
   /*
   for(k=0;k<mc->model.greenSymMat.nIndep;k++){
@@ -556,12 +597,12 @@ int measure(MonteCarlo * mc) {
     mc->g_tau_accumulator.indep_G_tau_sampled[k] += indepG_tau_sampled[k];
   }
   */
-  printf("salut4\n"); fflush(stdout);
+  //printf("salut4\n"); fflush(stdout);
   
   mc->accumulated_sign +=mc->sign;
   mc->accumulated_expOrder +=N;
   free(sites);
-  printf("salut5\n"); fflush(stdout);
+  //printf("salut5\n"); fflush(stdout);
   
   return 1;
 }

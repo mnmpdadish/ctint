@@ -413,33 +413,30 @@ int test_huge_dMatrix(int verbose) {
 // adding the Vector U and V to the matrix A plus the corner should, in principle
 // give the same matrix as if you invert, apply "shermanMorrison" and invert again.
 int test_dAddOneElementToInvers(int verbose) {
-  dMatrix A,B;
+  dMatrix A, Sol;
   init_dMatrix(&A,3);
-  init_dMatrix(&B,3);
+  init_dMatrix(&Sol,3);
   double * p = A.data;
   *p++ = 1.0; *p++ = 5.0; *p++ = 2.0;
   *p++ = 4.0; *p++ = 1.0; *p++ = 2.0;
   *p++ = 3.0; *p++ = 2.0; *p++ = 1.0;
   transpose_dMatrix(&A);
   
-  /*p = Sol.data;
-  *p++ = 1.0; *p++ = 5.0; *p++ = 2.0; *p++ = 5.0;
-  *p++ = 4.0; *p++ = 1.0; *p++ = 2.0; *p++ = 2.0;
-  *p++ = 3.0; *p++ = 2.0; *p++ = 1.0; *p++ = 1.0;
-  *p++ = 1.0; *p++ = 3.0; *p++ = 5.0; *p++ = 6.0;
+  p = Sol.data;
+  *p++ = 1.0; *p++ = 5.0;  *p++ = 2.0;
+  *p++ = 4.0; *p++ =-29.0; *p++ = 2.0;
+  *p++ = 3.0; *p++ = 2.0;  *p++ = 1.0;
   transpose_dMatrix(&Sol);
-  */
   
   if(verbose) {
     printf("\nA=\n"); print_dMatrix(&A); 
-    //printf("\nSol=\n"); print_dMatrix(&Sol);
+    printf("\nSol=\n"); print_dMatrix(&Sol);
   }
   
-  copy_dMatrix(&A,&B);
-  invert_dMatrix(&B);
+  invert_dMatrix(&A);
   if(verbose) {
-    printf("\ninverting\nB=\n"); 
-    print_dMatrix(&B);
+    printf("\ninverting\nA=\n"); 
+    print_dMatrix(&A);
   }
   
   dVector Row, Col;
@@ -447,23 +444,23 @@ int test_dAddOneElementToInvers(int verbose) {
   init_dVector(&Col,0);
   dCopyRowIntoVector(&A, &Row, 1);
   dCopyColIntoVector(&A, &Col, 1);
-  
-  double value=50.0;
-  double factor=value/(1+ELEM_VAL(A,1,1));
-  
-  dAddOneElementToInverse(&A, &Row, &Col, factor);
-  
-  
-  
-  invert_dMatrix(&A);
-  if(verbose) {printf("\ninverting\nA=\n"); print_dMatrix(&A);}
+
   if(verbose) {
     printf("\nRow=\n"); print_dVector(&Row); 
     printf("\nCol=\n"); print_dVector(&Col);
   }
   
-  int Nerror = 1;//!areEqual_dMatrix(&Sol,&B);
+  double value=-30.;
+  double factor=-value/(1+value*ELEM_VAL(A,1,1));
+  if(verbose) printf("value=%f,  factor=%f\n",value, factor);
+  dAddOneElementToInverse(&A, &Row, &Col, factor);
+  
+  invert_dMatrix(&A);
+  if(verbose) {printf("\ninverting\nA=\n"); print_dMatrix(&A);}
+  
+  int Nerror = !areEqual_dMatrix(&Sol,&A);
   free_dMatrix(&A);
+  free_dMatrix(&Sol);
   free_dVector(&Row);
   free_dVector(&Col);
   return Nerror;

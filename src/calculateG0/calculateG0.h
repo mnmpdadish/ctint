@@ -280,7 +280,7 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
           printf("Error, too many elements to read for the model\n");
           exit(1);
         }
-        else if (nElement > 2*model->greenSymMat.nIndep+1) {
+        else if (nElement < 2*model->greenSymMat.nIndep+1) {
           printf("Error, not enough elements to read for the model\n");
           exit(1);
         }

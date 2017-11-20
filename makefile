@@ -1,8 +1,8 @@
-#MKL     = /opt/intel/mkl/lib/intel64
-#LIBS    = ${MKL}/libmkl_intel_lp64.a -Wl,--start-group $(MKL)/libmkl_blas95_lp64.a $(MKL)/libmkl_lapack95_lp64.a $(MKL)/libmkl_sequential.a ${MKL}/libmkl_core.a -Wl,--end-group  -lgomp -lpthread -lm -ldl 
-LIBS    = -llapack -lblas
+MKL     = /opt/intel/mkl/lib/intel64
+LIBS    = ${MKL}/libmkl_intel_lp64.a -Wl,--start-group $(MKL)/libmkl_blas95_lp64.a $(MKL)/libmkl_lapack95_lp64.a $(MKL)/libmkl_sequential.a ${MKL}/libmkl_core.a -Wl,--end-group  -lgomp -lpthread -lm -ldl 
+#LIBS    = -llapack -lblas
 INCLUDE =
-OPTIONS = -O3 -Wall#-ffast-math#-pg
+OPTIONS = -O2 -Wall#-ffast-math#-pg
 
 arrays=src/util/arrays
 

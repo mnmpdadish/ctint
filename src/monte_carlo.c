@@ -45,35 +45,42 @@ int main(int argc, char *argv[]) {
   int update_i; //, termalization_i = 10000, measure_i=10000, cleanUpdate_i=501;
   int nSamples=0;
   
+  double probFlip = 0.5;
+  
   if(iteration>0){
     for(update_i=1; update_i<mc.model.nThermUpdates;  update_i++) {
-      if(urng()<0.5) InsertVertex(&mc);
-      else RemoveVertex(&mc);
-      if(update_i % mc.model.cleanUpdate_i ==0){
-        if(mc.vertices.N !=0) CleanUpdate(&mc);        
+      if(urng()<probFlip){
+        FlipVertex(&mc);
       }
-      printf("%d %d\n",update_i,mc.vertices.N); fflush(stdout);
+      else{
+        if(urng()<0.5) InsertVertex(&mc);
+        else RemoveVertex(&mc);
+        if(update_i % mc.model.cleanUpdate_i ==0){
+          if(mc.vertices.N !=0) CleanUpdate(&mc);        
+        }
+      }
+      //printf("%d %d\n",update_i,mc.vertices.N); fflush(stdout);
     }
     printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
     for(update_i=1; update_i < mc.model.nUpdates+1;  update_i++) {
       if(urng()<0.5) InsertVertex(&mc);
       else RemoveVertex(&mc);
       if(update_i % mc.model.cleanUpdate_i ==0){
-        printf("clean update ");
+        //printf("clean update ");
         if(mc.vertices.N !=0) CleanUpdate(&mc);
-        printf("done.\n");
-        //printf("%d",update_i); fflush(stdout);
-        //printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
+        //printf("done.\n");
+        printf("%d",update_i); fflush(stdout);
+        printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
       }
       if(update_i % mc.model.measure_i==0) {
-        printf("%d",update_i); fflush(stdout);
+        //printf("%d",update_i); fflush(stdout);
         measure(&mc);
         //measureGreenOld(&mc);
         //Print_MonteCarlo(&mc);
         nSamples++;
-        printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
+        //printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
       }
-      printf("%d %d\n",update_i,mc.vertices.N); fflush(stdout);
+      //printf("%d %d\n",update_i,mc.vertices.N); fflush(stdout);
     }
   }
   
