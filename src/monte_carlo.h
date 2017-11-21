@@ -7,7 +7,7 @@
 
 #define VERTICES_BASIC_CAPACITY 256
 #define N_EXP 2000
-#define N_BIN_TAU 300 //must be bigger than N_PTS_MAT
+#define N_BIN_TAU 400 //must be bigger than N_PTS_MAT
 #define N_PTS_K 64
 
 
