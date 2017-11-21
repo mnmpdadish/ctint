@@ -6,8 +6,8 @@
 #include "calculateG0/calculateG0.h"
 
 #define VERTICES_BASIC_CAPACITY 256
-#define N_EXP 2000
-#define N_BIN_TAU 400 //must be bigger than N_PTS_MAT
+//#define N_EXP 2000
+#define N_BIN_TAU 400 //must be bigger than N_PTS_MAT: ideally 2*N_PTS_MAT
 #define N_PTS_K 64
 
 
@@ -69,7 +69,7 @@ typedef struct {
   double accumulated_expOrder;
   cMatrixFunction accumulated_g_matsubara; //interacting Green Function to sample.
   dMatrix g_tau_0; //interacting Green Function at tau=0.
-  double complex expI[N_EXP];
+  //double complex expI[N_EXP];
   double KDirac; // same notation as Patrick, not sure about the math yet
   double density;
   GreenAccumulator g_tau_accumulator;
@@ -160,7 +160,7 @@ void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
   mc->accumulated_expOrder=0;
  
   unsigned int i;
-  for(i=0;i<N_EXP;i++) mc->expI[i] = cexp(-I*2*M_PI*((double)i)/((double) N_EXP)); 
+  //for(i=0;i<N_EXP;i++) mc->expI[i] = cexp(-I*2*M_PI*((double)i)/((double) N_EXP)); 
 
   mc->nRemove=0;
   mc->nInsert=0;
