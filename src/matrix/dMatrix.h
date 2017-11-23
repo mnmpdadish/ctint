@@ -42,7 +42,7 @@ unsigned int resize_dVector(dVector * x, unsigned int N) {
 unsigned int resize_dMatrix(dMatrix * A, unsigned int N) {
   while(N*N > A->capacity) {
     A->data = realloc(A->data, (A->capacity *= 2) * sizeof(double));
-    printf("new matrix size = %d \n",A->capacity); fflush(stdout);
+    //printf("new matrix size = %d \n",A->capacity); fflush(stdout);
   }
   A->N=N;
   return 0;

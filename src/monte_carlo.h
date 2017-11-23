@@ -159,7 +159,7 @@ void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
   mc->accumulated_sign=0;
   mc->accumulated_expOrder=0;
  
-  unsigned int i;
+  //unsigned int i;
   //for(i=0;i<N_EXP;i++) mc->expI[i] = cexp(-I*2*M_PI*((double)i)/((double) N_EXP)); 
 
   mc->nRemove=0;
@@ -402,7 +402,7 @@ void FlipVertex(MonteCarlo * mc) {
     double factDown = (1. + flipAuxDown*ELEM(mc->M_down,p,p));
     
     double pAcc = factUp*factDown;
-    
+    //printf("pAcc spin-flip=%f\n", pAcc);
     if(urng() < fabs(pAcc)) {
       mc->nFlip++;
 			if(pAcc < .0) mc->sign *= -1;
