@@ -35,7 +35,7 @@ typedef struct {
 } Model;
 
 
-void read_Model(FILE * fileModel, FILE * fileParams, Model * model) {
+void read_Model(FILE * fileModel, FILE * fileParams, Model * model, unsigned int verbose) {
 
   init_HoppingMatrix(&model->tMat);
   init_MultiplePositions(&model->sites);
@@ -43,28 +43,28 @@ void read_Model(FILE * fileModel, FILE * fileParams, Model * model) {
      
   readOperators_HoppingMatrix(fileModel, &model->tMat);
   readSites(fileModel, &model->sites, "sites");
-  print_MultiplePositions(&model->sites,"sites");
+  if(verbose) print_MultiplePositions(&model->sites,"sites");
   model->nSites = model->sites.n;
   
   readSites(fileModel, &model->superlattice, "superlattice");
-  print_MultiplePositions(&model->superlattice,"superlattice");
+  if(verbose) print_MultiplePositions(&model->superlattice,"superlattice");
   assert(model->superlattice.n == 3);
   
   defineSparse_HoppingMatrix(&model->tMat, &model->sites, &model->superlattice);
-  print_HoppingMatrix(&model->tMat);
+  if(verbose) print_HoppingMatrix(&model->tMat);
   
   init_dMatrix(&model->hybFM,model->nSites);
   calculate_hybFirstMoments(&model->tMat, &model->hybFM);
   
   
   int nSym=countLineFlag(fileModel, "symmetry_generators");
-  printf("nsym=%d\n", nSym);
+  if(verbose)  printf("nsym=%d\n", nSym);
   initSymmetries(&model->sym, nSym, model->nSites);
   readSymmetries(fileModel, model->nSites, &model->sym, "symmetry_generators");
-  printSymmetries(&model->sym);
+  if(verbose) printSymmetries(&model->sym);
   
   initGreenSymmetriesMatrix(&model->greenSymMat,model->nSites,&model->sym);
-  printf("\nsymmetrized matrix:\n");
+  if(verbose) printf("\nsymmetrized matrix:\n");
   printGreenSymmetriesMatrix(&model->greenSymMat);
 
   

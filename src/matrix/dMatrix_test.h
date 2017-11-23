@@ -412,7 +412,7 @@ int test_huge_dMatrix(int verbose) {
 
 // adding the Vector U and V to the matrix A plus the corner should, in principle
 // give the same matrix as if you invert, apply "shermanMorrison" and invert again.
-int test_dAddOneElementToInvers(int verbose) {
+int test_dAddOneElementToInverse(int verbose) {
   dMatrix A, Sol;
   init_dMatrix(&A,3);
   init_dMatrix(&Sol,3);

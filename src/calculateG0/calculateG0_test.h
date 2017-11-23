@@ -14,7 +14,7 @@ int test_Plaquettes2x2(int verbose) {
   FILE * fileModel = fopenSafe("testInputFiles/plaquette2x2.model","rt",verbose);
   FILE * fileParams = fopenSafe("testInputFiles/params2x2","rt",verbose);
   Model model;
-  read_Model(fileModel, fileParams, &model);
+  read_Model(fileModel, fileParams, &model, verbose);
   fclose(fileModel);
   fclose(fileParams);
   
@@ -69,7 +69,7 @@ int test_dmft(int verbose) {
   FILE * fileModel = fopenSafe("testInputFiles/dmft.model","rt",verbose);
   FILE * fileParams = fopenSafe("testInputFiles/paramsDmft","rt",verbose);
   Model model;
-  read_Model(fileModel, fileParams, &model);
+  read_Model(fileModel, fileParams, &model, verbose);
   fclose(fileModel);
   fclose(fileParams);
   

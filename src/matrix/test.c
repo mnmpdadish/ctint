@@ -25,7 +25,7 @@ int main() {
   Nfail+= passOrFail("test_dScalarProduct",         test_dScalarProduct(verbose));
   Nfail+= passOrFail("test_dSchurComplement",       test_dSchurComplement(verbose));        // used for remove vertex
   Nfail+= passOrFail("test_dAddRowColToInverse",    test_dAddRowColToInverse(verbose));     // used for insert vertex
-  Nfail+= passOrFail("test_dAddOneElementToInvers", test_dAddOneElementToInvers(verbose));  // used for spin-flip
+  Nfail+= passOrFail("test_dAddOneElementToInverse",test_dAddOneElementToInverse(verbose));  // used for spin-flip
   
 
   

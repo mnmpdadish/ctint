@@ -4,14 +4,18 @@
 #include <time.h>
 
 void do_update(MonteCarlo * mc){
-  double probFlip = 0.0;
+  double probFlip = 0.95;
   if(urng()<probFlip){
     FlipVertex(mc);
   }
   else{
-    if(urng()<0.5) InsertVertex(mc); // we try to insert less often than the remove
+    //Print_MonteCarlo(mc);
+    if(urng()<0.5) InsertVertex(mc); 
     else RemoveVertex(mc);
+    //if(mc->vertices.N !=0) CleanUpdate(mc);
+    //Print_MonteCarlo(mc);
   }
+        
 }
 
 int main(int argc, char *argv[]) {
@@ -47,26 +51,28 @@ int main(int argc, char *argv[]) {
   FILE * fileParams = fopenSafe(paramsFileName, "rt",1);
   
   Model model;
-  read_Model(fileModel, fileParams, &model);
+  read_Model(fileModel, fileParams, &model, 0);
   MonteCarlo mc;
   init_MonteCarlo(fileHyb, &mc, &model);
   
-  //unsigned int seed = 10000061;
   srand(mc.model.seed);
-  
-  int update_i; //, termalization_i = 10000, measure_i=10000, cleanUpdate_i=501;
+  int update_i;
   int nSamples=0;
-  
+  clock_t start = clock();
   if(iteration>0){
-    clock_t start = clock();
     
+    // Thermalization:    
     for(update_i=1; update_i<mc.model.nThermUpdates;  update_i++) {
+    //for(update_i=1; update_i<20;  update_i++) {
       do_update(&mc);
       if(update_i % mc.model.cleanUpdate_i ==0) if(mc.vertices.N !=0) CleanUpdate(&mc);
       //printf("%d %d\n",update_i,mc.vertices.N); fflush(stdout);
     }
-
-    printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
+    //exit(1);
+    printf("thermalization time=%f\n", (double)(clock() - start) / CLOCKS_PER_SEC); fflush(stdout);
+    
+    // Measurements:    
+    start = clock();
     for(update_i=1; update_i < mc.model.nUpdates+1;  update_i++) {
         
       do_update(&mc);
@@ -75,15 +81,12 @@ int main(int argc, char *argv[]) {
         if(mc.vertices.N !=0) CleanUpdate(&mc);
         //printf("done.\n");
         printf("%d",update_i); fflush(stdout);
-        printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
-        double time_spent = (double)(clock() - start) / CLOCKS_PER_SEC;
-        printf("%f\n", time_spent);
+        printf(".  sign=% 2.0f   order=%d   time=%f\n", mc.sign, mc.vertices.N, (double)(clock() - start) / CLOCKS_PER_SEC); fflush(stdout);
       }
+      
       if(update_i % mc.model.measure_i==0) {
         //printf("%d",update_i); fflush(stdout);
         measure(&mc);
-        //measureGreenOld(&mc);
-        //Print_MonteCarlo(&mc);
         nSamples++;
         //printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
       }
@@ -91,7 +94,9 @@ int main(int argc, char *argv[]) {
     }
   }
   
+  start = clock();
   outputMeasure(&mc, nSamples, iteration);
+  printf("total measurement time=%f\n", (double)(clock() - start) / CLOCKS_PER_SEC);
   free_MonteCarlo(&mc);//vertices.N=0;
   return 0;
 }

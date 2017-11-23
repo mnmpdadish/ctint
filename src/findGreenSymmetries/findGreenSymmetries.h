@@ -178,7 +178,7 @@ void indexIndependantGreen(GreenSymmetriesMatrix * greenSymMat) {
         greenSymMat->numberOfSiteAssociated[index]++;
       }
   greenSymMat->nIndep = nIndep;
-  for(i=0;i<nIndep;i++) printf("iIndep=%d, numberOfSiteAssociated=%u\n", i,greenSymMat->numberOfSiteAssociated[i]);
+  //for(i=0;i<nIndep;i++) printf("iIndep=%d, numberOfSiteAssociated=%u\n", i,greenSymMat->numberOfSiteAssociated[i]);
   //return nIndep;
 }
 

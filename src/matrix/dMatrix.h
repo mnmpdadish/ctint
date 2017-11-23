@@ -48,6 +48,12 @@ unsigned int resize_dMatrix(dMatrix * A, unsigned int N) {
   return 0;
 }
 
+unsigned int reset_dVector(dVector * X) {
+  unsigned int i;
+  for(i=0; i<(X->N); i++) X->data[i]=0;
+  return 0;
+}
+
 unsigned int reset_dMatrix(dMatrix * A) {
   unsigned int i;
   for(i=0; i<(A->N*A->N); i++) A->data[i]=0;
