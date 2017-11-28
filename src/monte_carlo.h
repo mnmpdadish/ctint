@@ -98,10 +98,18 @@ void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
     calculate_G0_tau(&g0_matsubara_tmp,&mc->g0_tau);
     free_cMatrixFunction(&g0_matsubara_tmp);
     
+    //FILE * fileOut = fopenSafe("green_tau.dat","w",1);
+    //writeToFile_dMatrixFunction(fileOut, &mc->g0_tau, model);
+    //fclose(fileOut);  
   }
   else{
     calculate_G0_matsubara(&mc->g0_matsubara, model, NULL, model->muAux, 0);
   }
+  
+  //FILE * fileOut2 = fopenSafe("green_iwn.dat","w",1);
+  //writeToFile_cMatrixFunction(fileOut2, &mc->g0_matsubara, model);
+  //fclose(fileOut2);  
+
   
   init_cMatrix(&mc->dummy1, model->nSites);
   init_cMatrix(&mc->dummy2, model->nSites);
@@ -184,25 +192,35 @@ void free_MonteCarlo(MonteCarlo * mc) {
 
 void Print_MonteCarlo(MonteCarlo * mc){
   int i, N=mc->vertices.N;
-  printf("MonteCarlo state:\n");
+  printf("\n\nMonteCarlo state:\n");
   printf("\n"); for(i=0;i<N;i++) printf("%4.2f ",mc->vertices.m_vertex[i].tau); 
   printf("\n"); for(i=0;i<N;i++) printf("%d    ",mc->vertices.m_vertex[i].site); 
   printf("\n"); for(i=0;i<N;i++) printf("%d    ",mc->vertices.m_vertex[i].auxSpin); 
-  printf("\nM_up:\n");
+  /*printf("\nM_up:\n");
   print_dMatrix(mc->M_up);
   printf("\nM_down:\n");
   print_dMatrix(mc->M_down);
+  */
   printf("\n");
+  printf("\nM_up^-1:\n");
+  copy_dMatrix(mc->M_up,mc->Mdummy_up);
+  invert_dMatrix(mc->Mdummy_up);
+  print_dMatrix(mc->Mdummy_up);
+  printf("\nM_down^-1:\n");
+  copy_dMatrix(mc->M_down,mc->Mdummy_down);
+  invert_dMatrix(mc->Mdummy_down);
+  print_dMatrix(mc->Mdummy_down);
+  
 }
 
-double auxUp(Vertex const * vertex, MonteCarlo *mc)   { return vertex->auxSpin ? -mc->model.delta : 1. + mc->model.delta;}
-double auxDown(Vertex const * vertex, MonteCarlo *mc) { return vertex->auxSpin ? 1. + mc->model.delta : -mc->model.delta;}
+double auxDown(Vertex const * vertex, MonteCarlo *mc)   { return vertex->auxSpin ? -mc->model.delta : 1. + mc->model.delta;}
+double auxUp(Vertex const * vertex, MonteCarlo *mc) { return vertex->auxSpin ? 1. + mc->model.delta : -mc->model.delta;}
 double urng() {return (double)rand()/(double)(RAND_MAX);}
 unsigned int irng(unsigned int N) {return rand()%N;}
 
 
 double green0(Vertex const * vertexI, Vertex const * vertexJ, MonteCarlo *mc) { 
-  double diff_tau = vertexI->tau - vertexJ->tau +1e-13; 
+  double diff_tau = vertexI->tau - vertexJ->tau + 1e-12; 
 
   double aps = 1.;
   if (diff_tau > .0) {
@@ -406,8 +424,8 @@ void FlipVertex(MonteCarlo * mc) {
     unsigned int p = irng(mc->vertices.N);
     
     Vertex vertexToFlip = mc->vertices.m_vertex[p];
-    double flipAuxUp = auxDown(&vertexToFlip, mc) - auxUp(&vertexToFlip, mc);
-    double flipAuxDown = auxUp(&vertexToFlip, mc) - auxDown(&vertexToFlip, mc);
+    double flipAuxDown = auxDown(&vertexToFlip, mc) - auxUp(&vertexToFlip, mc);
+    double flipAuxUp = auxUp(&vertexToFlip, mc) - auxDown(&vertexToFlip, mc);
     
     double factUp   = (1. + flipAuxUp * ELEM(mc->M_up,p,p));
     double factDown = (1. + flipAuxDown*ELEM(mc->M_down,p,p));
@@ -478,7 +496,7 @@ int measure(MonteCarlo * mc) {
     for(p2=0;p2<N;p2++) {
       k = mc->model.greenSymMat.indexIndep[mc->model.nSites*sites[p1]+sites[p2]];
       double temp = mc->sign * 0.5 * ( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2));
-      double tau  = mc->vertices.m_vertex[p2].tau - mc->vertices.m_vertex[p1].tau; 
+      double tau  = mc->vertices.m_vertex[p1].tau - mc->vertices.m_vertex[p2].tau; 
       if(tau < .0) {
         temp *= -1.;
         tau += mc->model.beta;
@@ -677,9 +695,9 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
     fappend("k.dat",    "#     k", iteration, meas_k, 1);
     
     double occupation =  -(mc->KDirac/(mc->model.beta*nSamples*mc->model.nSites) + (mc->model.muAux - mc->model.mu) )/mc->model.U;  
-    printf("\nnSamples = %d\nsign = %f\nexpOrder =% f\nn =% f\nKDirac_n =% f\nnInsert = %lu\nnRemove = %lu\n",
+    printf("\nnSamples = %d\nsign = %f\nexpOrder =% f\nn =% f\nKDirac_n =% f\nnInsert = %lu\nnRemove = %lu\nnFlip = %lu\n",
            nSamples, meas_sign, meas_k, 2.0*mc->density/nSamples, 2.0*occupation,
-           mc->nInsert, mc->nRemove);
+           mc->nInsert, mc->nRemove, mc->nFlip);
     
     for(n=0; n<N_PTS_MAT; n++) scale_cMatrix(&mc->accumulated_g_matsubara.matrices[n],1.0/nSamples);
   

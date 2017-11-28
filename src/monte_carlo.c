@@ -3,19 +3,20 @@
 #include "monte_carlo.h"
 #include <time.h>
 
-void do_update(MonteCarlo * mc){
-  double probFlip = 0.95;
-  if(urng()<probFlip){
+void do_update(MonteCarlo * mc) {
+  double probFlip = 0.3;
+  if(urng()<probFlip) {
+    //printf("\n--------------->spin-flip\n");
     FlipVertex(mc);
   }
-  else{
+  else {
     //Print_MonteCarlo(mc);
     if(urng()<0.5) InsertVertex(mc); 
     else RemoveVertex(mc);
     //if(mc->vertices.N !=0) CleanUpdate(mc);
-    //Print_MonteCarlo(mc);
+    
   }
-        
+  //Print_MonteCarlo(mc);
 }
 
 int main(int argc, char *argv[]) {
@@ -76,7 +77,7 @@ int main(int argc, char *argv[]) {
     for(update_i=1; update_i < mc.model.nUpdates+1;  update_i++) {
         
       do_update(&mc);
-      if(update_i % mc.model.cleanUpdate_i ==0){
+      if(update_i % mc.model.cleanUpdate_i ==0) {
         //printf("clean update ");
         if(mc.vertices.N !=0) CleanUpdate(&mc);
         //printf("done.\n");

@@ -4,7 +4,7 @@ mc_DIR=../../
 MODEL=dmft
 
 ITER=0
-ITERMAX=10
+ITERMAX=100
 
 if [ -a logfile ]
   then rm logfile
