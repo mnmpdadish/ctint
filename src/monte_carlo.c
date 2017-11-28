@@ -79,7 +79,10 @@ int main(int argc, char *argv[]) {
       do_update(&mc);
       if(update_i % mc.model.cleanUpdate_i ==0) {
         //printf("clean update ");
+        //Print_MonteCarlo(&mc);
         if(mc.vertices.N !=0) CleanUpdate(&mc);
+        //Print_MonteCarlo(&mc);
+        //exit(1);
         //printf("done.\n");
         printf("%d",update_i); fflush(stdout);
         printf(".  sign=% 2.0f   order=%d   time=%f\n", mc.sign, mc.vertices.N, (double)(clock() - start) / CLOCKS_PER_SEC); fflush(stdout);

@@ -213,8 +213,8 @@ void Print_MonteCarlo(MonteCarlo * mc){
   
 }
 
-double auxDown(Vertex const * vertex, MonteCarlo *mc)   { return vertex->auxSpin ? -mc->model.delta : 1. + mc->model.delta;}
-double auxUp(Vertex const * vertex, MonteCarlo *mc) { return vertex->auxSpin ? 1. + mc->model.delta : -mc->model.delta;}
+double auxDown(Vertex const * vertex, MonteCarlo *mc) { return vertex->auxSpin ? -mc->model.delta : 1. + mc->model.delta;}
+double auxUp(Vertex const * vertex, MonteCarlo *mc)   { return vertex->auxSpin ? 1. + mc->model.delta : -mc->model.delta;}
 double urng() {return (double)rand()/(double)(RAND_MAX);}
 unsigned int irng(unsigned int N) {return rand()%N;}
 
@@ -464,8 +464,8 @@ void CleanUpdate(MonteCarlo * mc) {
     Vertex vertexI = mc->vertices.m_vertex[i];
     for(j = 0; j < mc->vertices.N; j++) {
       Vertex vertexJ = mc->vertices.m_vertex[j];
-      ELEM(mc->M_up,i,j) = green0(&vertexI, &vertexJ, mc);
-      ELEM(mc->M_down,i,j) = green0(&vertexI, &vertexJ, mc);
+      ELEM(mc->M_up,i,j) =   green0(&vertexJ, &vertexI, mc);
+      ELEM(mc->M_down,i,j) = green0(&vertexJ, &vertexI, mc);
     }
     ELEM(mc->M_up,i,i) -= auxUp(&vertexI, mc);
     ELEM(mc->M_down,i,i) -= auxDown(&vertexI, mc);
