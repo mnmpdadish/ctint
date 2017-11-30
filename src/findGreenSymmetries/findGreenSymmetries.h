@@ -46,7 +46,7 @@ int addElementToPermutation(Array_int *perm, unsigned int value, unsigned int nS
 
   Array_int_push(perm, value);
   
-   //perm->data[perm->size]=value;
+  //perm->data[perm->size]=value;
   //perm->nAssigned++;
   //assert(perm->nAssigned <= perm->nSites);
   return 0;
@@ -151,18 +151,15 @@ void printGreenSymmetriesMatrix(GreenSymmetriesMatrix * greenSymMat) {
 }
 
 
-
-void nameGreenSymmetriesElement(GreenSymmetriesMatrix * greenSymMat, unsigned int i, unsigned int j, char name[2]) {  
+void nameGreenSymmetriesElement(GreenSymmetriesMatrix * greenSymMat, unsigned int i, unsigned int j, char name[4]) {  
   int N=greenSymMat->nSites;
   assert(i<N);
   assert(j<N);
-  sprintf(name,"%c%c",charHexa(greenSymMat->i[N*i+j]),charHexa(greenSymMat->j[N*i+j]));
+  snprintf(name,4,"%c%c", charHexa(greenSymMat->i[N*i+j]), charHexa(greenSymMat->j[N*i+j])); // we put 4 instead of 2 to have a buffer. Not sure why, but needed to prevent buffer overflow in some cases
 }
 
 
-
-
-void indexIndependantGreen(GreenSymmetriesMatrix * greenSymMat) {  
+void indexIndependantGreen(GreenSymmetriesMatrix * greenSymMat) {
   int i,j,N=greenSymMat->nSites, nIndep=0;
   for(i=0;i<N;i++)
     for(j=0;j<N;j++)
@@ -181,8 +178,6 @@ void indexIndependantGreen(GreenSymmetriesMatrix * greenSymMat) {
   //for(i=0;i<nIndep;i++) printf("iIndep=%d, numberOfSiteAssociated=%u\n", i,greenSymMat->numberOfSiteAssociated[i]);
   //return nIndep;
 }
-
-
 
 
 int symmetrizeOneGreenElement(GreenSymmetriesMatrix * greenSymMat, Symmetries * sym) {  

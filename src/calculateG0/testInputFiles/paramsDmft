@@ -8,4 +8,4 @@ nUpdates   10000000
 cleanUpdate_i 10000
 measure_i       501
 nThermUpdates 10000
-
+seed             42

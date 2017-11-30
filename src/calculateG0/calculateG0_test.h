@@ -38,7 +38,9 @@ int test_Plaquettes2x2(int verbose) {
   writeToFile_dMatrixFunction(fileOut, &g0_tau, &model);
   fclose(fileOut);  
   
-  
+  printf("g0_tau.matrices[5].data[0]=%f\n", g0_tau.matrices[5].data[0]);
+  printf("g0_tau.matrices[5].data[1]=%f\n", g0_tau.matrices[5].data[1]);
+  printf("g0_tau.matrices[5].data[3]=%f\n", g0_tau.matrices[5].data[3]);
   if(!doubleEqual(g0_tau.matrices[5].data[0], -0.74174358)) Nerror+=1;
   if(!doubleEqual(g0_tau.matrices[5].data[1],  0.13809594)) Nerror+=1;
   if(!doubleEqual(g0_tau.matrices[5].data[3],  0.19526082)) Nerror+=1;
@@ -63,6 +65,7 @@ int test_Plaquettes2x2(int verbose) {
 }
 
 
+
 int test_dmft(int verbose) {
   int Nerror=0;
   
@@ -83,11 +86,14 @@ int test_dmft(int verbose) {
   FILE * fileHyb = fopenSafe("testInputFiles/hyb1.dat","rt",verbose);
   readFile_cMatrixFunction(fileHyb, &hyb_matsubara, &model);
   patch_HYB_matsubara(&model, &hyb_matsubara);
-  fclose(fileModel);
+  fclose(fileHyb);
+  
+  
   
   FILE * fileHybOut = fopenSafe("hybOut.dat","w",verbose);
   writeToFile_cMatrixFunction(fileHybOut, &hyb_matsubara, &model);
   fclose(fileHybOut);
+  
   
   
   calculate_G0_matsubara(&g0_matsubara, &model, &hyb_matsubara, model.muAux, verbose);

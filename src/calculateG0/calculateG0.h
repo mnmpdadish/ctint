@@ -8,7 +8,7 @@
 #include "model.h"
 
 #define N_PTS_MAT 200
-#define N_PTS_TAU 400
+#define N_PTS_TAU 1000
 
 
 // -------------------------------------------------------------------------
@@ -198,7 +198,6 @@ void writeToFile_cMatrixFunction(FILE *fileOut, cMatrixFunction * cMatFun, Model
     nameGreenSymmetriesElement(&model->greenSymMat, i, j, nameImag);
     fprintf(fileOut, "          %s_re         %s_im", nameReal, nameImag);
   }
-  
   for(n=0; n<N_PTS_MAT; n++){
     fprintf(fileOut,"\n");
     double omega_n = (2.*n+1)*M_PI/cMatFun->beta;
@@ -243,7 +242,7 @@ void writeToFile_dMatrixFunction(FILE *fileOut, dMatrixFunction * dMatFun, Model
 
 void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * model) {
   rewind(fileIn);
-  char tempbuff[2048];  //each line should not be above 2048 char long.
+  char tempbuff[256];  //each line should not be above 2048 char long.
   int i=0, j=0, nRead;
   float w_matsubara;
   float valR, valI;
@@ -253,7 +252,7 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
   
   while(!feof(fileIn)) 
   {
-    if (fgets(tempbuff,2048,fileIn)) {
+    if (fgets(tempbuff,256,fileIn)) {
       //printf("%s",tempbuff);
       /*int lenString = strlen(tempbuff);
       if(tempbuff[lenString-1]!='\n' && tempbuff[lenString] != EOF) {
