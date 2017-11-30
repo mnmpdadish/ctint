@@ -34,14 +34,14 @@ typedef struct {
 typedef dMatrix dVector;
 
 unsigned int resize_dVector(dVector * x, unsigned int N) {
-  while(N > x->capacity) x->data = realloc(x->data, (x->capacity *= 2) * sizeof(double));
+  while(N > x->capacity) x->data = (double*) realloc(x->data, (x->capacity *= 2) * sizeof(double));
   x->N=N;
   return 0;
 }
 
 unsigned int resize_dMatrix(dMatrix * A, unsigned int N) {
   while(N*N > A->capacity) {
-    A->data = realloc(A->data, (A->capacity *= 2) * sizeof(double));
+    A->data = (double*) realloc(A->data, (A->capacity *= 2) * sizeof(double));
     //printf("new matrix size = %d \n",A->capacity); fflush(stdout);
   }
   A->N=N;
@@ -62,7 +62,7 @@ unsigned int reset_dMatrix(dMatrix * A) {
 
 unsigned int init_dVector(dVector * x, unsigned int N) {
   x->capacity = INIT_CAPACITY;
-  x->data = malloc(x->capacity * sizeof(double));
+  x->data = (double *) malloc(x->capacity * sizeof(double));
   x->N=N;
   resize_dVector(x,N);
   return 0;
@@ -70,7 +70,7 @@ unsigned int init_dVector(dVector * x, unsigned int N) {
 
 unsigned int init_dMatrix(dMatrix * A, unsigned int N) {
   A->capacity = INIT_CAPACITY;
-  A->data = malloc(A->capacity * sizeof(double));
+  A->data = (double *) malloc(A->capacity * sizeof(double));
   A->N=N;
   resize_dMatrix(A,N);
   return 0;

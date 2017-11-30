@@ -55,13 +55,13 @@ typedef struct {
 typedef cMatrix cVector;
 
 unsigned int resize_cVector(cVector * x, unsigned int N) {
-  while(N > x->capacity) x->data = realloc(x->data, (x->capacity *= 2) * sizeof(double complex));
+  while(N > x->capacity) x->data = (double complex*) realloc(x->data, (x->capacity *= 2) * sizeof(double complex));
   x->N=N;
   return 0;
 }
 
 unsigned int resize_cMatrix(cMatrix * A, unsigned int N) {
-  while(N*N > A->capacity) A->data = realloc(A->data, (A->capacity *= 2) * sizeof(double complex));
+  while(N*N > A->capacity) A->data = (double complex*) realloc(A->data, (A->capacity *= 2) * sizeof(double complex));
   A->N=N;
   return 0;
 }
@@ -76,7 +76,7 @@ unsigned int reset_cMatrix(cMatrix * A) {
 
 unsigned int init_cVector(cVector * x, unsigned int N) {
   x->capacity = INIT_CAPACITY;
-  x->data = malloc(x->capacity * sizeof(double complex));
+  x->data = (double complex *) malloc(x->capacity * sizeof(double complex));
   x->N=N;
   resize_cVector(x,N);
   return 0;
@@ -84,7 +84,7 @@ unsigned int init_cVector(cVector * x, unsigned int N) {
 
 unsigned int init_cMatrix(cMatrix * A, unsigned int N) {
   A->capacity = INIT_CAPACITY;
-  A->data = malloc(A->capacity * sizeof(double complex));
+  A->data = (double complex *) malloc(A->capacity * sizeof(double complex));
   A->N=N;
   resize_cMatrix(A,N);
   return 0;

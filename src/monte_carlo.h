@@ -115,10 +115,10 @@ void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
   init_cMatrix(&mc->dummy2, model->nSites);
   init_dMatrix(&mc->g_tau_0, model->nSites);
 
-  mc->M_up     = malloc(sizeof(dMatrix));
-  mc->M_down    = malloc(sizeof(dMatrix));
-  mc->Mdummy_up  = malloc(sizeof(dMatrix));
-  mc->Mdummy_down = malloc(sizeof(dMatrix));
+  mc->M_up     = (dMatrix*)    malloc(sizeof(dMatrix));
+  mc->M_down    = (dMatrix*)   malloc(sizeof(dMatrix));
+  mc->Mdummy_up  = (dMatrix*)  malloc(sizeof(dMatrix));
+  mc->Mdummy_down = (dMatrix*) malloc(sizeof(dMatrix));
   
   init_dMatrix(mc->M_up,0);
   init_dMatrix(mc->M_down,0);
@@ -134,12 +134,12 @@ void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
   mc->nSites = model->nSites;
   
   mc->g_tau_accumulator.nIndep = model->greenSymMat.nIndep;
-  mc->g_tau_accumulator.indep_M_tau0_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
-  mc->g_tau_accumulator.indep_M_tau1_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
-  mc->g_tau_accumulator.indep_M_tau2_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
-  mc->g_tau_accumulator.indep_M_tau3_sampled = malloc(model->greenSymMat.nIndep * sizeof(dFunction));
-  mc->g_tau_accumulator.indep_G_tau_sampled  = malloc(model->greenSymMat.nIndep * sizeof(double));
-  mc->g_tau_accumulator.nSamples             = malloc(model->greenSymMat.nIndep * sizeof(iFunction));
+  mc->g_tau_accumulator.indep_M_tau0_sampled = (dFunction*) malloc(model->greenSymMat.nIndep * sizeof(dFunction));
+  mc->g_tau_accumulator.indep_M_tau1_sampled = (dFunction*) malloc(model->greenSymMat.nIndep * sizeof(dFunction));
+  mc->g_tau_accumulator.indep_M_tau2_sampled = (dFunction*) malloc(model->greenSymMat.nIndep * sizeof(dFunction));
+  mc->g_tau_accumulator.indep_M_tau3_sampled = (dFunction*) malloc(model->greenSymMat.nIndep * sizeof(dFunction));
+  mc->g_tau_accumulator.indep_G_tau_sampled  = (double*)    malloc(model->greenSymMat.nIndep * sizeof(double));
+  mc->g_tau_accumulator.nSamples             = (iFunction*) malloc(model->greenSymMat.nIndep * sizeof(iFunction));
   
   unsigned int k, n;
   for(k=0;k<model->greenSymMat.nIndep; k++){
@@ -153,7 +153,7 @@ void init_MonteCarlo(FILE * fileHyb, MonteCarlo * mc, Model * model) {
   }
   
   mc->vertices.capacity = VERTICES_BASIC_CAPACITY;
-  mc->vertices.m_vertex = malloc(mc->vertices.capacity * sizeof(Vertex));
+  mc->vertices.m_vertex = (Vertex*) malloc(mc->vertices.capacity * sizeof(Vertex));
   mc->vertices.N=0;
   mc->model=*model;
   mc->sign=1.0;
@@ -337,7 +337,7 @@ int InsertVertex(MonteCarlo * mc) {
   
 
   if(mc->vertices.N == mc->vertices.capacity) {
-    mc->vertices.m_vertex = realloc(mc->vertices.m_vertex, (mc->vertices.capacity *= 2) * sizeof(Vertex));
+    mc->vertices.m_vertex = (Vertex*) realloc(mc->vertices.m_vertex, (mc->vertices.capacity *= 2) * sizeof(Vertex));
     printf("new size = %d \n",mc->vertices.capacity); fflush(stdout);
   }
   
@@ -482,7 +482,7 @@ void CleanUpdate(MonteCarlo * mc) {
 int measure(MonteCarlo * mc) {
   unsigned int N = mc->vertices.N;
   unsigned int * sites;
-  sites = malloc(N*sizeof(unsigned int));
+  sites = (unsigned int*) malloc(N*sizeof(unsigned int));
     
   int p1,p2,k;//,i,j;
 

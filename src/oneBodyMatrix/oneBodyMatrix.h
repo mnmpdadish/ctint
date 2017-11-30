@@ -49,7 +49,7 @@ typedef struct {
 
 int init_MultiplePositions(MultiplePositions * mPositions) {
   mPositions->capacity = INIT_CAPACITY;
-  mPositions->positions = malloc(mPositions->capacity * sizeof (IntPosition));
+  mPositions->positions = (IntPosition *) malloc(mPositions->capacity * sizeof (IntPosition));
   mPositions->n=0;
   return 0;
 }
@@ -57,7 +57,7 @@ int init_MultiplePositions(MultiplePositions * mPositions) {
 void addSites_MultiplePositions(MultiplePositions * mPositions, int pos3D[3]) {
   unsigned int n=mPositions->n;
   if(mPositions->n > mPositions->capacity) 
-    mPositions->positions = realloc(mPositions->positions, (mPositions->capacity *= 2) * sizeof(IntPosition));
+    mPositions->positions = (IntPosition*) realloc(mPositions->positions, (mPositions->capacity *= 2) * sizeof(IntPosition));
   mPositions->positions[n].x=pos3D[0];
   mPositions->positions[n].y=pos3D[1];
   mPositions->positions[n].z=pos3D[2];
@@ -251,7 +251,7 @@ int init_HoppingMatrix(HoppingMatrix * tMat) {
 }
 
 void addOperators_HoppingMatrix(HoppingMatrix * tMat, char label[64], double coefficient, int posDiff3D[3]) {
-  if(tMat->n > tMat->capacity) tMat->operators = realloc(tMat->operators, (tMat->capacity *= 2) * sizeof(OperatorDef));
+  if(tMat->n > tMat->capacity) tMat->operators = (OperatorDef*) realloc(tMat->operators, (tMat->capacity *= 2) * sizeof(OperatorDef));
   memset(tMat->operators[tMat->n].label,0,64);
   strcpy(tMat->operators[tMat->n].label,label);
   tMat->operators[tMat->n].coefficient=coefficient;
@@ -309,10 +309,10 @@ void addElementSparse_HoppingMatrix(HoppingMatrix * tMat, unsigned int i1, unsig
   if(N == tMat->sparse.capacity) {
     tMat->sparse.capacity *= 2;
     //printf("new capacity = %d",tMat->sparse.capacity);
-    tMat->sparse.index1 = realloc(tMat->sparse.index1, (tMat->sparse.capacity ) * sizeof(unsigned int));
-    tMat->sparse.index2 = realloc(tMat->sparse.index2, (tMat->sparse.capacity) * sizeof(unsigned int));
-    tMat->sparse.value  = realloc(tMat->sparse.value, (tMat->sparse.capacity) * sizeof(double));
-    tMat->sparse.clusterPosition = realloc(tMat->sparse.clusterPosition, (tMat->sparse.capacity) * sizeof(IntPosition));
+    tMat->sparse.index1 = (unsigned int*) realloc(tMat->sparse.index1, (tMat->sparse.capacity ) * sizeof(unsigned int));
+    tMat->sparse.index2 = (unsigned int*) realloc(tMat->sparse.index2, (tMat->sparse.capacity) * sizeof(unsigned int));
+    tMat->sparse.value  = (double*) realloc(tMat->sparse.value, (tMat->sparse.capacity) * sizeof(double));
+    tMat->sparse.clusterPosition = (IntPosition*) realloc(tMat->sparse.clusterPosition, (tMat->sparse.capacity) * sizeof(IntPosition));
   }
   tMat->sparse.index1[N] = i1;
   tMat->sparse.index2[N] = i2;

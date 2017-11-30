@@ -21,7 +21,7 @@ void Array_double_init(Array_double *arr)
 {
     arr->capacity = ARRAY_INIT_CAPACITY;
     arr->size = 0;
-    arr->data = malloc(sizeof(double) * arr->capacity);
+    arr->data = (double*) malloc(sizeof(double) * arr->capacity);
 }
 
 void Array_double_reserve(Array_double *arr, int capacity)
@@ -32,7 +32,7 @@ void Array_double_reserve(Array_double *arr, int capacity)
     printf("Array_double_resize: %d to %d\n", arr->capacity, capacity);
     #endif
   
-    arr->data = realloc(arr->data, sizeof(double) * capacity);
+    arr->data = (double*) realloc(arr->data, sizeof(double) * capacity);
     arr->capacity = capacity;
     if (!arr->data) {
       printf("Attempt to allocate memory failed (out of memory? who knows).\n");
@@ -100,7 +100,7 @@ void Array_int_init(Array_int *arr)
 {
     arr->capacity = ARRAY_INIT_CAPACITY;
     arr->size = 0;
-    arr->data = malloc(sizeof(int) * arr->capacity);
+    arr->data = (int*) malloc(sizeof(int) * arr->capacity);
 }
 
 
@@ -112,7 +112,7 @@ void Array_int_reserve(Array_int *arr, int capacity)
     printf("Array_int_resize: %d to %d\n", arr->capacity, capacity);
     #endif
     
-    arr->data = realloc(arr->data, sizeof(int) * capacity);
+    arr->data = (int*) realloc(arr->data, sizeof(int) * capacity);
     arr->capacity = capacity;
     if (!arr->data) {
       printf("Attempt to allocate memory failed (out of memory? who knows).\n");
