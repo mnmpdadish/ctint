@@ -1,7 +1,7 @@
 
 #include <unistd.h>
-#include "monte_carlo.h"
 #include <time.h>
+#include "monte_carlo.h"
 
 void do_update(MonteCarlo * mc) {
   double probFlip = 0.3;
@@ -19,7 +19,15 @@ void do_update(MonteCarlo * mc) {
   //Print_MonteCarlo(mc);
 }
 
+double timeSec(struct timespec start, struct timespec end){
+  return (double) (end.tv_sec - start.tv_sec) + (double) (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+}
+
 int main(int argc, char *argv[]) {
+
+  struct timespec start, end;
+  //usleep(2304040);
+  
 
   if(argc!=3) {
     printf("program usage example:\n$ mc dmft.model 9\n\n");
@@ -59,7 +67,11 @@ int main(int argc, char *argv[]) {
   srand(mc.model.seed);
   int update_i;
   int nSamples=0;
-  clock_t start = clock();
+  clock_gettime(CLOCK_MONOTONIC, &start);
+  
+  //double delta_us = (double) (end.tv_sec - start.tv_sec) + (double) (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+  //printf("took %f,    %d %d\n", delta_us, (int) (end.tv_sec - start.tv_sec), (int) (end.tv_nsec - start.tv_nsec));
+  //double start = (double) time(NULL);
   if(iteration>0){
     
     // Thermalization:    
@@ -70,10 +82,12 @@ int main(int argc, char *argv[]) {
       //printf("%d %d\n",update_i,mc.vertices.N); fflush(stdout);
     }
     //exit(1);
-    printf("thermalization time=%f\n", (double)(clock() - start) / CLOCKS_PER_SEC); fflush(stdout);
-    
+    //printf("thermalization time=%f\n", (double)(clock() - start) / CLOCKS_PER_SEC); fflush(stdout);
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    printf("thermalization time=%f\n", timeSec(start,end)); fflush(stdout);
+
     // Measurements:    
-    start = clock();
+    clock_gettime(CLOCK_MONOTONIC, &start);
     for(update_i=1; update_i < mc.model.nUpdates+1;  update_i++) {
         
       do_update(&mc);
@@ -85,7 +99,9 @@ int main(int argc, char *argv[]) {
         //exit(1);
         //printf("done.\n");
         printf("%d",update_i); fflush(stdout);
-        printf(".  sign=% 2.0f   order=%d   time=%f\n", mc.sign, mc.vertices.N, (double)(clock() - start) / CLOCKS_PER_SEC); fflush(stdout);
+        printf(".  sign=% 2.0f   order=%d   ", mc.sign, mc.vertices.N); fflush(stdout);
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        printf("  time=%f\n", timeSec(start,end)); fflush(stdout);
       }
       
       if(update_i % mc.model.measure_i==0) {
@@ -98,9 +114,9 @@ int main(int argc, char *argv[]) {
     }
   }
   
-  start = clock();
   outputMeasure(&mc, nSamples, iteration);
-  printf("total measurement time=%f\n", (double)(clock() - start) / CLOCKS_PER_SEC);
+  clock_gettime(CLOCK_MONOTONIC, &end);
+  printf("total measurement time=%f\n", timeSec(start,end)); fflush(stdout);
   free_MonteCarlo(&mc);//vertices.N=0;
   return 0;
 }
