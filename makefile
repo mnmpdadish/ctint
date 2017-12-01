@@ -11,16 +11,14 @@
 cluster := $(shell echo $(CLUSTER))
 
 ifeq ($(cluster),graham)
-	LIBS    = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -mkl -lpthread -ldl
-	COMPILER= icc
+	LIBS     = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -mkl -lpthread -ldl
+	COMPILER = icc
 else
-	LIBS    = -L${MKLROOT}/lib/intel64 libmkl_intel_lp64.a -Wl,--start-group libmkl_blas95_lp64.a libmkl_lapack95_lp64.a libmkl_sequential.a libmkl_core.a -Wl,--end-group  -lgomp -lpthread -lm -ldl 
-	COMPILER= gcc
+	LIBS     = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_rt -lpthread -ldl 
+	COMPILER = gcc
 endif
 
-OPTIONS = -Wall -O3 #-ffast-math#-pg
-
-arrays=src/util/arrays
+OPTIONS = -Wall -O3
 
 all: build 
 build: 
