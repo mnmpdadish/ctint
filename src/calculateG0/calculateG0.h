@@ -192,8 +192,8 @@ void writeToFile_cMatrixFunction(FILE *fileOut, cMatrixFunction * cMatFun, Model
   for(k=0; k<model->greenSymMat.nIndep; k++) {
     int i=model->greenSymMat.iFirstIndep[k];
     int j=model->greenSymMat.jFirstIndep[k];
-    char nameReal[2];
-    char nameImag[2];
+    char nameReal[4];
+    char nameImag[4];
     nameGreenSymmetriesElement(&model->greenSymMat, i, j, nameReal);
     nameGreenSymmetriesElement(&model->greenSymMat, i, j, nameImag);
     fprintf(fileOut, "          %s_re         %s_im", nameReal, nameImag);
@@ -219,7 +219,7 @@ void writeToFile_dMatrixFunction(FILE *fileOut, dMatrixFunction * dMatFun, Model
   for(k=0; k<model->greenSymMat.nIndep; k++) {
     int i=model->greenSymMat.iFirstIndep[k];
     int j=model->greenSymMat.jFirstIndep[k];
-    char nameReal[2];
+    char nameReal[4];
     nameGreenSymmetriesElement(&model->greenSymMat, i, j, nameReal);
     fprintf(fileOut, "          %s_re", nameReal);
   }
@@ -242,7 +242,7 @@ void writeToFile_dMatrixFunction(FILE *fileOut, dMatrixFunction * dMatFun, Model
 
 void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * model) {
   rewind(fileIn);
-  char tempbuff[256];  //each line should not be above 2048 char long.
+  char tempbuff[4096];  //each line should not be above 2048 char long.
   int i=0, j=0, nRead;
   float w_matsubara;
   float valR, valI;
@@ -252,7 +252,7 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
   
   while(!feof(fileIn)) 
   {
-    if (fgets(tempbuff,256,fileIn)) {
+    if (fgets(tempbuff,4096,fileIn)) {
       //printf("%s",tempbuff);
       /*int lenString = strlen(tempbuff);
       if(tempbuff[lenString-1]!='\n' && tempbuff[lenString] != EOF) {
@@ -280,7 +280,8 @@ void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * m
           exit(1);
         }
         else if (nElement < 2*model->greenSymMat.nIndep+1) {
-          printf("Error, not enough elements to read for the model\n");
+          printf("Error, not enough elements to read for the model, expected=%d, found=%d\n", 2*model->greenSymMat.nIndep+1, nElement);
+          
           exit(1);
         }
         if(n_matsubara==0) cMatFun->beta = M_PI/w_matsubara;
