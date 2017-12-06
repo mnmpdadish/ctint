@@ -670,7 +670,6 @@ void integrate_green_lattice(MonteCarlo *mc, cMatrixFunction *green, cMatrixFunc
 int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iteration) {
   unsigned int n, i, j;
   
-  
   cMatrixFunction self_matsubara;
   init_cMatrixFunction(&self_matsubara, &mc->model);
   
@@ -699,7 +698,7 @@ int outputMeasure(MonteCarlo * mc, unsigned int nSamples, unsigned long int iter
            nSamples, meas_sign, meas_k, 2.0*mc->density/nSamples, 2.0*occupation,
            mc->nInsert, mc->nRemove, mc->nFlip);
     
-    for(n=0; n<N_PTS_MAT; n++) scale_cMatrix(&mc->accumulated_g_matsubara.matrices[n],1.0/nSamples);
+    for(n=0; n<N_PTS_MAT; n++) scale_cMatrix(&mc->accumulated_g_matsubara.matrices[n],1.0/(nSamples*meas_sign));
   
     // extract Green:
     cMatrixFunction green_matsubara;

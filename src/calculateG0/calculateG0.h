@@ -242,7 +242,7 @@ void writeToFile_dMatrixFunction(FILE *fileOut, dMatrixFunction * dMatFun, Model
 
 void readFile_cMatrixFunction(FILE *fileIn, cMatrixFunction * cMatFun, Model * model) {
   rewind(fileIn);
-  char tempbuff[4096];  //each line should not be above 2048 char long.
+  char tempbuff[4096];  //each line should not be above 4096 char long.
   int i=0, j=0, nRead;
   float w_matsubara;
   float valR, valI;
