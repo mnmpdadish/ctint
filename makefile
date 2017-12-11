@@ -13,10 +13,14 @@ cluster := $(shell echo $(CLUSTER))
 ifeq ($(cluster),graham)
 	LIBS     = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -mkl -lpthread -ldl
 	COMPILER = icc
-else
+else ifdef MKLROOT 
 	LIBS     = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_rt -lpthread -ldl 
 	COMPILER = gcc
+else 
+	LIBS     = -llapack -lblas -lrt
+	COMPILER = gcc
 endif
+
 
 OPTIONS = -Wall -O3
 

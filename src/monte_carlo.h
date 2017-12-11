@@ -484,7 +484,7 @@ int measure(MonteCarlo * mc) {
   unsigned int * sites;
   sites = (unsigned int*) malloc(N*sizeof(unsigned int));
     
-  int p1,p2,k;//,i,j;
+  int p1,p2,k,i,j;
 
   for(p1=0;p1<N;p1++) sites[p1] = mc->vertices.m_vertex[p1].site;
 
@@ -550,7 +550,7 @@ int measure(MonteCarlo * mc) {
     if(i==j) mc->density += indepG_tau_sampled[k]/mc->model.greenSymMat.numberOfSiteAssociated[k];
     mc->g_tau_accumulator.indep_G_tau_sampled[k] += indepG_tau_sampled[k];
   }
-  */
+  //*/
   //printf("salut4\n"); fflush(stdout);
   
   mc->accumulated_sign +=mc->sign;
