@@ -485,6 +485,9 @@ int measure(MonteCarlo * mc) {
   sites = (unsigned int*) malloc(N*sizeof(unsigned int));
     
   int p1,p2,k,i,j;
+  double complex indepG_tau_sampled[mc->model.greenSymMat.nIndep];
+
+
 
   for(p1=0;p1<N;p1++) sites[p1] = mc->vertices.m_vertex[p1].site;
 
@@ -517,7 +520,7 @@ int measure(MonteCarlo * mc) {
   }
   //printf("salut3\n"); fflush(stdout);
   
-  /*
+  //*
   for(k=0;k<mc->model.greenSymMat.nIndep;k++){
     i = mc->model.greenSymMat.iFirstIndep[k];
     j = mc->model.greenSymMat.jFirstIndep[k];
@@ -538,8 +541,8 @@ int measure(MonteCarlo * mc) {
         //unsigned int index = mc->model.greenSymMat.indexIndep[mc->model.nSites*sites[p1]+sites[p2]];
         //printf("salut=%d %d %d  %d %d\n", index, N*sites[p1]+sites[p2], mc->model.greenSymMat.nElement, sites[p1], sites[p2] ); fflush(stdout);
         indepG_tau_sampled[k] -= mc->sign * 0.5 * ( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2)) * 
-                                 green0(&vertex0_I,&mc->vertices.m_vertex[p1], mc) * 
-                                 green0(&mc->vertices.m_vertex[p2],&vertex0_J, mc);
+                                 green0(&vertex0_I,&mc->vertices.m_vertex[p2], mc) * 
+                                 green0(&mc->vertices.m_vertex[p1],&vertex0_J, mc);
         
         if(p1==p2) {
           mc->KDirac += mc->sign * 0.5 * ( ELEM(mc->M_up, p1, p2) + ELEM(mc->M_down, p1, p2));
