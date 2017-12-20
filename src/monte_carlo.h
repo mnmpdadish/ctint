@@ -33,6 +33,9 @@ typedef struct {
 
 typedef struct {
   double * indep_G_tau_sampled; //[mc->model.greenSymMat.nIndep]
+  dMatrix G_tau0_sampled; 
+  //dVector G_tau0_sampled; 
+  //dVector G_tau0_sampled; 
   dFunction * indep_M_tau0_sampled;
   dFunction * indep_M_tau1_sampled;
   dFunction * indep_M_tau2_sampled;
@@ -456,24 +459,48 @@ void FlipVertex(MonteCarlo * mc) {
 
 void CleanUpdate(MonteCarlo * mc) { 
   //printf("salut1\n"); fflush(stdout);
-  assert(mc->M_up->N == mc->vertices.N);
-  assert(mc->M_down->N == mc->vertices.N);
+  resize_dMatrix(mc->Mdummy_up, mc->vertices.N);
+  resize_dMatrix(mc->Mdummy_down, mc->vertices.N);
   //printf("salut2\n"); fflush(stdout);
   unsigned int i,j;
   for(i = 0; i < mc->vertices.N; i++) {
     Vertex vertexI = mc->vertices.m_vertex[i];
     for(j = 0; j < mc->vertices.N; j++) {
       Vertex vertexJ = mc->vertices.m_vertex[j];
-      ELEM(mc->M_up,i,j) =   green0(&vertexJ, &vertexI, mc);
-      ELEM(mc->M_down,i,j) = green0(&vertexJ, &vertexI, mc);
+      ELEM(mc->Mdummy_up,i,j) =   green0(&vertexJ, &vertexI, mc);
+      ELEM(mc->Mdummy_down,i,j) = green0(&vertexJ, &vertexI, mc);
     }
-    ELEM(mc->M_up,i,i) -= auxUp(&vertexI, mc);
-    ELEM(mc->M_down,i,i) -= auxDown(&vertexI, mc);
+    ELEM(mc->Mdummy_up,i,i) -= auxUp(&vertexI, mc);
+    ELEM(mc->Mdummy_down,i,i) -= auxDown(&vertexI, mc);
   }
   //printf("salut3\n"); fflush(stdout);
-  invert_dMatrix(mc->M_up);
-  invert_dMatrix(mc->M_down);
+  invert_dMatrix(mc->Mdummy_up);
+  invert_dMatrix(mc->Mdummy_down);
   //printf("salut4\n"); fflush(stdout);
+  
+  // check what is the highest difference between Clean Update and current M matrices.
+  double max_error=0.0;
+  for(i = 0; i < mc->vertices.N; i++) {
+    for(j = 0; j < mc->vertices.N; j++) {
+      double error;
+      error = fabs(ELEM(mc->Mdummy_up,i,j) - ELEM(mc->M_up,i,j));
+      if(error > max_error ) max_error = error;
+      error = fabs(ELEM(mc->Mdummy_down,i,j) - ELEM(mc->M_down,i,j));
+      if(error > max_error ) max_error = error;
+    }
+  }
+  printf("clean update max error= %4.5e\n",max_error);
+  
+  // swapping M with Mdummy:
+      
+  dMatrix *tmp = mc->M_up;
+  mc->M_up = mc->Mdummy_up;
+  mc->Mdummy_up = tmp;
+  
+  tmp = mc->M_down;
+  mc->M_down = mc->Mdummy_down;
+  mc->Mdummy_down = tmp;
+      
 }
 
 
@@ -487,10 +514,7 @@ int measure(MonteCarlo * mc) {
   int p1,p2,k,i,j;
   double complex indepG_tau_sampled[mc->model.greenSymMat.nIndep];
 
-
-
   for(p1=0;p1<N;p1++) sites[p1] = mc->vertices.m_vertex[p1].site;
-
 
   const double DeltaInv = N_BIN_TAU/mc->model.beta;
   
@@ -521,7 +545,7 @@ int measure(MonteCarlo * mc) {
   //printf("salut3\n"); fflush(stdout);
   
   //*
-  for(k=0;k<mc->model.greenSymMat.nIndep;k++){
+  for(k=0;k<mc->model.greenSymMat.nIndep;k++) {
     i = mc->model.greenSymMat.iFirstIndep[k];
     j = mc->model.greenSymMat.jFirstIndep[k];
     
@@ -554,6 +578,10 @@ int measure(MonteCarlo * mc) {
     mc->g_tau_accumulator.indep_G_tau_sampled[k] += indepG_tau_sampled[k];
   }
   //*/
+  
+  
+  
+  
   //printf("salut4\n"); fflush(stdout);
   
   mc->accumulated_sign +=mc->sign;
