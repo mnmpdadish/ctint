@@ -239,7 +239,12 @@ double green0(Vertex const * vertexI, Vertex const * vertexJ, MonteCarlo *mc) {
   return aps*((1. - (ntau - ntau0))*val_n + (ntau - ntau0)*val_n1);
 }
 
-	
+/*
+void swap_dMatrix_ptr(dMatrix *pA, dMatrix *pB){
+  dMatrix *tmp = pA;
+  pA = pB;
+  pB = tmp;
+}*///wut? does not work, keep the old way.
 
 // add vertex at the end of the verticies:
 int InsertVertex(MonteCarlo * mc) { 
@@ -312,10 +317,6 @@ int InsertVertex(MonteCarlo * mc) {
       tmp = mc->M_down;
       mc->M_down = mc->Mdummy_down;
       mc->Mdummy_down = tmp;
-      
-      //old way: copy instead of swapping vector (slower):
-      //copy_dMatrix(mc->Mdummy_up,mc->M_up);
-      //copy_dMatrix(mc->Mdummy_down,mc->M_down);
 
       //printf("after insert\n"); fflush(stdout);
 //*/
@@ -395,10 +396,6 @@ void RemoveVertex(MonteCarlo * mc) {
       mc->M_down = mc->Mdummy_down;
       mc->Mdummy_down = tmp; 
       
-      //old way: copy instead of swapping vector (slower):
-      //copy_dMatrix(mc->Mdummy_up,  mc->M_up);
-      //copy_dMatrix(mc->Mdummy_down,mc->M_down);
-    
       mc->vertices.N--;  // the vertex is not deleted, it is just forgotten
       
       mc->vertices.m_vertex[p].tau     = mc->vertices.m_vertex[N].tau;
@@ -414,9 +411,6 @@ void RemoveVertex(MonteCarlo * mc) {
 
   }
 }
-
-
-
 
 
 // spin-flip a vertex:
@@ -453,8 +447,6 @@ void FlipVertex(MonteCarlo * mc) {
     }
   }
 }
-
-
 
 
 void CleanUpdate(MonteCarlo * mc) { 

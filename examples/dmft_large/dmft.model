@@ -1,0 +1,15 @@
+#you can most of the time use comment with #
+sites
+(0,0,0)
+
+symmetry_generators
+
+superlattice   
+(1,0,0)
+(0,1,0)
+(0,0,1)
+
+one-body
+t   (1,0,0)  -1.0
+t   (0,1,0)  -1.0
+

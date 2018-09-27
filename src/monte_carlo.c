@@ -69,9 +69,6 @@ int main(int argc, char *argv[]) {
   int nSamples=0;
   clock_gettime(CLOCK_MONOTONIC, &start);
   
-  //double delta_us = (double) (end.tv_sec - start.tv_sec) + (double) (end.tv_nsec - start.tv_nsec) / 1000000000.0;
-  //printf("took %f,    %d %d\n", delta_us, (int) (end.tv_sec - start.tv_sec), (int) (end.tv_nsec - start.tv_nsec));
-  //double start = (double) time(NULL);
   if(iteration>0){
     
     // Thermalization:    
@@ -80,6 +77,7 @@ int main(int argc, char *argv[]) {
       do_update(&mc);
       if(update_i % mc.model.cleanUpdate_i ==0) if(mc.vertices.N !=0) CleanUpdate(&mc);
       //printf("%d %d\n",update_i,mc.vertices.N); fflush(stdout);
+      //if(update_i % 100 ==0) printf("%d %d\n",update_i,mc.vertices.N); fflush(stdout);
     }
     //exit(1);
     //printf("thermalization time=%f\n", (double)(clock() - start) / CLOCKS_PER_SEC); fflush(stdout);
@@ -109,6 +107,8 @@ int main(int argc, char *argv[]) {
         measure(&mc);
         nSamples++;
         printf(".  sign=% 2.0f   order=%d   \n", mc.sign, mc.vertices.N); fflush(stdout);
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        printf("  time=%f\n", timeSec(start,end)); fflush(stdout);
       }
       //printf("%d %d\n",update_i,mc.vertices.N); fflush(stdout);
     }

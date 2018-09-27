@@ -21,8 +21,10 @@ else
 	COMPILER = gcc
 endif
 
+LIBS     = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -mkl -lpthread -ldl
+COMPILER = icc
 
-OPTIONS = -Wall -O3
+OPTIONS = -Wall -O2 
 
 all: build 
 build: 
