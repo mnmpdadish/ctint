@@ -2,14 +2,14 @@
 
 #include "../util/test.h"
 
-#include "../util/stringUtil_test.h"
+//#include "../util/stringUtil_test.h"
 #include "dMatrix_test.h"
 #include "cMatrix_test.h"
-#include "../findGreenSymmetries/findGreenSymmetries_test.h"
-#include "../oneBodyMatrix/oneBodyMatrix_test.h"
+//#include "../findGreenSymmetries/findGreenSymmetries_test.h"
+//#include "../oneBodyMatrix/oneBodyMatrix_test.h"
 
-#include "../util/arrays/array_test.h"
-#include "../util/arrays/array.h"
+//#include "../util/arrays/array_test.h"
+//#include "../util/arrays/array.h"
 
 int main() {
   int verbose=1;
