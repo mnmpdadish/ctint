@@ -21,10 +21,13 @@ else
 	COMPILER = gcc
 endif
 
-LIBS     = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -mkl -lpthread -ldl
-COMPILER = icc
+#LIBS     = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -mkl -lpthread -ldl
+#COMPILER = icc
+#LIBS     = -L${MKLROOT}/lib/intel64 -Wl,--no-as-needed -lmkl_rt -lpthread -ldl 
+LIBS     = -llapack -lblas -lrt
+COMPILER = gcc
 
-OPTIONS = -Wall -O2 
+OPTIONS = -Wall -O0 
 
 all: build 
 build: 
@@ -35,7 +38,7 @@ test:
 	$(COMPILER) $(OPTIONS) -o tests src/test.c -lm $(LIBS) -lgfortran
 
 clean:
-	rm mc tests
+	rm mc 
 
 	
 	
